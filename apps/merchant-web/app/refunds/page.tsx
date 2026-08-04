@@ -24,7 +24,7 @@ export default function RefundsPage() {
             <div className="mt-4 rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs">
               <p className="font-semibold">Ledger M2 Example 100 ETB fee 2.90 pro_rata 100% refund:</p>
               <p>Dr liability:merchant_payable 97.10 + Dr liability:platform_fee_due 2.90 Cr asset:clearing:mock 100.00 — Debit 100 == Credit 100 balanced ValidateBalanced O(n) + filter zero entries</p>
-              <p>Payment status → partially_refunded / refunded CASE WHEN sum(amount) >= amount THEN refunded ELSE partially_refunded</p>
+              <p>Payment status → partially_refunded / refunded CASE WHEN sum(amount) &gt;= amount THEN refunded ELSE partially_refunded</p>
             </div>
           </div>
         </div>

@@ -15,7 +15,7 @@ export function CompliancePreviewStep({ data }: { data: any }) {
     { type: "risk_scoring", label: "Risk Scoring • አደጋ ነጥብ", status: "passed", score: 42, details: "Medium risk TPV 500k" },
   ]
 
-  const avgScore = Math.round(checks.reduce((a,c)=> a+c.score,0)/checks.length)
+  const avgScore = Math.round(checks.reduce((a, c) => a + c.score, 0) / checks.length)
 
   return (
     <div className="space-y-6">
@@ -27,17 +27,17 @@ export function CompliancePreviewStep({ data }: { data: any }) {
       <Card className="p-4 bg-gradient-to-br from-primary-50 to-white">
         <div className="flex items-center justify-between">
           <div><p className="text-sm text-muted-foreground">Risk Score • አደጋ</p><p className="text-3xl font-bold">{avgScore}/100</p><p className="text-xs">Medium • TPV 500k ETB</p></div>
-          <div className="h-20 w-20 rounded-full border-8 border-primary flex items-center justify-center font-bold text-primary" style={{ borderColor: avgScore<50 ? "#10B981" : avgScore<75 ? "#F59E0B" : "#EF4444" }}>{avgScore}</div>
+          <div className="h-20 w-20 rounded-full border-8 border-primary flex items-center justify-center font-bold text-primary" style={{ borderColor: avgScore < 50 ? "#10B981" : avgScore < 75 ? "#F59E0B" : "#EF4444" }}>{avgScore}</div>
         </div>
         <Progress value={avgScore} className="mt-3" />
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {checks.map(c=> (
-          <Card key={c.type} className={`p-3 border ${c.status==="passed" ? "border-green-200 bg-green-50/30" : c.status==="needs_review" ? "border-amber-200 bg-amber-50/30" : "border-black/10"}`}>
+        {checks.map(c => (
+          <Card key={c.type} className={`p-3 border ${c.status === "passed" ? "border-green-200 bg-green-50/30" : c.status === "needs_review" ? "border-amber-200 bg-amber-50/30" : "border-black/10"}`}>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">{c.label}</p>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${c.status==="passed" ? "bg-green-100 text-green-700" : c.status==="needs_review" ? "bg-amber-100 text-amber-700" : "bg-neutral-100"}`}>{c.status}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "passed" ? "bg-green-100 text-green-700" : c.status === "needs_review" ? "bg-amber-100 text-amber-700" : "bg-neutral-100"}`}>{c.status}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">{c.details}</p>
             <Progress value={c.score} className="mt-2 h-1.5" />

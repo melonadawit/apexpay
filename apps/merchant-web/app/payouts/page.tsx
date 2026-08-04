@@ -4,9 +4,9 @@ import { parseBulkCSV, levenshtein, BulkRow } from "@/lib/papaparse-bulk"
 
 export default function PayoutsPage() {
   const [rows, setRows] = React.useState<BulkRow[]>([
-    {name:"Abebe", account_no:"1000123456789", bank_code:"CBE", bank_name:"Commercial Bank of Ethiopia", amount:"10000", payout_ref:"pout_ref_01", status:"valid", errors:[]},
-    {name:"Almaz", account_no:"1000123456790", bank_code:"AWASH", bank_name:"Awash Bank", amount:"5000", payout_ref:"pout_ref_02", status:"valid", errors:[]},
-    {name:"Kebede", account_no:"1000123456791", bank_code:"DASHEN", bank_name:"Dashen Bank", amount:"15000", payout_ref:"pout_ref_03", status:"warning", errors:["name mismatch Levenshtein 2 require override note"]},
+    { name: "Abebe", account_no: "1000123456789", bank_code: "CBE", bank_name: "Commercial Bank of Ethiopia", amount: "10000", payout_ref: "pout_ref_01", status: "valid", errors: [] },
+    { name: "Almaz", account_no: "1000123456790", bank_code: "AWASH", bank_name: "Awash Bank", amount: "5000", payout_ref: "pout_ref_02", status: "valid", errors: [] },
+    { name: "Kebede", account_no: "1000123456791", bank_code: "DASHEN", bank_name: "Dashen Bank", amount: "15000", payout_ref: "pout_ref_03", status: "warning", errors: ["name mismatch Levenshtein 2 require override note"] },
   ])
   const [total, setTotal] = React.useState(30000)
 
@@ -52,12 +52,12 @@ export default function PayoutsPage() {
             </div>
             <div className="rounded-xl border overflow-hidden">
               <div className="grid grid-cols-6 gap-2 bg-neutral-50 p-3 text-xs font-semibold"><span>Name</span><span>Account</span><span>Bank</span><span>Amount</span><span>Ref</span><span>Status</span></div>
-              {rows.map((r,i)=>(
-                <div key={i} className="grid grid-cols-6 gap-2 p-3 border-t text-xs"><span>{r.name}</span><span>****{r.account_no.slice(-4)}</span><span>{r.bank_code} {r.bank_name && `• ${r.bank_name}`}</span><span>ETB {r.amount}</span><span>{r.payout_ref}</span><span className={r.status==="valid" ? "text-green-600" : r.status==="warning" ? "text-amber-600" : "text-red-600"}>{r.status} {r.errors.join(", ")}</span></div>
+              {rows.map((r, i) => (
+                <div key={i} className="grid grid-cols-6 gap-2 p-3 border-t text-xs"><span>{r.name}</span><span>****{r.account_no.slice(-4)}</span><span>{r.bank_code} {r.bank_name && `• ${r.bank_name}`}</span><span>ETB {r.amount}</span><span>{r.payout_ref}</span><span className={r.status === "valid" ? "text-green-600" : r.status === "warning" ? "text-amber-600" : "text-red-600"}>{r.status} {r.errors.join(", ")}</span></div>
               ))}
             </div>
-            <div className="flex items-center gap-2"><div className="h-2 flex-1 bg-neutral-200 rounded-full overflow-hidden"><div className="h-full bg-primary" style={{width:`${Math.min(100, (rows.filter(r=>r.status==="valid").length/rows.length)*100)}%`}} /></div><span className="text-xs">Total ETB {total.toLocaleString()} • {rows.length} rows • {rows.filter(r=>r.status==="valid").length} valid • {rows.filter(r=>r.status!=="valid").length} invalid/warning • Maker-checker required • Balance check sufficient • Fee calc MDR 2.9%</span></div>
-            <button className="rounded-xl bg-primary text-white h-12 px-6">Create Batch • pbat_01H • pending_approval • Dual approve >50k • Ledger M3 Dr payable Cr clearing total per batch book + CreateBulkTx atomic batch+payouts+journal+balances</button>
+            <div className="flex items-center gap-2"><div className="h-2 flex-1 bg-neutral-200 rounded-full overflow-hidden"><div className="h-full bg-primary" style={{ width: `${Math.min(100, (rows.filter(r => r.status === "valid").length / rows.length) * 100)}%` }} /></div><span className="text-xs">Total ETB {total.toLocaleString()} • {rows.length} rows • {rows.filter(r => r.status === "valid").length} valid • {rows.filter(r => r.status !== "valid").length} invalid/warning • Maker-checker required • Balance check sufficient • Fee calc MDR 2.9%</span></div>
+            <button className="rounded-xl bg-primary text-white h-12 px-6">Create Batch • pbat_01H • pending_approval • Dual approve &gt;50k • Ledger M3 Dr payable Cr clearing total per batch book + CreateBulkTx atomic batch+payouts+journal+balances</button>
           </div>
         </div>
 

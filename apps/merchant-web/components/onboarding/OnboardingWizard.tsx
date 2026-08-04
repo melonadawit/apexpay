@@ -156,7 +156,7 @@ export function OnboardingWizard() {
             <Card className="p-4">
               <h4 className="font-semibold mb-2">Timeline • የጊዜ መስመር</h4>
               <div className="relative pl-6 border-l-2 border-neutral-200 space-y-4">
-                {["Business info saved • draft","Fayda verification OTP sent • 123456 mock","Bank added • CBE ****1234","Docs 4/6 uploaded • 66%"].map((t, i) => (
+                {["Business info saved • draft", "Fayda verification OTP sent • 123456 mock", "Bank added • CBE ****1234", "Docs 4/6 uploaded • 66%"].map((t, i) => (
                   <div key={i} className="relative">
                     <div className="absolute -left-[29px] top-0 h-3 w-3 rounded-full bg-primary border-2 border-white" />
                     <p className="text-xs">{t}</p>

@@ -8,30 +8,30 @@ export function ReviewSubmitStep({ data }: { data: any }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold flex items-center gap-2"><ShieldCheck className="text-primary"/> Review & Submit • ግምገማ እና አስገባ</h2>
+        <h2 className="text-xl font-bold flex items-center gap-2"><ShieldCheck className="text-primary" /> Review & Submit • ግምገማ እና አስገባ</h2>
         <p className="text-sm text-muted-foreground">Confirm per NBE ONPS/02/2020 and consent Fayda verification via id.gov.et with OTP consent.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4 space-y-2">
-          <div className="flex items-center gap-2 font-semibold"><Building size={16}/> Business</div>
-          <p className="text-sm">Legal: {data.legal_name||"Apex Trading PLC"}</p>
-          <p className="text-sm">TIN: {data.tin_number||"0023456789"}</p>
-          <p className="text-sm">Industry: {data.industry||"e-commerce"} • Region: {data.region||"Addis Ababa"}</p>
+          <div className="flex items-center gap-2 font-semibold"><Building size={16} /> Business</div>
+          <p className="text-sm">Legal: {data.legal_name || "Apex Trading PLC"}</p>
+          <p className="text-sm">TIN: {data.tin_number || "0023456789"}</p>
+          <p className="text-sm">Industry: {data.industry || "e-commerce"} • Region: {data.region || "Addis Ababa"}</p>
         </Card>
         <Card className="p-4 space-y-2">
-          <div className="flex items-center gap-2 font-semibold"><Check size={16}/> Owners & Fayda</div>
-          <p className="text-sm">{data.owners?.[0]?.full_name||"Abebe Kebede"} • 100% • Auth Signatory</p>
-          <p className="text-sm">FIN ****-{data.owners?.[0]?.fin_last4||"1234"} • Verified {data.owners?.[0]?.fayda_verified ? "✓ 0.92" : "pending"}</p>
+          <div className="flex items-center gap-2 font-semibold"><Check size={16} /> Owners & Fayda</div>
+          <p className="text-sm">{data.owners?.[0]?.full_name || "Abebe Kebede"} • 100% • Auth Signatory</p>
+          <p className="text-sm">FIN ****-{data.owners?.[0]?.fin_last4 || "1234"} • Verified {data.owners?.[0]?.fayda_verified ? "✓ 0.92" : "pending"}</p>
         </Card>
         <Card className="p-4 space-y-2">
-          <div className="flex items-center gap-2 font-semibold"><CreditCard size={16}/> Bank</div>
-          <p className="text-sm">{data.bank_code||"CBE"} • {data.account_name||"Apex Trading PLC"}</p>
-          <p className="text-sm">****{data.account_number?.slice(-4)||"1234"} • Default settlement</p>
+          <div className="flex items-center gap-2 font-semibold"><CreditCard size={16} /> Bank</div>
+          <p className="text-sm">{data.bank_code || "CBE"} • {data.account_name || "Apex Trading PLC"}</p>
+          <p className="text-sm">****{data.account_number?.slice(-4) || "1234"} • Default settlement</p>
         </Card>
         <Card className="p-4 space-y-2">
-          <div className="flex items-center gap-2 font-semibold"><FileText size={16}/> Documents</div>
-          <p className="text-sm">{Object.keys(data.uploadedDocs||{}).length} docs uploaded • {Object.keys(data.uploadedDocs||{}).join(", ")||"company_registration, tin_certificate, ..."}</p>
+          <div className="flex items-center gap-2 font-semibold"><FileText size={16} /> Documents</div>
+          <p className="text-sm">{Object.keys(data.uploadedDocs || {}).length} docs uploaded • {Object.keys(data.uploadedDocs || {}).join(", ") || "company_registration, tin_certificate, ..."}</p>
         </Card>
       </div>
 

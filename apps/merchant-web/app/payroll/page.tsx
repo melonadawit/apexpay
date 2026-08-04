@@ -19,9 +19,9 @@ export default function PayrollPage() {
             <h3 className="font-semibold">Employees • 10 • Fayda badge</h3>
             <div className="mt-3 space-y-2 text-xs">
               {[
-                {code:"EMP001", name:"Abebe Kebede", base:"20000", fayda:true, bank:"CBE ****1234", cost:"Sales"},
-                {code:"EMP002", name:"Almaz Tadesse", base:"25000", fayda:true, bank:"Awash ****5678", cost:"Eng"},
-              ].map(e=>(
+                { code: "EMP001", name: "Abebe Kebede", base: "20000", fayda: true, bank: "CBE ****1234", cost: "Sales" },
+                { code: "EMP002", name: "Almaz Tadesse", base: "25000", fayda: true, bank: "Awash ****5678", cost: "Eng" },
+              ].map(e => (
                 <div key={e.code} className="flex items-center justify-between rounded-xl border p-2"><div><p className="font-medium">{e.name} • {e.code}</p><p className="text-[11px] text-muted-foreground">Base {e.base} • {e.bank} • {e.cost} {e.fayda && "• Fayda ✓"}</p></div></div>
               ))}
             </div>
@@ -32,7 +32,7 @@ export default function PayrollPage() {
             <div className="flex justify-between items-center"><h3 className="font-semibold">Payroll Runs • Runs table status pipeline visual stepper</h3><button className="rounded-xl bg-primary text-white px-4 h-9 text-xs">Create Run July regular</button></div>
             <div className="mt-4 rounded-xl border overflow-hidden">
               <div className="grid grid-cols-6 gap-2 bg-neutral-50 p-3 text-xs font-semibold"><span>Run Ref</span><span>Period</span><span>Type</span><span>Status</span><span>Total Net</span><span>Action</span></div>
-              <div className="grid grid-cols-6 gap-2 p-3 border-t text-xs"><span>prun_July2026</span><span>07/2026</span><span>regular</span><span><span className="px-2 py-0.5 rounded-full bg-amber-100">pending_approval</span></span><span>ETB 150,000</span><Link href="/payroll/prun_July2026" className="text-primary">View • Calculate → Approve dual >100k → Disburse → payout batch</Link></div>
+              <div className="grid grid-cols-6 gap-2 p-3 border-t text-xs"><span>prun_July2026</span><span>07/2026</span><span>regular</span><span><span className="px-2 py-0.5 rounded-full bg-amber-100">pending_approval</span></span><span>ETB 150,000</span><Link href="/payroll/prun_July2026" className="text-primary">View • Calculate → Approve dual &gt;100k → Disburse → payout batch</Link></div>
             </div>
 
             <div className="mt-6 rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs">

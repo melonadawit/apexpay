@@ -6,7 +6,7 @@ export default function PaymentDetailPage({ params }: { params: { id: string } }
     <div className="min-h-screen bg-neutral-50 p-6">
       <div className="max-w-4xl mx-auto space-y-4">
         <h1 className="text-2xl font-bold">Payment Exam • {params.id}</h1>
-        <p className="text-sm text-muted-foreground">NBE exam console reconstruct any tx_ref <60s per SAD A1 — lifecycle + journals + connector refs + webhooks + agent actions</p>
+        <p className="text-sm text-muted-foreground">NBE exam console reconstruct any tx_ref &lt;60s per SAD A1 — lifecycle + journals + connector refs + webhooks + agent actions</p>
 
         <div className="grid grid-cols-3 gap-4">
           <div className="col-span-2 space-y-4">

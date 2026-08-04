@@ -28,7 +28,7 @@ export default function RefundDetailPage({ params }: { params: { id: string } })
                 <div className="grid grid-cols-4 gap-2 p-2 border-b"><span>liability:platform_fee_due</span><span className="text-green-600">debit</span><span>2.90</span><span>FR fee reversal pro_rata = fee*refund/pay Round2</span></div>
                 <div className="grid grid-cols-4 gap-2 p-2"><span>asset:clearing:mock</span><span className="text-red-600">credit</span><span>100.00</span><span>R full refund amount</span></div>
                 <p className="text-[11px] text-muted-foreground">Debit 100.00 = 97.10+2.90 == Credit 100.00 per ValidateBalanced O(n) + filtered zero entries if feeReversal zero + quality check SQL having sum(debit)!=sum(credit) expect 0 rows</p>
-                <p className="text-[11px]">Payment status → partially_refunded / refunded CASE WHEN COALESCE(SUM(amount),0) FROM refunds WHERE payment_id=$1 AND status IN ('processing','succeeded') >= amount THEN refunded ELSE partially_refunded</p>
+                <p className="text-[11px]">Payment status → partially_refunded / refunded CASE WHEN COALESCE(SUM(amount),0) FROM refunds WHERE payment_id=$1 AND status IN ('processing','succeeded') &gt;= amount THEN refunded ELSE partially_refunded</p>
               </div>
             </div>
           </div>

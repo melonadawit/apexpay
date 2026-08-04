@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { FaydaCapture } from "./FaydaCapture"
 import { Check, ShieldCheck, Smartphone } from "lucide-react"
 
-export function OwnersFaydaStep({ data, onChange }: { data: any, onChange: (d:any)=>void }) {
+export function OwnersFaydaStep({ data, onChange }: { data: any, onChange: (d: any) => void }) {
   const [owners, setOwners] = React.useState<any[]>(data.owners || [{ id: "own_1", full_name: "Abebe Kebede", full_name_am: "አበበ ከበደ", role: "owner", ownership_percentage: 100, is_authorized_signatory: true, fayda_verified: false }])
   const [activeOwnerIdx, setActiveOwnerIdx] = React.useState(0)
   const [frontFile, setFrontFile] = React.useState<File | null>(null)
@@ -43,29 +43,29 @@ export function OwnersFaydaStep({ data, onChange }: { data: any, onChange: (d:an
 
       <div className="flex gap-2 overflow-auto pb-2">
         {owners.map((o, idx) => (
-          <button key={o.id} onClick={()=> setActiveOwnerIdx(idx)} className={`rounded-xl border px-4 py-2 flex items-center gap-2 min-w-max ${idx===activeOwnerIdx ? "border-primary bg-primary/10" : "border-black/10 bg-white"}`}>
-            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${o.fayda_verified ? "bg-green-500 text-white" : "bg-neutral-200"}`}>{o.fayda_verified ? <Check size={12}/> : idx+1}</div>
+          <button key={o.id} onClick={() => setActiveOwnerIdx(idx)} className={`rounded-xl border px-4 py-2 flex items-center gap-2 min-w-max ${idx === activeOwnerIdx ? "border-primary bg-primary/10" : "border-black/10 bg-white"}`}>
+            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${o.fayda_verified ? "bg-green-500 text-white" : "bg-neutral-200"}`}>{o.fayda_verified ? <Check size={12} /> : idx + 1}</div>
             <span className="text-sm font-medium">{o.full_name} {o.is_authorized_signatory && "• Auth Signatory"}</span>
           </button>
         ))}
-        <Button variant="outline" size="sm" onClick={()=> setOwners([...owners, { id:`own_${owners.length+1}`, full_name:"New Owner", role:"shareholder", ownership_percentage:10 }])}>+ Add Owner</Button>
+        <Button variant="outline" size="sm" onClick={() => setOwners([...owners, { id: `own_${owners.length + 1}`, full_name: "New Owner", role: "shareholder", ownership_percentage: 10 }])}>+ Add Owner</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <FaydaCapture type="front" capturedUrl={frontFile ? URL.createObjectURL(frontFile) : undefined} onCapture={setFrontFile} onRetake={()=> setFrontFile(null)} />
-        <FaydaCapture type="back" capturedUrl={backFile ? URL.createObjectURL(backFile) : undefined} onCapture={setBackFile} onRetake={()=> setBackFile(null)} />
-        <FaydaCapture type="selfie" capturedUrl={selfieFile ? URL.createObjectURL(selfieFile) : undefined} onCapture={setSelfieFile} onRetake={()=> setSelfieFile(null)} />
+        <FaydaCapture type="front" capturedUrl={frontFile ? URL.createObjectURL(frontFile) : undefined} onCapture={setFrontFile} onRetake={() => setFrontFile(null)} />
+        <FaydaCapture type="back" capturedUrl={backFile ? URL.createObjectURL(backFile) : undefined} onCapture={setBackFile} onRetake={() => setBackFile(null)} />
+        <FaydaCapture type="selfie" capturedUrl={selfieFile ? URL.createObjectURL(selfieFile) : undefined} onCapture={setSelfieFile} onRetake={() => setSelfieFile(null)} />
       </div>
 
       <div className="rounded-2xl border border-black/10 p-4 space-y-4 bg-white">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1"><label className="text-sm font-medium">FIN 12-digit or FAN 16 • ፋይዳ ቁጥር *</label><input value={fin} onChange={e=> setFin(e.target.value)} placeholder="123456789012 or FAN alias" className="w-full rounded-xl border h-12 px-3" maxLength={16} /></div>
-          <div className="space-y-1"><label className="text-sm font-medium flex items-center gap-1"><Smartphone size={14}/> OTP 6-digit • የተላከ ኮድ * (mock 123456)</label><input value={otp} onChange={e=> setOtp(e.target.value)} placeholder="123456" className="w-full rounded-xl border h-12 px-3" maxLength={6} /></div>
+          <div className="space-y-1"><label className="text-sm font-medium">FIN 12-digit or FAN 16 • ፋይዳ ቁጥር *</label><input value={fin} onChange={e => setFin(e.target.value)} placeholder="123456789012 or FAN alias" className="w-full rounded-xl border h-12 px-3" maxLength={16} /></div>
+          <div className="space-y-1"><label className="text-sm font-medium flex items-center gap-1"><Smartphone size={14} /> OTP 6-digit • የተላከ ኮድ * (mock 123456)</label><input value={otp} onChange={e => setOtp(e.target.value)} placeholder="123456" className="w-full rounded-xl border h-12 px-3" maxLength={6} /></div>
         </div>
 
         <div className="flex items-center gap-3">
           <Button onClick={handleVerify} disabled={verified} className="flex-1">{verified ? `Verified • Face Score ${faceScore}` : "Verify via Fayda • በፋይዳ አረጋግጥ"}</Button>
-          {verified && <span className="text-green-600 text-sm flex items-center gap-1"><Check size={16}/> OTP verified • FIN hashed sha256(salt+FIN)</span>}
+          {verified && <span className="text-green-600 text-sm flex items-center gap-1"><Check size={16} /> OTP verified • FIN hashed sha256(salt+FIN)</span>}
         </div>
 
         <div className="text-xs text-muted-foreground">

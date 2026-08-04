@@ -57,14 +57,14 @@ export function FaydaCapture({
       const imageData = ctx.getImageData(0, 0, 100, 100)
       let total = 0, bright = 0
       for (let i = 0; i < imageData.data.length; i += 16) {
-        const r = imageData.data[i], g = imageData.data[i+1], b = imageData.data[i+2]
-        const bness = (r+g+b)/3
+        const r = imageData.data[i], g = imageData.data[i + 1], b = imageData.data[i + 2]
+        const bness = (r + g + b) / 3
         total += bness
         if (bness > 200) bright++
       }
-      const avg = total / (imageData.data.length/16)
+      const avg = total / (imageData.data.length / 16)
       setBrightness(Math.round(avg))
-      setHasGlare(bright / (imageData.data.length/16) > 0.15)
+      setHasGlare(bright / (imageData.data.length / 16) > 0.15)
     }, 400)
     return () => clearInterval(interval)
   }, [capturedUrl, stream])
@@ -78,7 +78,7 @@ export function FaydaCapture({
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], `fayda_${type}_${Date.now()}.jpg`, { type: "image/jpeg" })
-        if (file.size > 2*1024*1024) alert("File must be <2MB per NIDP spec")
+        if (file.size > 2 * 1024 * 1024) alert("File must be <2MB per NIDP spec")
         else onCapture(file)
       }
     }, "image/jpeg", 0.85)
@@ -105,7 +105,7 @@ export function FaydaCapture({
       </div>
 
       <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] border-2 border-black/10">
-        <video ref={videoRef} autoPlay playsInline muted className={cn("w-full h-full object-cover", type==="selfie" && "-scale-x-100")} />
+        <video ref={videoRef} autoPlay playsInline muted className={cn("w-full h-full object-cover", type === "selfie" && "-scale-x-100")} />
 
         {/* Outstanding corner guides animated pulse */}
         <div className="absolute inset-6 pointer-events-none">

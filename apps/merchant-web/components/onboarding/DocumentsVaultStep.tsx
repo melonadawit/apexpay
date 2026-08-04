@@ -17,18 +17,18 @@ const requiredDocs = [
   { type: "website_screenshot", label: "Website Screenshot + Refund/Privacy/Terms • ድህረ ገጽ", required: true },
 ]
 
-export function DocumentsVaultStep({ data, onChange }: { data: any, onChange: (d:any)=>void }) {
-  const [uploaded, setUploaded] = React.useState<Record<string, number>>(data.uploadedDocs || { company_registration:1, tin_certificate:1, business_license:1, fayda_card_front:1 })
+export function DocumentsVaultStep({ data, onChange }: { data: any, onChange: (d: any) => void }) {
+  const [uploaded, setUploaded] = React.useState<Record<string, number>>(data.uploadedDocs || { company_registration: 1, tin_certificate: 1, business_license: 1, fayda_card_front: 1 })
 
   const handleFiles = (files: File[], docType: string) => {
     // Check size <5MB generic, Fayda <2MB per NIDP
     const isFayda = docType.includes("fayda")
-    const max = isFayda ? 2*1024*1024 : 5*1024*1024
+    const max = isFayda ? 2 * 1024 * 1024 : 5 * 1024 * 1024
     for (const f of files) {
-      if (f.size > max) { alert(`${f.name} exceeds ${max/1024/1024}MB`); return }
+      if (f.size > max) { alert(`${f.name} exceeds ${max / 1024 / 1024}MB`); return }
     }
     // Mock hash integrity sha256
-    const newUploaded = { ...uploaded, [docType]: (uploaded[docType]||0)+files.length }
+    const newUploaded = { ...uploaded, [docType]: (uploaded[docType] || 0) + files.length }
     setUploaded(newUploaded)
     onChange({ ...data, uploadedDocs: newUploaded })
   }
