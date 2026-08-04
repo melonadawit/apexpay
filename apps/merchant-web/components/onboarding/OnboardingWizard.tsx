@@ -68,14 +68,14 @@ export function OnboardingWizard() {
                     onClick={() => isPast && setCurrent(i)}
                     className={cn(
                       "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all min-w-[160px]",
-                      isCurrent ? "border-primary bg-primary text-white shadow-soft scale-[1.02]" : "",
-                      isDone && !isCurrent ? "border-green-200 bg-green-50 text-green-700" : "",
-                      !isCurrent && !isDone ? "border-black/10 bg-white hover:bg-neutral-50" : ""
+                      isCurrent ? "border-primary bg-primary text-foreground shadow-soft scale-[1.02]" : "",
+                      isDone && !isCurrent ? "border-green-500/20 bg-green-500/10 text-green-700" : "",
+                      !isCurrent && !isDone ? "border-border bg-card hover:bg-muted" : ""
                     )}
                     whileHover={{ scale: isPast ? 1.02 : 1 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <div className={cn("h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold", isCurrent ? "bg-white text-primary" : isDone ? "bg-green-500 text-white" : "bg-neutral-100")}>
+                    <div className={cn("h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold", isCurrent ? "bg-card text-primary" : isDone ? "bg-green-500 text-foreground" : "bg-muted/80")}>
                       {isDone ? <Check size={16} /> : i + 1}
                     </div>
                     <div>
@@ -98,7 +98,7 @@ export function OnboardingWizard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Card className="p-0 overflow-hidden">
-              <div className="h-1 w-full bg-neutral-100">
+              <div className="h-1 w-full bg-muted/80">
                 <motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${((current + 1) / steps.length) * 100}%` }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} />
               </div>
               <div className="p-6 md:p-8">
@@ -141,7 +141,7 @@ export function OnboardingWizard() {
               </div>
             </GlassCard>
 
-            <Card className="p-4 bg-gradient-to-br from-primary to-primary-light text-white">
+            <Card className="p-4 bg-gradient-to-br from-primary to-primary-light text-foreground">
               <h4 className="font-semibold">NBE Checklist • መስፈርቶች</h4>
               <ul className="mt-2 space-y-1 text-xs opacity-90 list-disc list-inside">
                 <li>Company Registration notarized</li>

@@ -86,11 +86,11 @@ export function FaydaCapture({
 
   if (capturedUrl) {
     return (
-      <div className="relative rounded-2xl overflow-hidden border border-black/10">
+      <div className="relative rounded-2xl overflow-hidden border border-border">
         <img src={capturedUrl} alt={`Fayda ${type}`} className="w-full h-64 object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="absolute bottom-3 left-3 right-3 flex justify-between">
-          <span className="text-white text-sm font-medium flex items-center gap-2"><Check size={16} className="bg-green-500 rounded-full p-0.5" /> Captured</span>
+          <span className="text-foreground text-sm font-medium flex items-center gap-2"><Check size={16} className="bg-green-500 rounded-full p-0.5" /> Captured</span>
           <Button size="sm" variant="glass" onClick={onRetake}><RotateCcw size={14} className="mr-1" /> Retake</Button>
         </div>
       </div>
@@ -104,7 +104,7 @@ export function FaydaCapture({
         <div><p className="font-semibold text-sm">{typeConfig.label}</p><p className="text-xs text-muted-foreground">{typeConfig.hint}</p></div>
       </div>
 
-      <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] border-2 border-black/10">
+      <div className="relative rounded-2xl overflow-hidden bg-background aspect-[4/3] border-2 border-border">
         <video ref={videoRef} autoPlay playsInline muted className={cn("w-full h-full object-cover", type === "selfie" && "-scale-x-100")} />
 
         {/* Outstanding corner guides animated pulse */}
@@ -120,7 +120,7 @@ export function FaydaCapture({
         {/* Glare / brightness outstanding helper */}
         <AnimatePresence>
           {hasGlare && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1 shadow-medium">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-foreground text-xs px-3 py-1.5 rounded-full flex items-center gap-1 shadow-medium">
               <AlertTriangle size={12} /> Move to shade • ጥላ ውስጥ ይሂዱ (brightness {brightness})
             </motion.div>
           )}

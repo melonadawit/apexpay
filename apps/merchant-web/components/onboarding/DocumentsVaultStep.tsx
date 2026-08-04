@@ -42,7 +42,7 @@ export function DocumentsVaultStep({ data, onChange }: { data: any, onChange: (d
 
       <DocumentDropzone requiredDocs={requiredDocs} uploaded={uploaded} onFiles={handleFiles} />
 
-      <div className="rounded-xl border border-black/10 p-3 text-xs bg-white">
+      <div className="rounded-xl border border-border p-3 text-xs bg-card">
         <p className="font-semibold">What happens next — optimal flow:</p>
         <ul className="list-disc list-inside mt-1 space-y-0.5 text-muted-foreground">
           <li>File uploaded via presigned POST TTL 15m directly to MinIO `merchants/{"{merchant_id}"}/kyc/{"{doc_type}"}_id.pdf` — no server buffering</li>

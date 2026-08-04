@@ -29,7 +29,7 @@ export function BankAccountStep({ data, onChange }: { data: any, onChange: (a: a
         <label className="text-sm font-medium">Bank • ባንክ * — via GET /v1/banks</label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {banks.map(b => (
-            <button key={b.code} onClick={() => setBankCode(b.code)} className={`rounded-xl border p-3 flex items-center gap-3 text-left ${bankCode === b.code ? "border-primary bg-primary/5" : "border-black/10 bg-white hover:bg-neutral-50"}`}>
+            <button key={b.code} onClick={() => setBankCode(b.code)} className={`rounded-xl border p-3 flex items-center gap-3 text-left ${bankCode === b.code ? "border-primary bg-primary/5" : "border-border bg-card hover:bg-muted"}`}>
               <span className="text-xl">{b.logo}</span><span className="text-sm font-medium">{b.name} • {b.code}</span>{bankCode === b.code && <span className="ml-auto text-primary">✓</span>}
             </button>
           ))}
@@ -42,7 +42,7 @@ export function BankAccountStep({ data, onChange }: { data: any, onChange: (a: a
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isDefault} onChange={e => setIsDefault(e.target.checked)} /> Settlement default • ነባሪ ሂሳብ</label>
       </div>
 
-      <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs">
+      <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-3 text-xs">
         <p className="font-semibold">Validation:</p>
         <ul className="list-disc list-inside mt-1">
           <li>Account name fuzzy match Levenshtein &lt;3 vs legal_name or require override note</li>

@@ -59,8 +59,8 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label="Toggle theme"
       className={`relative h-9 w-9 flex items-center justify-center rounded-full 
         transition-all duration-300 hover:scale-105 active:scale-95
-        dark:bg-white/10 dark:hover:bg-white/20 dark:text-white
-        bg-black/5 hover:bg-black/10 text-neutral-700
+        dark:bg-card/10 dark:hover:bg-card/20 dark:text-foreground
+        bg-background/5 hover:bg-background/10 text-neutral-700
         ${className ?? ""}`}
     >
       <Sun

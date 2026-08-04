@@ -43,8 +43,8 @@ export function OwnersFaydaStep({ data, onChange }: { data: any, onChange: (d: a
 
       <div className="flex gap-2 overflow-auto pb-2">
         {owners.map((o, idx) => (
-          <button key={o.id} onClick={() => setActiveOwnerIdx(idx)} className={`rounded-xl border px-4 py-2 flex items-center gap-2 min-w-max ${idx === activeOwnerIdx ? "border-primary bg-primary/10" : "border-black/10 bg-white"}`}>
-            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${o.fayda_verified ? "bg-green-500 text-white" : "bg-neutral-200"}`}>{o.fayda_verified ? <Check size={12} /> : idx + 1}</div>
+          <button key={o.id} onClick={() => setActiveOwnerIdx(idx)} className={`rounded-xl border px-4 py-2 flex items-center gap-2 min-w-max ${idx === activeOwnerIdx ? "border-primary bg-primary/10" : "border-border bg-card"}`}>
+            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${o.fayda_verified ? "bg-green-500 text-foreground" : "bg-neutral-200"}`}>{o.fayda_verified ? <Check size={12} /> : idx + 1}</div>
             <span className="text-sm font-medium">{o.full_name} {o.is_authorized_signatory && "• Auth Signatory"}</span>
           </button>
         ))}
@@ -57,7 +57,7 @@ export function OwnersFaydaStep({ data, onChange }: { data: any, onChange: (d: a
         <FaydaCapture type="selfie" capturedUrl={selfieFile ? URL.createObjectURL(selfieFile) : undefined} onCapture={setSelfieFile} onRetake={() => setSelfieFile(null)} />
       </div>
 
-      <div className="rounded-2xl border border-black/10 p-4 space-y-4 bg-white">
+      <div className="rounded-2xl border border-border p-4 space-y-4 bg-card">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1"><label className="text-sm font-medium">FIN 12-digit or FAN 16 • ፋይዳ ቁጥር *</label><input value={fin} onChange={e => setFin(e.target.value)} placeholder="123456789012 or FAN alias" className="w-full rounded-xl border h-12 px-3" maxLength={16} /></div>
           <div className="space-y-1"><label className="text-sm font-medium flex items-center gap-1"><Smartphone size={14} /> OTP 6-digit • የተላከ ኮድ * (mock 123456)</label><input value={otp} onChange={e => setOtp(e.target.value)} placeholder="123456" className="w-full rounded-xl border h-12 px-3" maxLength={6} /></div>
@@ -74,7 +74,7 @@ export function OwnersFaydaStep({ data, onChange }: { data: any, onChange: (d: a
       </div>
 
       {verified && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-green-50 border border-green-200 p-3 flex gap-3">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-green-500/10 border border-green-500/20 p-3 flex gap-3">
           <Check className="text-green-600" />
           <div className="text-sm">
             <p className="font-semibold text-green-700">Fayda Verification Successful • ማረጋገጫ ተሳክቷል</p>

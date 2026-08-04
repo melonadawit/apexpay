@@ -24,7 +24,7 @@ export interface PayslipData {
 // Real jsPDF implementation — jsPDF + qrcode.react QR data URL
 export async function generatePayslipPDFReal(data: PayslipData): Promise<string> {
   // Dynamic import for Next.js no SSR optimal code splitting
-  const { jsPDF } = await import("jspdf")
+  const jsPDF = (await import("jspdf")).default
   // @ts-ignore qrcode.react generates QR data URL via canvas
   const QRCode = await import("qrcode")
 

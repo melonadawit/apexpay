@@ -9,14 +9,14 @@ export default function ApiKeysPage() {
   ])
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-6">
+    <div className="min-h-screen bg-muted p-6">
       <div className="max-w-5xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold">API Keys • Test/Live Separate Scopes Reveal Once — Outstanding</h1>
 
-        <div className="rounded-2xl border bg-white p-6 space-y-4">
+        <div className="rounded-2xl border bg-card p-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold">Secret Keys • sk_test_ / sk_live_ — hash at rest per DATABASE</h3>
-            <button className="rounded-xl bg-primary text-white px-4 h-9 text-xs">Create New Key • test/live separate live only after KYC active</button>
+            <button className="rounded-xl bg-primary text-foreground px-4 h-9 text-xs">Create New Key • test/live separate live only after KYC active</button>
           </div>
 
           <div className="space-y-3">
@@ -30,7 +30,7 @@ export default function ApiKeysPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${k.status==="active" ? "bg-green-100 text-green-700" : "bg-amber-100"}`}>{k.status}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${k.status==="active" ? "bg-green-500/20 text-green-700" : "bg-amber-500/20"}`}>{k.status}</span>
                   <button onClick={()=> setShowSecret(!showSecret)} className="rounded-lg border px-3 py-1 text-xs">{showSecret ? "Hide" : "Reveal"} • sk_live shown once</button>
                 </div>
               </div>
@@ -38,12 +38,12 @@ export default function ApiKeysPage() {
           </div>
 
           {showSecret && (
-            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 font-mono text-sm">
+            <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 font-mono text-sm">
               sk_test_51Hq...abc123xyz — <span className="text-red-600">shown once per security best practice — copy now!</span> — Stored as hash sha256(salt+secret) or bcrypt/argon2 at rest, prefix visible later for audit who used which key.
             </div>
           )}
 
-          <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs">
+          <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-3 text-xs">
             <p className="font-semibold">Security Best Practice:</p>
             <ul className="list-disc list-inside mt-1 space-y-0.5">
               <li>Secret shown once — hash at rest per DATABASE + prefix unique index O(1) lookup • secret_hash index where not null • scopes jsonb • last_used_at async best effort non-blocking Go routine</li>
@@ -54,10 +54,10 @@ export default function ApiKeysPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6">
+        <div className="rounded-2xl border bg-card p-6">
           <h3 className="font-semibold">Public Keys • pk_test_ / pk_live_ + Embedded SDK checkout.js</h3>
           <p className="font-mono text-xs mt-2">pk_test_51Hq... + checkout.js embedded SDK `https://checkout.apexpay.et/sdk.js` — no secret, safe for frontend, tokenization only, no PAN storage</p>
-          <div className="mt-3 rounded-xl bg-neutral-900 text-white p-4 font-mono text-[11px] overflow-auto">
+          <div className="mt-3 rounded-xl bg-muted text-foreground p-4 font-mono text-[11px] overflow-auto">
             {`<script src="https://checkout.apexpay.et/sdk.js"></script>
 <script>
   const apexpay = new ApexPay('pk_test_51Hq...');

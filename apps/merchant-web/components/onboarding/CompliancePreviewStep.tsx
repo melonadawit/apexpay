@@ -34,10 +34,10 @@ export function CompliancePreviewStep({ data }: { data: any }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {checks.map(c => (
-          <Card key={c.type} className={`p-3 border ${c.status === "passed" ? "border-green-200 bg-green-50/30" : c.status === "needs_review" ? "border-amber-200 bg-amber-50/30" : "border-black/10"}`}>
+          <Card key={c.type} className={`p-3 border ${c.status === "passed" ? "border-green-500/20 bg-green-500/10/30" : c.status === "needs_review" ? "border-amber-500/20 bg-amber-500/10/30" : "border-border"}`}>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">{c.label}</p>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "passed" ? "bg-green-100 text-green-700" : c.status === "needs_review" ? "bg-amber-100 text-amber-700" : "bg-neutral-100"}`}>{c.status}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "passed" ? "bg-green-500/20 text-green-700" : c.status === "needs_review" ? "bg-amber-500/20 text-amber-700" : "bg-muted/80"}`}>{c.status}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">{c.details}</p>
             <Progress value={c.score} className="mt-2 h-1.5" />
@@ -45,7 +45,7 @@ export function CompliancePreviewStep({ data }: { data: any }) {
         ))}
       </div>
 
-      <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs">
+      <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-3 text-xs">
         <p className="font-semibold">Next Steps:</p>
         <ul className="list-disc list-inside mt-1">
           <li>If risk high (&gt;=70) or TPV &gt;1M ETB =&gt; dual approval required maker-checker</li>

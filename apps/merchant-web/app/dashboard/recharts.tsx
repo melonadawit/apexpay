@@ -49,7 +49,7 @@ export function HealthRecharts() {
           <Line type="monotone" dataKey="bank" stroke="#0EA5E9" strokeWidth={2} dot={false} />
         </LineChart>
       </ResponsiveContainer>
-      <p className="text-[11px] text-muted-foreground">Health sampler 30s inserts health_samples + Redis cache health:{connector} TTL 60s O(1) + circuit breaker 5 fails open 60s map O(1) + Recharts LineChart latency line • Admin GET /v1/admin/connectors/health</p>
+      <p className="text-[11px] text-muted-foreground">Health sampler 30s inserts health_samples + Redis cache health:connector_name TTL 60s O(1) + circuit breaker 5 fails open 60s map O(1) + Recharts LineChart latency line • Admin GET /v1/admin/connectors/health</p>
     </div>
   )
 }

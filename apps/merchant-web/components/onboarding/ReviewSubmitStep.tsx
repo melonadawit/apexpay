@@ -35,7 +35,7 @@ export function ReviewSubmitStep({ data }: { data: any }) {
         </Card>
       </div>
 
-      <GlassCard className="p-4 bg-amber-50/70">
+      <GlassCard className="p-4 bg-amber-500/10/70">
         <h4 className="font-semibold text-sm">Consent & Declarations • ስምምነት</h4>
         <ul className="mt-2 space-y-2 text-xs">
           <li className="flex gap-2"><input type="checkbox" defaultChecked /> <span>I confirm business info true per NBE ONPS/02/2020 directive and capacity to manage payment gateway per capital ETB 3M requirement</span></li>
@@ -45,7 +45,7 @@ export function ReviewSubmitStep({ data }: { data: any }) {
         </ul>
       </GlassCard>
 
-      <div className="rounded-xl bg-neutral-50 p-3 text-xs text-muted-foreground">
+      <div className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">
         <p>After submit: compliance team reviews in Kanban board outstanding (Submitted → In Review → Fayda Pending → Compliance Check → Approved). Timeline vertical like Linear. Email with confetti animation. Ledger: merchant operating book created + accounts seeded. Outbox merchant.activated.</p>
       </div>
     </div>
