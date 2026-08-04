@@ -1,0 +1,357 @@
+openapi: 3.0.3
+info:
+  title: ApexPay API — Full Platform v1.1.0
+  description: |
+    AI-native digital payment gateway for Ethiopia — ETB-first, NBE PO Gateway Operator ONPS/02/2020,
+    Fayda ID verification front/back <2MB + OTP consent id.gov.et, smart routing, refunds, subs, payouts, payroll ET tax 7/11, RAG citations, swarm.
+    Outstanding modern UI — Mercury/Linear inspiration, glassmorphic, motion 200-300ms.
+  version: 1.1.0-full
+servers:
+  - url: https://api.apexpay.et/v1
+  - url: http://localhost:8080/v1
+security:
+  - bearerAuth: []
+paths:
+  /onboarding/kyc:
+    post:
+      summary: Create KYC profile (NBE checklist)
+      tags: [Onboarding]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [legal_name, business_type, registration_number, tin_number, industry_category, region, city, office_address_full]
+              properties:
+                merchant_id: {type: string}
+                legal_name: {type: string, example: Apex Trading PLC}
+                business_type: {type: string, enum: [sole_proprietorship, plc, share_company]}
+                registration_number: {type: string}
+                tin_number: {type: string, pattern: '^[0-9]{10}$'}
+                industry_category: {type: string, example: e-commerce}
+                business_description: {type: string}
+                region: {type: string}
+                city: {type: string}
+                office_address_full: {type: string}
+                expected_monthly_tpv: {type: string, example: "500000"}
+      responses:
+        '201':
+          description: KYC draft created
+          content:
+            application/json:
+              schema: {type: object}
+
+  /onboarding/owners:
+    post:
+      summary: Add beneficial owner UBO >10% + authorized signatory per NBE min 5 shareholders
+      tags: [Onboarding]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name: {type: string}
+                full_name_am: {type: string}
+                role: {type: string, enum: [owner, shareholder, director, authorized_rep, ubo]}
+                ownership_percentage: {type: string, example: "100"}
+                id_type: {type: string, enum: [fayda, passport]}
+                is_authorized_signatory: {type: boolean}
+                is_pep: {type: boolean}
+      responses: {'201': {description: owner created}}
+
+  /onboarding/fayda/verify/init:
+    post:
+      summary: Fayda ID verification init — FIN 12-digit + front/back images <2MB + selfie + OTP consent per id.gov.et
+      tags: [Fayda]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fin, front_file_key, back_file_key]
+              properties:
+                merchant_id: {type: string}
+                owner_id: {type: string}
+                kyc_profile_id: {type: string}
+                fin: {type: string, description: FIN 12-digit plain, never stored plain, hashed sha256(salt+FIN)+last4 only, example: "123456789012"}
+                fan: {type: string, description: FAN 16 alias}
+                method: {type: string, enum: [otp, face, fingerprint, offline_qr, oidc_esignet], default: otp}
+                front_file_key: {type: string, description: MinIO key merchants/{id}/kyc/fayda_front_*.jpg <2MB}
+                back_file_key: {type: string}
+                selfie_file_key: {type: string}
+      responses:
+        '201':
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id: {type: string}
+                  fin_last4: {type: string, example: "1234"}
+                  status: {type: string, example: otp_sent}
+                  fayda_transaction_id: {type: string}
+
+  /onboarding/fayda/verify/confirm:
+    post:
+      summary: Confirm Fayda OTP 6-digit
+      tags: [Fayda]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                request_id: {type: string}
+                otp: {type: string, example: "123456", description: mock OTP 123456 always succeeds}
+      responses:
+        '200':
+          description: verified face_score 0.92
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: {type: string, example: verified}
+                  otp_verified: {type: boolean}
+                  demographics_match: {type: boolean}
+                  face_match: {type: boolean}
+                  face_score: {type: number, example: 0.92}
+                  fin_last4: {type: string}
+
+  /banks:
+    get:
+      summary: Ethiopian banks list CBE/Awash/Dashen... for settlement per PayAtlas
+      tags: [Payouts]
+      responses:
+        '200':
+          description: banks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code: {type: string, example: CBE}
+                    name: {type: string, example: Commercial Bank of Ethiopia}
+
+  /transactions/initialize:
+    post:
+      summary: Initialize payment with smart routing + 2FA >5000 ETB per ONPS/10/2025
+      tags: [Payments]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tx_ref, amount, currency]
+              properties:
+                tx_ref: {type: string}
+                amount: {type: string, example: "500.00"}
+                currency: {type: string, example: ETB}
+                method: {type: string, example: telebirr}
+                return_url: {type: string}
+      responses:
+        '201':
+          description: pending
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: {type: string}
+                  tx_ref: {type: string}
+                  checkout_url: {type: string, example: https://checkout.apexpay.et/c/abc}
+                  status: {type: string, example: pending}
+                  requires_2fa: {type: boolean, description: true if >5000 ETB}
+
+  /transactions/verify/{tx_ref}:
+    get:
+      summary: Verify payment (idempotent second success no-op)
+      tags: [Payments]
+      parameters:
+        - name: tx_ref
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: succeeded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: {type: string}
+                  ledger_journal_balanced: {type: boolean}
+
+  /payment_links:
+    post:
+      summary: Create payment link outstanding QR preview
+      tags: [Links]
+      responses: {'201': {description: link created}}
+
+  /refunds:
+    post:
+      summary: Refunds FULL fee reversal pro_rata/non_refundable/full ledger M2
+      tags: [Refunds]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_id: {type: string}
+                refund_ref: {type: string}
+                amount: {type: string}
+                fee_policy: {type: string, enum: [non_refundable, pro_rata, full]}
+      responses: {'201': {description: refund succeeded}}
+
+  /subscription_plans:
+    post:
+      tags: [Subscriptions]
+      summary: Create subscription plan
+      responses: {'201': {description: plan}}
+
+  /subscriptions:
+    post:
+      tags: [Subscriptions]
+      summary: Create subscription trial 7d dunning 1d/3d/5d
+      responses: {'201': {description: subscription trialing}}
+
+  /beneficiaries:
+    post:
+      tags: [Payouts]
+      summary: Add beneficiary bank verification fuzzy Levenshtein <3
+      responses: {'201': {description: beneficiary}}
+
+  /payouts:
+    post:
+      tags: [Payouts]
+      summary: Single payout maker-checker >50k
+      responses: {'201': {description: payout pending_approval}}
+
+  /payouts/bulk:
+    post:
+      tags: [Payouts]
+      summary: Bulk CSV 1000 rows preview outstanding
+      responses: {'201': {description: batch}}
+
+  /employees:
+    post:
+      tags: [Payroll]
+      summary: Add employee Fayda hash + bank
+      responses: {'201': {description: employee}}
+
+  /payroll_runs:
+    post:
+      tags: [Payroll]
+      summary: Create payroll run July regular
+      responses: {'201': {description: draft}}
+
+  /payroll_runs/{id}/calculate:
+    post:
+      tags: [Payroll]
+      summary: Calculate payroll ET tax brackets binary search O(log n) pension 7/11 OT 1.25/1.5/2.0
+      responses: {'200': {description: pending_approval total_net 150000}}
+
+  /compliance/ask:
+    post:
+      summary: RAG compliance ask EN/AM with citations mandatory + no hallucination guard 0.65
+      tags: [RAG]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query: {type: string, example: When is 2FA required?}
+                lang: {type: string, enum: [en, am], default: en}
+                top_k: {type: integer, default: 5}
+      responses:
+        '200':
+          description: answer + citations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer: {type: string, example: Transactions above 5000 ETB require 2FA per ONPS/10/2025 [1]}
+                  citations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        document_id: {type: string}
+                        chunk_id: {type: string}
+                        score: {type: number, example: 0.92}
+                        page: {type: integer}
+                  no_answer: {type: boolean}
+
+  /swarm/run:
+    post:
+      tags: [Swarm]
+      summary: Swarm planner/critic/executor goal -> needs_confirmation if >100k
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                goal: {type: string, example: Create link 100 ETB for coffee and run payroll July}
+      responses:
+        '201':
+          description: plan + needs_confirmation outstanding modal
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: {type: string}
+                  status: {type: string, example: needs_confirmation}
+                  plan:
+                    type: array
+                    items:
+                      type: object
+
+  /methods:
+    get:
+      summary: Ranked methods smart routing success_rate/latency/cost score 0.6*success+0.4*(1-latency/1000)
+      tags: [Routing]
+      parameters:
+        - name: amount
+          in: query
+          schema: {type: string}
+        - name: currency
+          in: query
+          schema: {type: string, example: ETB}
+      responses:
+        '200':
+          description: ranked array chosen true
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    connector: {type: string, example: telebirr}
+                    success_rate_5m: {type: number, example: 0.95}
+                    latency_ms: {type: integer, example: 210}
+                    score: {type: number, example: 0.88}
+                    chosen: {type: boolean}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: sk_test_ / sk_live_ prefix + secret hash at rest per DATABASE. FIN never logged, only last4.

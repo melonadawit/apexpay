@@ -14,9 +14,9 @@ import (
 // Never log plain FIN or full account numbers - only last4 + hash.
 
 var (
-	finRe  = regexp.MustCompile(`^\d{12}$`)        // Fayda FIN 12-digit
-	fanRe  = regexp.MustCompile(`^[A-Z0-9]{16}$`) // FAN alias 16 chars example
-	tinRe  = regexp.MustCompile(`^\d{10}$`)       // ET TIN example
+	finRe = regexp.MustCompile(`^\d{12}$`)       // Fayda FIN 12-digit
+	fanRe = regexp.MustCompile(`^[A-Z0-9]{16}$`) // FAN alias 16 chars example
+	tinRe = regexp.MustCompile(`^\d{10}$`)       // ET TIN example
 )
 
 // ValidateFaydaFIN checks 12-digit format + optional check digit (Luhn placeholder, real check is NIDP side).

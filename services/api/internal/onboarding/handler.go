@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"apexpay/internal/id"
 	"apexpay/internal/platform/crypto"
 	pkghttp "apexpay/internal/platform/http"
 	"apexpay/internal/platform/storage"
+	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
 )
 
@@ -17,7 +17,9 @@ type Handler struct {
 	storage *storage.Client
 }
 
-func NewHandler(svc *Service, storage *storage.Client) *Handler { return &Handler{svc: svc, storage: storage} }
+func NewHandler(svc *Service, storage *storage.Client) *Handler {
+	return &Handler{svc: svc, storage: storage}
+}
 
 func (h *Handler) Routes(r chi.Router) {
 	r.Post("/kyc", h.CreateKYC)
@@ -115,12 +117,12 @@ func (h *Handler) AddOwner(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AddBankAccount(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		MerchantID      string `json:"merchant_id"`
-		AccountName     string `json:"account_name"`
-		AccountNumber   string `json:"account_number"`
-		BankCode        string `json:"bank_code"`
-		BankName        string `json:"bank_name"`
-		IsDefault       bool   `json:"is_settlement_default"`
+		MerchantID    string `json:"merchant_id"`
+		AccountName   string `json:"account_name"`
+		AccountNumber string `json:"account_number"`
+		BankCode      string `json:"bank_code"`
+		BankName      string `json:"bank_name"`
+		IsDefault     bool   `json:"is_settlement_default"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
@@ -144,9 +146,9 @@ func (h *Handler) AddBankAccount(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) PresignDocument(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		MerchantID string `json:"merchant_id"`
-		DocType    string `json:"doc_type"`
-		FileName   string `json:"file_name"`
+		MerchantID  string `json:"merchant_id"`
+		DocType     string `json:"doc_type"`
+		FileName    string `json:"file_name"`
 		ContentType string `json:"content_type"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -154,7 +156,7 @@ func (h *Handler) PresignDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	objectKey := storage.ObjectKey(req.MerchantID, req.DocType, id.NewDocument(), "pdf")
-	url, err := h.storage.PresignedPutURL(r.Context(), objectKey, 15* 60 * 1000000000) // 15m
+	url, err := h.storage.PresignedPutURL(r.Context(), objectKey, 15*60*1000000000) // 15m
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -188,7 +190,10 @@ func (h *Handler) CreateDocument(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) SubmitKYC(w http.ResponseWriter, r *http.Request) {
-	var req struct{ MerchantID string `json:"merchant_id"`; KYCProfileID string `json:"kyc_profile_id"` }
+	var req struct {
+		MerchantID   string `json:"merchant_id"`
+		KYCProfileID string `json:"kyc_profile_id"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
 		return

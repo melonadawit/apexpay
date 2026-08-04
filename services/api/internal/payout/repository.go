@@ -1,14 +1,14 @@
 package payout
 
 import (
+	"apexpay/internal/ledger"
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"apexpay/internal/ledger"
 	"github.com/shopspring/decimal"
 )
 
 type PgRepository struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
 	ledger *ledger.PgRepository
 }
 
@@ -31,17 +31,25 @@ func (r *PgRepository) GetBeneficiary(ctx context.Context, merchantID, id string
 
 func (r *PgRepository) CreateBatchTx(ctx context.Context, batch *PayoutBatch, journal *ledger.Journal, entries []ledger.Entry) error {
 	tx, err := r.pool.Begin(ctx)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	_, err = tx.Exec(ctx, `INSERT INTO payout_batches (id, merchant_id, book_id, batch_ref, amount, currency, status, total_count) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
 		batch.ID, batch.MerchantID, batch.BookID, batch.BatchRef, batch.Amount.String(), batch.Currency, batch.Status, len(batch.Payouts))
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	// ledger
 	_, err = tx.Exec(ctx, `INSERT INTO ledger_journals (id, book_id, posting_key, memo, reference_type, reference_id) VALUES ($1,$2,$3,$4,$5,$6)`, journal.ID, journal.BookID, journal.PostingKey, journal.Memo, journal.ReferenceType, journal.ReferenceID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	for _, e := range entries {
 		_, err = tx.Exec(ctx, `INSERT INTO ledger_entries (id, journal_id, book_id, account_id, direction, amount, currency) VALUES ($1,$2,$3,$4,$5,$6,$7)`, e.ID, e.JournalID, e.BookID, e.AccountID, e.Direction, e.Amount.String(), e.Currency)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 	return tx.Commit(ctx)
 }
@@ -54,24 +62,34 @@ func (r *PgRepository) CreatePayout(ctx context.Context, p *Payout) error {
 
 func (r *PgRepository) CreateBulkTx(ctx context.Context, batch *PayoutBatch, payouts []Payout, journal *ledger.Journal, entries []ledger.Entry) error {
 	tx, err := r.pool.Begin(ctx)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	_, err = tx.Exec(ctx, `INSERT INTO payout_batches (id, merchant_id, batch_ref, amount, currency, status, total_count) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
 		batch.ID, batch.MerchantID, batch.BatchRef, batch.Amount.String(), batch.Currency, batch.Status, len(payouts))
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	for _, p := range payouts {
 		_, err = tx.Exec(ctx, `INSERT INTO payouts (id, merchant_id, batch_id, beneficiary_id, payout_ref, amount, currency, status, method) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
 			p.ID, p.MerchantID, p.BatchID, p.BeneficiaryID, p.PayoutRef, p.Amount.String(), p.Currency, p.Status, p.Method)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 	// ledger M3
 	_, err = tx.Exec(ctx, `INSERT INTO ledger_journals (id, book_id, posting_key, memo, reference_type, reference_id) VALUES ($1,$2,$3,$4,$5,$6)`,
 		journal.ID, journal.BookID, journal.PostingKey, journal.Memo, journal.ReferenceType, journal.ReferenceID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	for _, e := range entries {
 		_, err = tx.Exec(ctx, `INSERT INTO ledger_entries (id, journal_id, book_id, account_id, direction, amount, currency) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
 			e.ID, e.JournalID, e.BookID, e.AccountID, e.Direction, e.Amount.String(), e.Currency)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 	return tx.Commit(ctx)
 }
@@ -81,7 +99,9 @@ func (r *PgRepository) GetBatch(ctx context.Context, merchantID, batchID string)
 	var b PayoutBatch
 	var amt string
 	err := row.Scan(&b.ID, &b.MerchantID, &b.BatchRef, &amt, &b.Currency, &b.Status)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	b.Amount, _ = decimal.NewFromString(amt)
 	return &b, nil
 }
@@ -100,6 +120,8 @@ func (r *PgRepository) GetMerchantBalance(ctx context.Context, merchantID string
 	// Simplified: sum of succeeded payments net - payouts succeeded
 	var balStr string
 	err := r.pool.QueryRow(ctx, `SELECT COALESCE((SELECT SUM(net_amount) FROM payments WHERE merchant_id=$1 AND status='succeeded'),0) - COALESCE((SELECT SUM(amount) FROM payouts WHERE merchant_id=$1 AND status IN ('queued','processing','succeeded')),0)`, merchantID).Scan(&balStr)
-	if err != nil { return decimal.Zero, err }
+	if err != nil {
+		return decimal.Zero, err
+	}
 	return decimal.NewFromString(balStr)
 }

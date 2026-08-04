@@ -3,7 +3,6 @@ package ledger
 import (
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -43,8 +42,8 @@ func TestValidateBalanced(t *testing.T) {
 			balanced: false,
 		},
 		{
-			name: "empty not balanced",
-			entries: []Entry{},
+			name:     "empty not balanced",
+			entries:  []Entry{},
 			balanced: false,
 		},
 		{
@@ -181,11 +180,18 @@ func TestPostingKeyUniqueness(t *testing.T) {
 func TestPayrollTaxBracketLogic(t *testing.T) {
 	// Simplified brackets same as migration 0008 seed
 	type bracket struct {
-		min, max *decimal.Decimal
+		min             decimal.Decimal
+		max             *decimal.Decimal
 		rate, deduction decimal.Decimal
 	}
 	dec := func(s string) decimal.Decimal { d, _ := decimal.NewFromString(s); return d }
-	decPtr := func(s string) *decimal.Decimal { if s=="" { return nil }; d:=dec(s); return &d }
+	decPtr := func(s string) *decimal.Decimal {
+		if s == "" {
+			return nil
+		}
+		d := dec(s)
+		return &d
+	}
 
 	brackets := []bracket{
 		{min: dec("0"), max: decPtr("600"), rate: dec("0"), deduction: dec("0")},
@@ -215,14 +221,14 @@ func TestPayrollTaxBracketLogic(t *testing.T) {
 	}
 
 	tests := []struct {
-		taxable decimal.Decimal
+		taxable  decimal.Decimal
 		expected decimal.Decimal
 	}{
 		{dec("500"), dec("0")},
-		{dec("1000"), dec("40")}, // 1000*0.10-60=40
+		{dec("1000"), dec("40")},    // 1000*0.10-60=40
 		{dec("2000"), dec("157.5")}, // 2000*0.15-142.5=157.5
 		{dec("4000"), dec("497.5")}, // 4000*0.20-302.5=497.5
-		{dec("6000"), dec("935")}, // 6000*0.25-565=935
+		{dec("6000"), dec("935")},   // 6000*0.25-565=935
 	}
 
 	for _, tt := range tests {

@@ -7,6 +7,7 @@ import (
 )
 
 type PayoutStatus string
+
 const (
 	StatusCreated         PayoutStatus = "created"
 	StatusPendingApproval PayoutStatus = "pending_approval"
@@ -18,16 +19,16 @@ const (
 )
 
 type Beneficiary struct {
-	ID                string
-	MerchantID        string
-	Name              string
-	AccountNoMasked   string
-	AccountNoHash     string
-	BankCode          string
-	BankName          string
-	Type              string // individual, business
+	ID                 string
+	MerchantID         string
+	Name               string
+	AccountNoMasked    string
+	AccountNoHash      string
+	BankCode           string
+	BankName           string
+	Type               string // individual, business
 	VerificationStatus string
-	CreatedAt         time.Time
+	CreatedAt          time.Time
 }
 
 type PayoutBatch struct {

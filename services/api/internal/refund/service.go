@@ -4,21 +4,21 @@ import (
 	"context"
 	"time"
 
-	"github.com/shopspring/decimal"
 	"apexpay/internal/id"
-	"apexpay/internal/platform/errors"
 	"apexpay/internal/ledger"
+	"apexpay/internal/platform/errors"
+	"github.com/shopspring/decimal"
 )
 
 type PaymentInfo struct {
-	ID           string
-	MerchantID   string
-	Amount       decimal.Decimal
-	RefundedAmt  decimal.Decimal // sum of succeeded refunds
-	FeeAmount    decimal.Decimal
-	Status       string
-	Currency     string
-	ConnectorID  string
+	ID          string
+	MerchantID  string
+	Amount      decimal.Decimal
+	RefundedAmt decimal.Decimal // sum of succeeded refunds
+	FeeAmount   decimal.Decimal
+	Status      string
+	Currency    string
+	ConnectorID string
 }
 
 type Repository interface {
@@ -88,12 +88,12 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*Refund, error
 	// Ledger posting M2: Dr merchant_payable (amount-feeReversal) + Dr fee_due (feeReversal) Cr clearing
 	// Use transfer_group = refund group for multi-book (merchant + rail)
 	journal := &ledger.Journal{
-		ID:         id.NewLedgerJournal(),
-		BookID:     "merchant_operating_default", // resolved via ledger svc in reality
-		PostingKey: "refund:" + r.ID,
-		Memo:       "refund " + req.Reason,
+		ID:            id.NewLedgerJournal(),
+		BookID:        "merchant_operating_default", // resolved via ledger svc in reality
+		PostingKey:    "refund:" + r.ID,
+		Memo:          "refund " + req.Reason,
 		ReferenceType: "refund",
-		ReferenceID: r.ID,
+		ReferenceID:   r.ID,
 	}
 	// Ledger entries - double entry invariant check sum debits=credits
 	entries := []ledger.Entry{

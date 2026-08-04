@@ -1,0 +1,204 @@
+{
+  "info": {
+    "name": "ApexPay Full Platform v1.1.0 — NBE Onboarding + Fayda + Payments + Ledger + RAG + Swarm",
+    "description": "Collection for ApexPay — ETB-first, NBE PSO Gateway ONPS/02/2020, Fayda ID front/back <2MB OTP consent id.gov.et VeriFayda 2.0 OIDC eSignet, smart routing success_rate/latency/cost, refunds M2, subscriptions dunning 1d/3d/5d, payouts bulk 1000 escrow, payroll ET tax binary search O(log n) pension 7/11 OT 1.25/1.5/2.0, RAG pgvector 1024 e5-large citations mandatory threshold 0.65, swarm planner/critic/executor confirmation >100k, 2FA >5000 ETB per ONPS/10/2025. Outstanding modern UI Mercury/Linear glassmorphic motion 200-300ms.\n\nBase URL: https://api.apexpay.et/v1 and http://localhost:8080/v1\nAuth: Bearer sk_test_ or sk_live_ per DATABASE api_keys_prefix_uidx O(1) secret_hash hash at rest FIN masked ****1234 only last4 never plain FIN in logs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Onboarding NBE-Grade 6-Step Wizard",
+      "item": [
+        {
+          "name": "Create KYC Profile — NBE Checklist",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchant_id\": \"mer_01H\",\n  \"legal_name\": \"Apex Trading PLC\",\n  \"business_type\": \"plc\",\n  \"registration_number\": \"MT/AA/123456\",\n  \"tin_number\": \"0023456789\",\n  \"industry_category\": \"e-commerce\",\n  \"business_description\": \"E-commerce test per PayAtlas + Chapa onboarding\",\n  \"region\": \"Addis Ababa\",\n  \"city\": \"Addis Ababa\",\n  \"office_address_full\": \"Bole, Woreda 03, House 123\",\n  \"contact_person_name\": \"Abebe Kebede\",\n  \"contact_person_role\": \"owner\",\n  \"contact_email\": \"abebe@example.et\",\n  \"contact_phone\": \"0911111111\",\n  \"expected_monthly_tpv\": \"500000\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/onboarding/kyc", "host": ["{{base_url}}"], "path": ["onboarding","kyc"]}
+          }
+        },
+        {
+          "name": "Add Beneficial Owner UBO >10% + Auth Signatory",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchant_id\": \"mer_01H\",\n  \"kyc_profile_id\": \"kyc_01H\",\n  \"full_name\": \"Abebe Kebede\",\n  \"full_name_am\": \"አበበ ከበደ\",\n  \"role\": \"owner\",\n  \"ownership_percentage\": \"100\",\n  \"id_type\": \"fayda\",\n  \"phone\": \"0911111111\",\n  \"email\": \"abebe@example.et\",\n  \"is_authorized_signatory\": true,\n  \"is_pep\": false\n}"
+            },
+            "url": {"raw": "{{base_url}}/onboarding/owners"}
+          }
+        },
+        {
+          "name": "Fayda Verify Init — FIN 12-digit + Front/Back <2MB + Selfie + OTP Consent id.gov.et",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchant_id\": \"mer_01H\",\n  \"owner_id\": \"own_01H\",\n  \"kyc_profile_id\": \"kyc_01H\",\n  \"fin\": \"123456789012\",\n  \"fan\": \"\",\n  \"method\": \"otp\",\n  \"front_file_key\": \"merchants/mer_01H/kyc/fayda_front_own_01H.jpg\",\n  \"back_file_key\": \"merchants/mer_01H/kyc/fayda_back_own_01H.jpg\",\n  \"selfie_file_key\": \"merchants/mer_01H/kyc/selfie_own_01H.jpg\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/onboarding/fayda/verify/init"}
+          }
+        },
+        {
+          "name": "Fayda Verify Confirm — OTP 6-digit Mock 123456 Face 0.92",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"request_id\": \"fayda_01H\",\n  \"otp\": \"123456\"\n}"},
+            "url": {"raw": "{{base_url}}/onboarding/fayda/verify/confirm"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments + Routing + 2FA >5000 ETB per ONPS/10/2025",
+      "item": [
+        {
+          "name": "Initialize Payment 500 ETB — Idempotency-Key + Smart Routing",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{sk_test}}"},
+              {"key": "Idempotency-Key", "value": "idem_{{$timestamp}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tx_ref\": \"txr_{{$timestamp}}\",\n  \"amount\": \"500.00\",\n  \"currency\": \"ETB\",\n  \"method\": \"telebirr\",\n  \"description\": \"Tutoring • አስተማሪ\",\n  \"customer_email\": \"cust@example.et\",\n  \"return_url\": \"https://example.et/return\",\n  \"callback_url\": \"https://example.et/callback\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/transactions/initialize"}
+          }
+        },
+        {
+          "name": "Initialize Payment 6000 ETB — Requires 2FA True per ONPS/10/2025",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"tx_ref\": \"txr_6000_{{$timestamp}}\",\n  \"amount\": \"6000.00\",\n  \"currency\": \"ETB\",\n  \"method\": \"bank\"\n}"},
+            "url": {"raw": "{{base_url}}/transactions/initialize"}
+          }
+        },
+        {
+          "name": "Verify Payment Pending → Succeeded + Ledger M1 Balanced",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "url": {"raw": "{{base_url}}/transactions/verify/txr_test_123"}
+          }
+        },
+        {
+          "name": "Ranked Methods — Smart Routing success_rate/latency/cost score 0.6*success+0.4*(1-latency/1000)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "url": {"raw": "{{base_url}}/methods?amount=1000&currency=ETB"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refunds FULL M2 Ledger",
+      "item": [
+        {
+          "name": "Create Refund 100 Partial Fee Reversal pro_rata",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"payment_id\": \"pay_01H\",\n  \"refund_ref\": \"ref_{{$timestamp}}\",\n  \"amount\": \"100.00\",\n  \"currency\": \"ETB\",\n  \"reason\": \"Customer request\",\n  \"fee_policy\": \"pro_rata\"\n}"},
+            "url": {"raw": "{{base_url}}/refunds"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payouts Bulk 1000 + Escrow + Maker-Checker >50k",
+      "item": [
+        {
+          "name": "Create Beneficiary — Bank Verification Fuzzy Levenshtein <3",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Abebe Kebede\",\n  \"account_no\": \"1000123456789\",\n  \"bank_code\": \"CBE\",\n  \"bank_name\": \"Commercial Bank of Ethiopia\",\n  \"type\": \"individual\"\n}"},
+            "url": {"raw": "{{base_url}}/beneficiaries"}
+          }
+        },
+        {
+          "name": "Bulk Payout CSV 5 Rows Preview Outstanding",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"batch_ref\": \"pbat_{{$timestamp}}\",\n  \"currency\": \"ETB\",\n  \"items\": [\n    {\"beneficiary_id\": \"ben_01H\", \"amount\": \"10000\", \"payout_ref\": \"pout_ref_01\"},\n    {\"beneficiary_id\": \"ben_02H\", \"amount\": \"5000\", \"payout_ref\": \"pout_ref_02\"}\n  ]\n}"},
+            "url": {"raw": "{{base_url}}/payouts/bulk"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payroll ET Tax Brackets Binary Search O(log n) + Pension 7/11 + OT 1.25/1.5/2.0",
+      "item": [
+        {
+          "name": "Create Payroll Run July 2026 Regular",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"run_ref\": \"prun_July2026\",\n  \"period_month\": 7,\n  \"period_year\": 2026,\n  \"type\": \"regular\"\n}"},
+            "url": {"raw": "{{base_url}}/payroll_runs"}
+          }
+        },
+        {
+          "name": "Calculate Payroll — Binary Search Tax Brackets + Pension + OT",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "url": {"raw": "{{base_url}}/payroll_runs/prun_July2026/calculate"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "RAG Compliance Citations Mandatory Threshold 0.65 No Hallucination + AM/EN",
+      "item": [
+        {
+          "name": "Ask NBE — When is 2FA required? — Answer 5000 ETB per ONPS/10/2025 [1] Score 0.92",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"query\": \"When is 2FA required?\",\n  \"lang\": \"en\",\n  \"top_k\": 5\n}"},
+            "url": {"raw": "{{base_url}}/compliance/ask"}
+          }
+        },
+        {
+          "name": "Ask AM — 2FA መቼ ያስፈልጋል? — Amharic",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"query\": \"2FA መቼ ያስፈልጋል?\",\n  \"lang\": \"am\",\n  \"top_k\": 5\n}"},
+            "url": {"raw": "{{base_url}}/compliance/ask"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swarm Multi-Agent Planner/Critic/Executor Confirmation >100k",
+      "item": [
+        {
+          "name": "Swarm Run — Create link 100 ETB for coffee and run payroll July",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}],
+            "body": {"mode": "raw", "raw": "{\n  \"goal\": \"Create link 100 ETB for coffee and run payroll July with bonus\"\n}"},
+            "url": {"raw": "{{base_url}}/swarm/run"}
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8080/v1"},
+    {"key": "sk_test", "value": "sk_test_51Hq..."}
+  ]
+}

@@ -1,13 +1,13 @@
 package payroll
 
 import (
+	"apexpay/internal/ledger"
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"apexpay/internal/ledger"
 )
 
 type PgRepository struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
 	ledger *ledger.PgRepository
 }
 
@@ -23,13 +23,17 @@ func (r *PgRepository) CreateEmployee(ctx context.Context, e *Employee) error {
 
 func (r *PgRepository) ListEmployees(ctx context.Context, merchantID string) ([]Employee, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, merchant_id, employee_code, name, base_salary::text, status, cost_center FROM employees WHERE merchant_id=$1 AND status='active'`, merchantID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var list []Employee
 	for rows.Next() {
 		var e Employee
 		var base string
-		if err := rows.Scan(&e.ID, &e.MerchantID, &e.EmployeeCode, &e.Name, &base, &e.Status, &e.CostCenter); err != nil { return nil, err }
+		if err := rows.Scan(&e.ID, &e.MerchantID, &e.EmployeeCode, &e.Name, &base, &e.Status, &e.CostCenter); err != nil {
+			return nil, err
+		}
 		list = append(list, e)
 	}
 	return list, nil
@@ -71,25 +75,33 @@ func (r *PgRepository) UpdateRunStatusWithTotals(ctx context.Context, runID stri
 
 func (r *PgRepository) BulkCreateItems(ctx context.Context, items []PayrollItem) error {
 	tx, err := r.pool.Begin(ctx)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	for _, it := range items {
 		_, err = tx.Exec(ctx, `INSERT INTO payroll_items (id, run_id, employee_id, gross, taxable_income, income_tax, pension_employee, pension_employer, net_pay, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
 			it.ID, it.RunID, it.EmployeeID, it.Gross.String(), it.TaxableIncome.String(), it.IncomeTax.String(), it.PensionEmployee.String(), it.PensionEmployer.String(), it.NetPay.String(), it.Status)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 	return tx.Commit(ctx)
 }
 
 func (r *PgRepository) ListItems(ctx context.Context, runID string) ([]PayrollItem, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, run_id, employee_id, gross::text, net_pay::text FROM payroll_items WHERE run_id=$1`, runID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var list []PayrollItem
 	for rows.Next() {
 		var it PayrollItem
 		var gross, net string
-		if err := rows.Scan(&it.ID, &it.RunID, &it.EmployeeID, &gross, &net); err != nil { return nil, err }
+		if err := rows.Scan(&it.ID, &it.RunID, &it.EmployeeID, &gross, &net); err != nil {
+			return nil, err
+		}
 		list = append(list, it)
 	}
 	return list, nil
@@ -97,13 +109,17 @@ func (r *PgRepository) ListItems(ctx context.Context, runID string) ([]PayrollIt
 
 func (r *PgRepository) GetTaxBrackets(ctx context.Context) ([]TaxBracket, error) {
 	rows, err := r.pool.Query(ctx, `SELECT min_amount::text, max_amount::text, rate::text, deduction::text FROM payroll_tax_brackets WHERE effective_from <= CURRENT_DATE AND (effective_to IS NULL OR effective_to >= CURRENT_DATE) ORDER BY min_amount ASC`)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var brackets []TaxBracket
 	for rows.Next() {
 		var minStr, maxStr, rateStr, dedStr string
 		var maxPtr *string
-		if err := rows.Scan(&minStr, &maxStr, &rateStr, &dedStr); err != nil { return nil, err }
+		if err := rows.Scan(&minStr, &maxStr, &rateStr, &dedStr); err != nil {
+			return nil, err
+		}
 		if maxStr == "" {
 			maxPtr = nil
 		} else {
@@ -117,17 +133,27 @@ func (r *PgRepository) GetTaxBrackets(ctx context.Context) ([]TaxBracket, error)
 
 func (r *PgRepository) CreateRunBookTx(ctx context.Context, run *PayrollRun, journal *ledger.Journal, entries []ledger.Entry) error {
 	tx, err := r.pool.Begin(ctx)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	_, err = tx.Exec(ctx, `INSERT INTO ledger_books (id, merchant_id, book_type, name, currency, status) VALUES ($1,$2,'payroll_run',$3,'ETB','open') ON CONFLICT (id) DO NOTHING`, journal.BookID, run.MerchantID, "Payroll run "+run.RunRef)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	_, err = tx.Exec(ctx, `UPDATE payroll_runs SET book_id=$1 WHERE id=$2`, journal.BookID, run.ID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	_, err = tx.Exec(ctx, `INSERT INTO ledger_journals (id, book_id, posting_key, memo, reference_type, reference_id) VALUES ($1,$2,$3,$4,$5,$6)`, journal.ID, journal.BookID, journal.PostingKey, journal.Memo, journal.ReferenceType, journal.ReferenceID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	for _, e := range entries {
 		_, err = tx.Exec(ctx, `INSERT INTO ledger_entries (id, journal_id, book_id, account_id, direction, amount, currency) VALUES ($1,$2,$3,$4,$5,$6,$7)`, e.ID, e.JournalID, e.BookID, e.AccountID, e.Direction, e.Amount.String(), e.Currency)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 	return tx.Commit(ctx)
 }

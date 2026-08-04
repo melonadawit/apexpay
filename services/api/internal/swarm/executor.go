@@ -27,7 +27,7 @@ func NewToolExecutor() *ToolExecutorImpl {
 			return map[string]interface{}{
 				"payment_link_id":  id.New("pl"),
 				"payment_link_url": fmt.Sprintf("https://checkout.apexpay.et/c/%s_%.0f", merchantID, amount),
-				"amount": amount, "currency": currency,
+				"amount":           amount, "currency": currency,
 			}, nil
 		},
 		payoutCreator: func(ctx context.Context, merchantID string, amount float64) (map[string]interface{}, error) {

@@ -104,7 +104,7 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 		// Example OT 5h weekday for demo
 		// In real API, OT hours come from request payload per employee
 
-		pensionEmp := gross.Mul(decimal.NewFromFloat(0.07)).Round(2) // 7%
+		pensionEmp := gross.Mul(decimal.NewFromFloat(0.07)).Round(2)   // 7%
 		pensionEmplr := gross.Mul(decimal.NewFromFloat(0.11)).Round(2) // 11%
 
 		// Taxable per ET: gross - pensionEmp (non-taxable portion) - other exemptions
@@ -194,10 +194,10 @@ func (s *Service) DisburseRun(ctx context.Context, merchantID, runID string) err
 			}
 			return id.NewLedgerBook()
 		}(),
-		PostingKey: "payroll_run:" + r.ID,
-		Memo:       "payroll run " + r.RunRef,
+		PostingKey:    "payroll_run:" + r.ID,
+		Memo:          "payroll run " + r.RunRef,
 		ReferenceType: "payroll_run",
-		ReferenceID: r.ID,
+		ReferenceID:   r.ID,
 	}
 
 	entries := []ledger.Entry{

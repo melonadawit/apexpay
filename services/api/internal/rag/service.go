@@ -37,10 +37,10 @@ type Repository interface {
 }
 
 type Service struct {
-	repo      Repository
-	vector    VectorStore
-	embedder  Embedder
-	llm       LLM
+	repo     Repository
+	vector   VectorStore
+	embedder Embedder
+	llm      LLM
 }
 
 func NewService(repo Repository, vector VectorStore, embedder Embedder, llm LLM) *Service {

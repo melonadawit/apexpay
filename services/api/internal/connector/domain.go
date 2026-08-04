@@ -23,9 +23,9 @@ type VerifyRequest struct {
 }
 
 type VerifyResponse struct {
-	Status       string // succeeded, failed, pending
-	Amount       string
-	FailureCode  string
+	Status      string // succeeded, failed, pending
+	Amount      string
+	FailureCode string
 }
 
 type RefundRequest struct {

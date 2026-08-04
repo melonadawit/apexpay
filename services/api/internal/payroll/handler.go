@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	pkghttp "apexpay/internal/platform/http"
 	"apexpay/internal/id"
+	pkghttp "apexpay/internal/platform/http"
+	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
 )
 
@@ -26,7 +26,9 @@ func (h *Handler) Routes(r chi.Router) {
 
 func (h *Handler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
 	merchantID, _ := r.Context().Value("merchant_id").(string)
-	var req struct{ EmployeeCode, Name, BaseSalary, BankCode, BankAccount string `json:"employee_code"` }
+	var req struct {
+		EmployeeCode, Name, BaseSalary, BankCode, BankAccount string `json:"employee_code"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
 		return
@@ -54,7 +56,11 @@ func (h *Handler) ListEmployees(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateRun(w http.ResponseWriter, r *http.Request) {
 	merchantID, _ := r.Context().Value("merchant_id").(string)
-	var req struct{ RunRef string `json:"run_ref"`; PeriodMonth, PeriodYear int `json:"period_month"`; Type string `json:"type"` }
+	var req struct {
+		RunRef                  string `json:"run_ref"`
+		PeriodMonth, PeriodYear int    `json:"period_month"`
+		Type                    string `json:"type"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
 		return

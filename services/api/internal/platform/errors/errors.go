@@ -39,10 +39,10 @@ func New(code Code, msg string, status int) *AppError {
 	return &AppError{Code: code, Message: msg, HTTPStatus: status}
 }
 
-func NotFound(msg string) *AppError       { return New(CodeNotFound, msg, http.StatusNotFound) }
-func Validation(msg string) *AppError     { return New(CodeValidation, msg, http.StatusBadRequest) }
-func Unauthorized(msg string) *AppError   { return New(CodeUnauthorized, msg, http.StatusUnauthorized) }
-func Forbidden(msg string) *AppError      { return New(CodeForbidden, msg, http.StatusForbidden) }
+func NotFound(msg string) *AppError            { return New(CodeNotFound, msg, http.StatusNotFound) }
+func Validation(msg string) *AppError          { return New(CodeValidation, msg, http.StatusBadRequest) }
+func Unauthorized(msg string) *AppError        { return New(CodeUnauthorized, msg, http.StatusUnauthorized) }
+func Forbidden(msg string) *AppError           { return New(CodeForbidden, msg, http.StatusForbidden) }
 func Conflict(code Code, msg string) *AppError { return New(code, msg, http.StatusConflict) }
 
 // HTTPStatus returns status or 500.

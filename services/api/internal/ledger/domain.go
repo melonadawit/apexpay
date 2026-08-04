@@ -18,15 +18,15 @@ type Journal struct {
 }
 
 type Entry struct {
-	ID         string
-	JournalID  string
-	BookID     string
-	AccountID  string
-	Direction  string // debit, credit
-	Amount     decimal.Decimal
-	Currency   string
-	Meta       map[string]any
-	CreatedAt  time.Time
+	ID        string
+	JournalID string
+	BookID    string
+	AccountID string
+	Direction string // debit, credit
+	Amount    decimal.Decimal
+	Currency  string
+	Meta      map[string]any
+	CreatedAt time.Time
 }
 
 // Service handles balance updates - optimal with advisory locks per book

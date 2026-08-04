@@ -1,0 +1,19 @@
+# RAG worker - Python 3.12 - optimal embeddings multilingual-e5
+# Best practices: pinned versions, no float for money (not needed here but decimal for financial if any)
+fastapi==0.114.0
+uvicorn[standard]==0.30.5
+psycopg[binary,pool]==3.2.1
+pgvector==0.3.5
+sentence-transformers==3.0.1
+transformers==4.44.2
+torch==2.4.1 --extra-index-url https://download.pytorch.org/whl/cpu
+pymupdf==1.24.10
+python-multipart==0.0.9
+pydantic==2.8.2
+pydantic-settings==2.4.0
+redis==5.0.5
+httpx==0.27.2
+numpy==1.26.4
+tiktoken==0.6.6
+pytest==8.3.2
+pytest-asyncio==0.23.8

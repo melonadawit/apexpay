@@ -27,10 +27,10 @@ type Repository interface {
 }
 
 type Service struct {
-	repo         Repository
-	verifier     Verifier
-	salt         string // for fin hashing
-	partnerCode  string
+	repo              Repository
+	verifier          Verifier
+	salt              string // for fin hashing
+	partnerCode       string
 	storageEncryptKey []byte
 }
 

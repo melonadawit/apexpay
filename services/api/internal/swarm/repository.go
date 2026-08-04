@@ -22,7 +22,9 @@ func (r *PgRepository) GetSession(ctx context.Context, id string) (*SwarmSession
 	var s SwarmSession
 	var planBytes []byte
 	err := row.Scan(&s.ID, &s.MerchantID, &s.UserID, &s.Goal, &planBytes, &s.Status, &s.ConfirmationRequired, &s.ConfirmationData, &s.FinalOutput)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	_ = json.Unmarshal(planBytes, &s.Plan)
 	return &s, nil
 }

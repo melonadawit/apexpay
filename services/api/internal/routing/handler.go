@@ -3,9 +3,9 @@ package routing
 import (
 	"net/http"
 
+	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
-	pkghttp "apexpay/internal/platform/http"
 )
 
 type Handler struct{ svc *Service }
@@ -22,9 +22,13 @@ func (h *Handler) Ranked(w http.ResponseWriter, r *http.Request) {
 	merchantID, _ := r.Context().Value("merchant_id").(string)
 	amountStr := r.URL.Query().Get("amount")
 	currency := r.URL.Query().Get("currency")
-	if currency == "" { currency = "ETB" }
+	if currency == "" {
+		currency = "ETB"
+	}
 	amt, _ := decimal.NewFromString(amountStr)
-	if amt.IsZero() { amt = decimal.NewFromInt(1000) }
+	if amt.IsZero() {
+		amt = decimal.NewFromInt(1000)
+	}
 
 	ranked, err := h.svc.RankedMethods(r.Context(), merchantID, amt, currency)
 	if err != nil {

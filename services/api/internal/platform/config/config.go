@@ -10,22 +10,22 @@ import (
 
 // Config is the validated application config - no silent defaults for secrets (SAD).
 type Config struct {
-	Env               string `mapstructure:"env"` // local, staging, production, pilot
-	Port              int    `mapstructure:"port"`
-	DatabaseURL       string `mapstructure:"database_url"`
-	RedisURL          string `mapstructure:"redis_url"`
-	MinIOEndpoint     string `mapstructure:"minio_endpoint"`
-	MinIOAccessKey    string `mapstructure:"minio_access_key"`
-	MinIOSecretKey    string `mapstructure:"minio_secret_key"`
-	MinIOBucket       string `mapstructure:"minio_bucket"`
-	MinIOUseSSL       bool   `mapstructure:"minio_use_ssl"`
-	JWTSecret         string `mapstructure:"jwt_secret"`
-	ConnectorEncKey   string `mapstructure:"connector_encryption_key"`
-	FaydaMode         string `mapstructure:"fayda_mode"` // mock | live
-	FaydaPartnerCode  string `mapstructure:"fayda_partner_code"`
-	FaydaPartnerKey   string `mapstructure:"fayda_partner_key"`
-	FaydaBaseURL      string `mapstructure:"fayda_base_url"`
-	RedisCacheTTL     int    `mapstructure:"redis_cache_ttl_seconds"`
+	Env              string `mapstructure:"env"` // local, staging, production, pilot
+	Port             int    `mapstructure:"port"`
+	DatabaseURL      string `mapstructure:"database_url"`
+	RedisURL         string `mapstructure:"redis_url"`
+	MinIOEndpoint    string `mapstructure:"minio_endpoint"`
+	MinIOAccessKey   string `mapstructure:"minio_access_key"`
+	MinIOSecretKey   string `mapstructure:"minio_secret_key"`
+	MinIOBucket      string `mapstructure:"minio_bucket"`
+	MinIOUseSSL      bool   `mapstructure:"minio_use_ssl"`
+	JWTSecret        string `mapstructure:"jwt_secret"`
+	ConnectorEncKey  string `mapstructure:"connector_encryption_key"`
+	FaydaMode        string `mapstructure:"fayda_mode"` // mock | live
+	FaydaPartnerCode string `mapstructure:"fayda_partner_code"`
+	FaydaPartnerKey  string `mapstructure:"fayda_partner_key"`
+	FaydaBaseURL     string `mapstructure:"fayda_base_url"`
+	RedisCacheTTL    int    `mapstructure:"redis_cache_ttl_seconds"`
 }
 
 func Load() (*Config, error) {

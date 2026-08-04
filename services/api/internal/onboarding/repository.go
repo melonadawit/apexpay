@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"apexpay/internal/id"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 )
 
@@ -47,13 +47,17 @@ func (r *PgRepository) CreateOwner(ctx context.Context, o *BeneficialOwner) erro
 
 func (r *PgRepository) ListOwners(ctx context.Context, merchantID, kycProfileID string) ([]BeneficialOwner, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, merchant_id, kyc_profile_id, full_name, role, ownership_percentage::text, phone, is_authorized_signatory, fayda_verified, verification_status FROM merchant_beneficial_owners WHERE merchant_id=$1 AND kyc_profile_id=$2`, merchantID, kycProfileID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var owners []BeneficialOwner
 	for rows.Next() {
 		var o BeneficialOwner
 		var pctStr string
-		if err := rows.Scan(&o.ID, &o.MerchantID, &o.KYCProfileID, &o.FullName, &o.Role, &pctStr, &o.Phone, &o.IsAuthorizedSignatory, &o.FaydaVerified, &o.VerificationStatus); err != nil { return nil, err }
+		if err := rows.Scan(&o.ID, &o.MerchantID, &o.KYCProfileID, &o.FullName, &o.Role, &pctStr, &o.Phone, &o.IsAuthorizedSignatory, &o.FaydaVerified, &o.VerificationStatus); err != nil {
+			return nil, err
+		}
 		owners = append(owners, o)
 	}
 	return owners, nil
@@ -72,12 +76,16 @@ func (r *PgRepository) CreateBankAccount(ctx context.Context, b *BankAccount) er
 
 func (r *PgRepository) ListBankAccounts(ctx context.Context, merchantID string) ([]BankAccount, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, merchant_id, account_name, account_number_masked, account_number_hash, bank_code, bank_name, is_settlement_default, verification_status FROM bank_accounts WHERE merchant_id=$1`, merchantID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var accs []BankAccount
 	for rows.Next() {
 		var b BankAccount
-		if err := rows.Scan(&b.ID, &b.MerchantID, &b.AccountName, &b.AccountNumberMasked, &b.AccountNumberHash, &b.BankCode, &b.BankName, &b.IsSettlementDefault, &b.VerificationStatus); err != nil { return nil, err }
+		if err := rows.Scan(&b.ID, &b.MerchantID, &b.AccountName, &b.AccountNumberMasked, &b.AccountNumberHash, &b.BankCode, &b.BankName, &b.IsSettlementDefault, &b.VerificationStatus); err != nil {
+			return nil, err
+		}
 		accs = append(accs, b)
 	}
 	return accs, nil
@@ -91,12 +99,16 @@ func (r *PgRepository) CreateDocument(ctx context.Context, d *Document) error {
 
 func (r *PgRepository) ListDocuments(ctx context.Context, merchantID, kycProfileID string) ([]Document, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, merchant_id, kyc_profile_id, doc_type, file_key, file_hash, mime_type, file_size_bytes, status FROM merchant_documents WHERE merchant_id=$1 AND kyc_profile_id=$2`, merchantID, kycProfileID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var docs []Document
 	for rows.Next() {
 		var d Document
-		if err := rows.Scan(&d.ID, &d.MerchantID, &d.KYCProfileID, &d.Type, &d.FileKey, &d.FileHash, &d.MimeType, &d.SizeBytes, &d.Status); err != nil { return nil, err }
+		if err := rows.Scan(&d.ID, &d.MerchantID, &d.KYCProfileID, &d.Type, &d.FileKey, &d.FileHash, &d.MimeType, &d.SizeBytes, &d.Status); err != nil {
+			return nil, err
+		}
 		docs = append(docs, d)
 	}
 	return docs, nil
@@ -117,12 +129,16 @@ func (r *PgRepository) CreateComplianceCheck(ctx context.Context, c *ComplianceC
 
 func (r *PgRepository) ListComplianceChecks(ctx context.Context, merchantID, kycProfileID string) ([]ComplianceCheck, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, merchant_id, kyc_profile_id, check_type, status, score FROM compliance_checks WHERE merchant_id=$1 AND kyc_profile_id=$2`, merchantID, kycProfileID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var checks []ComplianceCheck
 	for rows.Next() {
 		var c ComplianceCheck
-		if err := rows.Scan(&c.ID, &c.MerchantID, &c.KYCProfileID, &c.Type, &c.Status, &c.Score); err != nil { return nil, err }
+		if err := rows.Scan(&c.ID, &c.MerchantID, &c.KYCProfileID, &c.Type, &c.Status, &c.Score); err != nil {
+			return nil, err
+		}
 		checks = append(checks, c)
 	}
 	return checks, nil
@@ -136,12 +152,16 @@ func (r *PgRepository) CreateReview(ctx context.Context, rev *OnboardingReview) 
 
 func (r *PgRepository) ListReviews(ctx context.Context, merchantID string) ([]OnboardingReview, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, merchant_id, kyc_profile_id, reviewer_type, from_status, to_status, action, comments, created_at FROM onboarding_reviews WHERE merchant_id=$1 ORDER BY created_at DESC`, merchantID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var revs []OnboardingReview
 	for rows.Next() {
 		var rv OnboardingReview
-		if err := rows.Scan(&rv.ID, &rv.MerchantID, &rv.KYCProfileID, &rv.ReviewerType, &rv.FromStatus, &rv.ToStatus, &rv.Action, &rv.Comments, &rv.CreatedAt); err != nil { return nil, err }
+		if err := rows.Scan(&rv.ID, &rv.MerchantID, &rv.KYCProfileID, &rv.ReviewerType, &rv.FromStatus, &rv.ToStatus, &rv.Action, &rv.Comments, &rv.CreatedAt); err != nil {
+			return nil, err
+		}
 		revs = append(revs, rv)
 	}
 	return revs, nil
@@ -149,21 +169,29 @@ func (r *PgRepository) ListReviews(ctx context.Context, merchantID string) ([]On
 
 func (r *PgRepository) ApproveMerchantTx(ctx context.Context, merchantID, kycProfileID, reviewerID string) error {
 	tx, err := r.pool.Begin(ctx)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	// Update KYC approved
 	_, err = tx.Exec(ctx, `UPDATE merchant_kyc_profiles SET onboarding_status='approved', reviewed_at=now(), updated_at=now() WHERE merchant_id=$1 AND id=$2`, merchantID, kycProfileID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Update merchant active + operating book creation
 	_, err = tx.Exec(ctx, `UPDATE merchants SET status='active', onboarding_status='active', fayda_verified=true, updated_at=now() WHERE id=$1`, merchantID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Create operating book - idempotent
 	bookID := id.NewLedgerBook()
 	_, err = tx.Exec(ctx, `INSERT INTO ledger_books (id, merchant_id, book_type, name, currency, status) VALUES ($1,$2,'merchant_operating',$3,'ETB','open') ON CONFLICT (id) DO NOTHING`, bookID, merchantID, fmt.Sprintf("Operating book %s", merchantID))
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Seed standard accounts - optimal batch
 	accounts := [][]string{
@@ -176,20 +204,28 @@ func (r *PgRepository) ApproveMerchantTx(ctx context.Context, merchantID, kycPro
 	}
 	for _, acc := range accounts {
 		_, err = tx.Exec(ctx, `INSERT INTO ledger_accounts (id, book_id, code, name, normal_balance) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (book_id, code) DO NOTHING`, acc[0], acc[1], acc[2], acc[3], acc[4])
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 	}
 
 	// Audit review
 	_, err = tx.Exec(ctx, `INSERT INTO onboarding_reviews (id, merchant_id, kyc_profile_id, reviewer_id, reviewer_type, from_status, to_status, action, comments, created_at) VALUES ($1,$2,$3,$4,'compliance','compliance_check','active','approve','approved merchant active + operating book created', now())`, id.New("orev"), merchantID, kycProfileID, reviewerID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Outbox merchant.activated
 	_, err = tx.Exec(ctx, `INSERT INTO outbox_events (id, merchant_id, aggregate_type, aggregate_id, event_type, payload) VALUES ($1,$2,'merchant',$3,'merchant.activated',$4)`, id.NewOutbox(), merchantID, merchantID, fmt.Sprintf(`{"merchant_id":"%s","kyc_profile_id":"%s"}`, merchantID, kycProfileID))
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Update merchants.kyc_profile_id
 	_, err = tx.Exec(ctx, `UPDATE merchants SET kyc_profile_id=$1 WHERE id=$2`, kycProfileID, merchantID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return tx.Commit(ctx)
 }

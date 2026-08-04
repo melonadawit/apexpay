@@ -3,6 +3,7 @@ package rag
 import "time"
 
 type DocumentStatus string
+
 const (
 	StatusPending DocumentStatus = "pending"
 	StatusIndexed DocumentStatus = "indexed"
@@ -10,6 +11,7 @@ const (
 )
 
 type SourceType string
+
 const (
 	SourceNBEDirective SourceType = "nbe_directive"
 	SourcePolicy       SourceType = "policy"
@@ -41,21 +43,21 @@ type Chunk struct {
 }
 
 type AskRequest struct {
-	Query     string `validate:"required,min=3"`
-	Lang      string `validate:"omitempty,oneof=en am"` // default en
+	Query      string `validate:"required,min=3"`
+	Lang       string `validate:"omitempty,oneof=en am"` // default en
 	MerchantID string
-	TopK      int // default 5
+	TopK       int // default 5
 }
 
 type Citation struct {
-	DocumentID   string
+	DocumentID    string
 	DocumentTitle string
-	ChunkID      string
-	Content      string
-	Score        float64
-	Page         *int
-	SourceURL    string
-	SourceType   SourceType
+	ChunkID       string
+	Content       string
+	Score         float64
+	Page          *int
+	SourceURL     string
+	SourceType    SourceType
 }
 
 type AskResponse struct {

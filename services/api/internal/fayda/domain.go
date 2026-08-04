@@ -5,16 +5,18 @@ import "time"
 // Domain types for Fayda verification - implements id.gov.et flows
 
 type VerificationMethod string
+
 const (
-	MethodOTP        VerificationMethod = "otp"
-	MethodFace       VerificationMethod = "face"
+	MethodOTP         VerificationMethod = "otp"
+	MethodFace        VerificationMethod = "face"
 	MethodFingerprint VerificationMethod = "fingerprint"
-	MethodOfflineQR  VerificationMethod = "offline_qr"
-	MethodOIDC       VerificationMethod = "oidc_esignet"
+	MethodOfflineQR   VerificationMethod = "offline_qr"
+	MethodOIDC        VerificationMethod = "oidc_esignet"
 	MethodDemographic VerificationMethod = "demographic"
 )
 
 type VerificationStatus string
+
 const (
 	StatusInitiated      VerificationStatus = "initiated"
 	StatusOTPSent        VerificationStatus = "otp_sent"
@@ -80,13 +82,13 @@ type ConfirmOTPRequest struct {
 
 // Fayda partner API payloads (per id.gov.et spec simplified)
 type FaydaAuthRequest struct {
-	PartnerCode     string `json:"partnerCode"`
-	PartnerAPIKey   string `json:"partnerApiKey"`
-	UseCase         string `json:"useCaseDescription"`
-	FIN             string `json:"fin"` // only for live call, not stored
-	FAN             string `json:"fan,omitempty"`
-	OTP             string `json:"otp,omitempty"`
-	Demographics    *Demographics `json:"demographics,omitempty"`
+	PartnerCode   string        `json:"partnerCode"`
+	PartnerAPIKey string        `json:"partnerApiKey"`
+	UseCase       string        `json:"useCaseDescription"`
+	FIN           string        `json:"fin"` // only for live call, not stored
+	FAN           string        `json:"fan,omitempty"`
+	OTP           string        `json:"otp,omitempty"`
+	Demographics  *Demographics `json:"demographics,omitempty"`
 }
 
 type Demographics struct {

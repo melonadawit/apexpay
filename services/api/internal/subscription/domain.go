@@ -21,6 +21,7 @@ type Plan struct {
 }
 
 type SubscriptionStatus string
+
 const (
 	StatusIncomplete SubscriptionStatus = "incomplete"
 	StatusTrialing   SubscriptionStatus = "trialing"
@@ -31,19 +32,20 @@ const (
 )
 
 type Subscription struct {
-	ID                  string
-	MerchantID          string
-	CustomerID          string
-	PlanID              string
-	Status              SubscriptionStatus
-	CurrentPeriodStart  time.Time
-	CurrentPeriodEnd    time.Time
-	TrialEnd            *time.Time
-	CancelAt            *time.Time
-	CreatedAt           time.Time
+	ID                 string
+	MerchantID         string
+	CustomerID         string
+	PlanID             string
+	Status             SubscriptionStatus
+	CurrentPeriodStart time.Time
+	CurrentPeriodEnd   time.Time
+	TrialEnd           *time.Time
+	CancelAt           *time.Time
+	CreatedAt          time.Time
 }
 
 type InvoiceStatus string
+
 const (
 	InvoiceDraft         InvoiceStatus = "draft"
 	InvoiceOpen          InvoiceStatus = "open"

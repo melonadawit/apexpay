@@ -5,14 +5,15 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	appErrors "apexpay/internal/platform/errors"
 	pkghttp "apexpay/internal/platform/http"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Auth middleware - API keys pk_/sk_ with hashed secrets at rest per DATABASE
 
 type contextKey string
+
 const (
 	CtxMerchantID contextKey = "merchant_id"
 	CtxUserID     contextKey = "user_id"

@@ -8,6 +8,7 @@ import (
 
 // Enums per DATABASE v1.1.0
 type BusinessType string
+
 const (
 	BusinessTypeSoleProp BusinessType = "sole_proprietorship"
 	BusinessTypePLC      BusinessType = "plc"
@@ -17,19 +18,21 @@ const (
 )
 
 type OnboardingStatus string
+
 const (
-	StatusDraft            OnboardingStatus = "draft"
-	StatusSubmitted        OnboardingStatus = "submitted"
-	StatusInReview         OnboardingStatus = "in_review"
-	StatusFaydaPending     OnboardingStatus = "fayda_pending"
-	StatusComplianceCheck  OnboardingStatus = "compliance_check"
-	StatusNeedsMoreInfo    OnboardingStatus = "needs_more_info"
-	StatusApproved         OnboardingStatus = "approved"
-	StatusRejected         OnboardingStatus = "rejected"
-	StatusActive           OnboardingStatus = "active"
+	StatusDraft           OnboardingStatus = "draft"
+	StatusSubmitted       OnboardingStatus = "submitted"
+	StatusInReview        OnboardingStatus = "in_review"
+	StatusFaydaPending    OnboardingStatus = "fayda_pending"
+	StatusComplianceCheck OnboardingStatus = "compliance_check"
+	StatusNeedsMoreInfo   OnboardingStatus = "needs_more_info"
+	StatusApproved        OnboardingStatus = "approved"
+	StatusRejected        OnboardingStatus = "rejected"
+	StatusActive          OnboardingStatus = "active"
 )
 
 type KYCLevel string
+
 const (
 	Level1 KYCLevel = "level1" // referral, <=5000 bal per NBE tiered
 	Level2 KYCLevel = "level2" // standard
@@ -37,63 +40,65 @@ const (
 )
 
 type Industry string
+
 const (
-	IndustryEcommerce   Industry = "e-commerce"
-	IndustryEducation   Industry = "education"
-	IndustryHealth      Industry = "health"
-	IndustryLogistics   Industry = "logistics"
-	IndustryFood        Industry = "food"
-	IndustryTech        Industry = "tech"
-	IndustryOther       Industry = "other"
+	IndustryEcommerce Industry = "e-commerce"
+	IndustryEducation Industry = "education"
+	IndustryHealth    Industry = "health"
+	IndustryLogistics Industry = "logistics"
+	IndustryFood      Industry = "food"
+	IndustryTech      Industry = "tech"
+	IndustryOther     Industry = "other"
 	// Restricted
-	IndustryGambling    Industry = "gambling"
-	IndustryCrypto      Industry = "crypto"
-	IndustryAdult       Industry = "adult"
+	IndustryGambling Industry = "gambling"
+	IndustryCrypto   Industry = "crypto"
+	IndustryAdult    Industry = "adult"
 )
 
 var RestrictedIndustries = map[Industry]bool{
 	IndustryGambling: true,
-	IndustryCrypto: true,
-	IndustryAdult: true,
+	IndustryCrypto:   true,
+	IndustryAdult:    true,
 }
 
 // KYCProfile is merchant_kyc_profiles
 type KYCProfile struct {
-	ID                  string
-	MerchantID          string
-	Version             int
-	LegalName           string
-	TradeName           string
-	BusinessType        BusinessType
-	RegistrationNumber  string
-	TINNumber           string
-	VATNumber           string
-	BusinessLicenseNo   string
-	Industry            Industry
-	Description         string
-	WebsiteURL          string
-	ExpectedMonthlyTPV  decimal.Decimal
-	AvgTicketAmount     decimal.Decimal
-	Region              string
-	City                string
-	SubCity             string
-	Woreda              string
-	AddressFull         string
-	ContactPersonName   string
-	ContactPersonRole   string
-	ContactEmail        string
-	ContactPhone        string
-	HasRefundPolicy     bool
-	HasPrivacyPolicy    bool
-	HasTerms            bool
-	OnboardingStatus    OnboardingStatus
-	KYCLevel            KYCLevel
-	SubmittedAt         *time.Time
-	CreatedAt           time.Time
+	ID                 string
+	MerchantID         string
+	Version            int
+	LegalName          string
+	TradeName          string
+	BusinessType       BusinessType
+	RegistrationNumber string
+	TINNumber          string
+	VATNumber          string
+	BusinessLicenseNo  string
+	Industry           Industry
+	Description        string
+	WebsiteURL         string
+	ExpectedMonthlyTPV decimal.Decimal
+	AvgTicketAmount    decimal.Decimal
+	Region             string
+	City               string
+	SubCity            string
+	Woreda             string
+	AddressFull        string
+	ContactPersonName  string
+	ContactPersonRole  string
+	ContactEmail       string
+	ContactPhone       string
+	HasRefundPolicy    bool
+	HasPrivacyPolicy   bool
+	HasTerms           bool
+	OnboardingStatus   OnboardingStatus
+	KYCLevel           KYCLevel
+	SubmittedAt        *time.Time
+	CreatedAt          time.Time
 }
 
 // BeneficialOwner
 type OwnerRole string
+
 const (
 	RoleOwner         OwnerRole = "owner"
 	RoleShareholder   OwnerRole = "shareholder"
@@ -140,23 +145,24 @@ type BankAccount struct {
 
 // Document types per NBE + PayAtlas
 type DocType string
+
 const (
-	DocCompanyReg       DocType = "company_registration"
-	DocTINCertificate   DocType = "tin_certificate"
-	DocBusinessLicense  DocType = "business_license"
-	DocVAT              DocType = "vat_certificate"
-	DocMemorandum       DocType = "memorandum_articles"
-	DocBoardResolution  DocType = "board_resolution"
-	DocShareholderList  DocType = "shareholder_list"
-	DocUBOIDFront       DocType = "ubo_id_front"
-	DocUBOIDBack        DocType = "ubo_id_back"
-	DocFaydaFront       DocType = "fayda_card_front"
-	DocFaydaBack        DocType = "fayda_card_back"
-	DocProofOfAddress   DocType = "proof_of_address"
-	DocBankLetter       DocType = "bank_letter"
+	DocCompanyReg        DocType = "company_registration"
+	DocTINCertificate    DocType = "tin_certificate"
+	DocBusinessLicense   DocType = "business_license"
+	DocVAT               DocType = "vat_certificate"
+	DocMemorandum        DocType = "memorandum_articles"
+	DocBoardResolution   DocType = "board_resolution"
+	DocShareholderList   DocType = "shareholder_list"
+	DocUBOIDFront        DocType = "ubo_id_front"
+	DocUBOIDBack         DocType = "ubo_id_back"
+	DocFaydaFront        DocType = "fayda_card_front"
+	DocFaydaBack         DocType = "fayda_card_back"
+	DocProofOfAddress    DocType = "proof_of_address"
+	DocBankLetter        DocType = "bank_letter"
 	DocWebsiteScreenshot DocType = "website_screenshot"
-	DocRefundPolicy     DocType = "refund_policy_doc"
-	DocOther            DocType = "other"
+	DocRefundPolicy      DocType = "refund_policy_doc"
+	DocOther             DocType = "other"
 )
 
 type Document struct {
@@ -177,17 +183,18 @@ type Document struct {
 
 // ComplianceCheck
 type CheckType string
+
 const (
-	CheckTIN          CheckType = "tin_validation"
-	CheckLicense      CheckType = "business_license_validation"
-	CheckBank         CheckType = "bank_account_validation"
-	CheckAML          CheckType = "aml_screening"
-	CheckPEP          CheckType = "pep_check"
-	CheckRestricted   CheckType = "restricted_industry"
-	CheckWebsite      CheckType = "website_policy_check"
-	CheckFayda        CheckType = "fayda_verification"
-	CheckDocAuth      CheckType = "document_authenticity"
-	CheckRisk         CheckType = "risk_scoring"
+	CheckTIN        CheckType = "tin_validation"
+	CheckLicense    CheckType = "business_license_validation"
+	CheckBank       CheckType = "bank_account_validation"
+	CheckAML        CheckType = "aml_screening"
+	CheckPEP        CheckType = "pep_check"
+	CheckRestricted CheckType = "restricted_industry"
+	CheckWebsite    CheckType = "website_policy_check"
+	CheckFayda      CheckType = "fayda_verification"
+	CheckDocAuth    CheckType = "document_authenticity"
+	CheckRisk       CheckType = "risk_scoring"
 )
 
 type ComplianceCheck struct {
@@ -204,6 +211,7 @@ type ComplianceCheck struct {
 
 // Onboarding Review - maker-checker
 type ReviewAction string
+
 const (
 	ActionSubmit      ReviewAction = "submit"
 	ActionApprove     ReviewAction = "approve"

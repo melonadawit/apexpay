@@ -6,6 +6,7 @@ import (
 )
 
 type PgRepository struct{ pool *pgxpool.Pool }
+
 func NewPgRepository(pool *pgxpool.Pool) *PgRepository { return &PgRepository{pool: pool} }
 
 func (r *PgRepository) Create(ctx context.Context, v *FaydaVerification) error {
@@ -21,12 +22,16 @@ func (r *PgRepository) GetByRequestID(ctx context.Context, requestID string) (*F
 }
 func (r *PgRepository) GetByOwner(ctx context.Context, ownerID string) ([]FaydaVerification, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id, merchant_id, fin_last4, status, otp_verified, face_match_score FROM fayda_verifications WHERE owner_id=$1 ORDER BY created_at DESC`, ownerID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var list []FaydaVerification
 	for rows.Next() {
 		var v FaydaVerification
-		if err := rows.Scan(&v.ID, &v.MerchantID, &v.FinLast4, &v.Status, &v.OTPVerified, &v.FaceMatchScore); err != nil { return nil, err }
+		if err := rows.Scan(&v.ID, &v.MerchantID, &v.FinLast4, &v.Status, &v.OTPVerified, &v.FaceMatchScore); err != nil {
+			return nil, err
+		}
 		list = append(list, v)
 	}
 	return list, nil

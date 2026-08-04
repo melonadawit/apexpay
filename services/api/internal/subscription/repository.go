@@ -48,12 +48,16 @@ func (r *PgRepository) ListSubscriptions(ctx context.Context, merchantID string,
 		args = append(args, *status)
 	}
 	rows, err := r.pool.Query(ctx, query, args...)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var list []Subscription
 	for rows.Next() {
 		var s Subscription
-		if err := rows.Scan(&s.ID, &s.MerchantID, &s.CustomerID, &s.PlanID, &s.Status, &s.CurrentPeriodStart, &s.CurrentPeriodEnd); err != nil { return nil, err }
+		if err := rows.Scan(&s.ID, &s.MerchantID, &s.CustomerID, &s.PlanID, &s.Status, &s.CurrentPeriodStart, &s.CurrentPeriodEnd); err != nil {
+			return nil, err
+		}
 		list = append(list, s)
 	}
 	return list, nil

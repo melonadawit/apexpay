@@ -17,7 +17,7 @@ func (m *MockConnector) Initialize(ctx context.Context, req InitializeRequest) (
 	return InitializeResponse{
 		ConnectorRef: "mock_ref_" + req.TxRef,
 		CheckoutURL:  fmt.Sprintf("https://checkout.apexpay.et/mock/%s", req.TxRef),
-		Status: "pending",
+		Status:       "pending",
 	}, nil
 }
 

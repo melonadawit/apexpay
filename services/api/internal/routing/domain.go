@@ -9,15 +9,16 @@ import (
 type ConnectorID string
 
 const (
-	ConnectorMock       ConnectorID = "mock"
-	ConnectorTelebirr   ConnectorID = "telebirr"
-	ConnectorCBEBirr    ConnectorID = "cbe_birr"
-	ConnectorBankIPS    ConnectorID = "bank_ips"
-	ConnectorEthSwitch  ConnectorID = "ethswitch"
-	ConnectorCard       ConnectorID = "card_acquirer"
+	ConnectorMock      ConnectorID = "mock"
+	ConnectorTelebirr  ConnectorID = "telebirr"
+	ConnectorCBEBirr   ConnectorID = "cbe_birr"
+	ConnectorBankIPS   ConnectorID = "bank_ips"
+	ConnectorEthSwitch ConnectorID = "ethswitch"
+	ConnectorCard      ConnectorID = "card_acquirer"
 )
 
 type Strategy string
+
 const (
 	StrategySuccessRate Strategy = "success_rate"
 	StrategyLatency     Strategy = "latency"
@@ -43,13 +44,13 @@ type RoutingRule struct {
 }
 
 type HealthSample struct {
-	ID           string
-	ConnectorID  ConnectorID
-	Environment  string
-	LatencyMS    int
-	Success      bool
-	ErrorCode    *string
-	SampledAt    time.Time
+	ID          string
+	ConnectorID ConnectorID
+	Environment string
+	LatencyMS   int
+	Success     bool
+	ErrorCode   *string
+	SampledAt   time.Time
 }
 
 // Aggregated health for decision - optimal cached structure
@@ -64,10 +65,10 @@ type ConnectorHealth struct {
 
 // Decision result
 type RoutingDecision struct {
-	RuleID            string
-	Primary           ConnectorID
-	Fallbacks         []ConnectorID
-	Chosen            ConnectorID
-	Reason            string
-	HealthSnapshot    map[ConnectorID]ConnectorHealth
+	RuleID         string
+	Primary        ConnectorID
+	Fallbacks      []ConnectorID
+	Chosen         ConnectorID
+	Reason         string
+	HealthSnapshot map[ConnectorID]ConnectorHealth
 }

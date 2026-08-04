@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	pkghttp "apexpay/internal/platform/http"
+	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct{ svc *Service }
@@ -63,7 +63,10 @@ func (h *Handler) ConfirmOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) VerifyQR(w http.ResponseWriter, r *http.Request) {
-	var req struct{ RequestID string `json:"request_id"`; QRData string `json:"qr_data"` }
+	var req struct {
+		RequestID string `json:"request_id"`
+		QRData    string `json:"qr_data"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
 		return

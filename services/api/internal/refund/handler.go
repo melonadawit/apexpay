@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
-	pkghttp "apexpay/internal/platform/http"
 )
 
 type Handler struct{ svc *Service }
@@ -22,12 +22,12 @@ func (h *Handler) Routes(r chi.Router) {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	merchantID, _ := r.Context().Value("merchant_id").(string)
 	var req struct {
-		PaymentID  string `json:"payment_id"`
-		RefundRef  string `json:"refund_ref"`
-		Amount     string `json:"amount"`
-		Currency   string `json:"currency"`
-		Reason     string `json:"reason"`
-		FeePolicy  string `json:"fee_policy"`
+		PaymentID string `json:"payment_id"`
+		RefundRef string `json:"refund_ref"`
+		Amount    string `json:"amount"`
+		Currency  string `json:"currency"`
+		Reason    string `json:"reason"`
+		FeePolicy string `json:"fee_policy"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")

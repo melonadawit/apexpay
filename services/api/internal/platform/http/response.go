@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5/middleware"
 	appErrors "apexpay/internal/platform/errors"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 // Standard API response with request_id for audit per SAD §11 correlation
@@ -40,8 +40,8 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 		// Override with error body
 		w.Header().Set("Content-Type", "application/json")
 		resp := Response{
-			Success: false,
-			Error: &ErrorBody{Code: string(appErr.Code), Message: appErr.Message},
+			Success:   false,
+			Error:     &ErrorBody{Code: string(appErr.Code), Message: appErr.Message},
 			RequestID: middleware.GetReqID(r.Context()),
 		}
 		_ = json.NewEncoder(w).Encode(resp)
@@ -55,8 +55,8 @@ func WriteErrorWithBody(w http.ResponseWriter, r *http.Request, status int, code
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	resp := Response{
-		Success: false,
-		Error: &ErrorBody{Code: code, Message: msg},
+		Success:   false,
+		Error:     &ErrorBody{Code: code, Message: msg},
 		RequestID: middleware.GetReqID(r.Context()),
 	}
 	_ = json.NewEncoder(w).Encode(resp)

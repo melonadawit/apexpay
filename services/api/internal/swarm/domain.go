@@ -3,6 +3,7 @@ package swarm
 import "time"
 
 type SessionStatus string
+
 const (
 	StatusPlanning          SessionStatus = "planning"
 	StatusExecuting         SessionStatus = "executing"
@@ -27,12 +28,12 @@ type SwarmSession struct {
 }
 
 type PlanStep struct {
-	Step        int              `json:"step"`
-	Tool        string           `json:"tool"` // create_payment_link, create_payout, calculate_payroll, etc
-	Description string           `json:"description"`
-	Args        map[string]any   `json:"args"`
-	Status      string           `json:"status"` // pending, executing, succeeded, failed, needs_confirmation
-	Result      map[string]any   `json:"result,omitempty"`
+	Step        int            `json:"step"`
+	Tool        string         `json:"tool"` // create_payment_link, create_payout, calculate_payroll, etc
+	Description string         `json:"description"`
+	Args        map[string]any `json:"args"`
+	Status      string         `json:"status"` // pending, executing, succeeded, failed, needs_confirmation
+	Result      map[string]any `json:"result,omitempty"`
 }
 
 type AgentRun struct {

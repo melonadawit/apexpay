@@ -1,0 +1,112 @@
+/**
+ * Custom CSS — Outstanding modern UI like Mercury/Linear glassmorphic motion 200-300ms per Day 6 docs site
+ * Best practice: ET Green #0B6E4F gold #EAB308 radius xl 24 shadow soft
+ */
+
+:root {
+  --ifm-color-primary: #0B6E4F;
+  --ifm-color-primary-dark: #094E38;
+  --ifm-color-primary-darker: #073D2C;
+  --ifm-color-primary-darkest: #052B1F;
+  --ifm-color-primary-light: #10A37A;
+  --ifm-color-primary-lighter: #14C792;
+  --ifm-color-primary-lightest: #18EBA9;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(11, 110, 79, 0.1);
+  --ifm-border-radius: 16px;
+  --ifm-card-border-radius: 24px;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #10A37A;
+  --ifm-color-primary-dark: #0B6E4F;
+}
+
+.navbar {
+  backdrop-filter: blur(20px);
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.card {
+  border-radius: 24px !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07) !important;
+  transition: all 0.3s ease-out;
+}
+
+.card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.10) !important;
+  transform: translateY(-2px);
+}
+
+.button {
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease-out !important;
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
+/* Shimmer skeleton per Day 3 outstanding */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes confetti {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(11, 110, 79, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(11, 110, 79, 0.4); }
+}
+
+/* Glassmorphic helper */
+.glass {
+  backdrop-filter: blur(20px);
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-radius: 24px;
+}
+
+/* Donut progress outstanding */
+.donut-progress {
+  transition: all 0.7s ease-out;
+}
+
+/* Stepper animated line pathLength */
+.stepper-line {
+  transition: transform 0.5s ease-out;
+  transform-origin: left;
+}
+
+/* Corner brackets pulse for Fayda capture */
+.corner-bracket {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}

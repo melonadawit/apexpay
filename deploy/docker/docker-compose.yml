@@ -1,0 +1,75 @@
+version: '3.8'
+services:
+  postgres:
+    image: ankane/pgvector:latest
+    environment:
+      POSTGRES_DB: apexpay
+      POSTGRES_USER: apexpay
+      POSTGRES_PASSWORD: apexpay_dev
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U apexpay"], interval: 5s, retries: 5}
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 5s}
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports: ["9000:9000","9001:9001"]
+    volumes: ["miniodata:/data"]
+
+  api:
+    build: {context: ../.., dockerfile: deploy/docker/Dockerfile.api}
+    ports: ["8080:8080"]
+    environment:
+      ENV: local
+      PORT: 8080
+      DATABASE_URL: postgres://apexpay:apexpay_dev@postgres:5432/apexpay?sslmode=disable
+      REDIS_URL: redis:6379
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: apexpay-vault
+      JWT_SECRET: dev_jwt_secret_change_in_prod
+      CONNECTOR_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef
+      FAYDA_MODE: mock
+      FAYDA_PARTNER_CODE: APEXPAY_TEST
+      FAYDA_PARTNER_KEY: mock_key
+    depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}, minio: {condition: service_started}}
+
+  worker:
+    build: {context: ../.., dockerfile: deploy/docker/Dockerfile.worker}
+    environment:
+      ENV: local
+      DATABASE_URL: postgres://apexpay:apexpay_dev@postgres:5432/apexpay?sslmode=disable
+      REDIS_URL: redis:6379
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      FAYDA_MODE: mock
+    depends_on: [postgres, redis, minio]
+
+  merchant-web:
+    build: {context: ../../apps/merchant-web, dockerfile: Dockerfile}
+    ports: ["3000:3000"]
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/v1
+      NEXT_PUBLIC_CHECKOUT_URL: http://localhost:3001
+    depends_on: [api]
+
+  checkout-web:
+    build: {context: ../../apps/checkout-web, dockerfile: Dockerfile}
+    ports: ["3001:3001"]
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/v1
+    depends_on: [api]
+
+volumes:
+  pgdata:
+  miniodata:

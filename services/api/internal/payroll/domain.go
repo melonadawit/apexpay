@@ -7,6 +7,7 @@ import (
 )
 
 type EmploymentType string
+
 const (
 	EmploymentPermanent EmploymentType = "permanent"
 	EmploymentContract  EmploymentType = "contract"
@@ -14,28 +15,29 @@ const (
 )
 
 type Employee struct {
-	ID               string
-	MerchantID       string
-	EmployeeCode     string
-	Name             string
-	NameAM           string
-	Email            string
-	Phone            string
-	TIN              string
-	FinHash          string // Fayda
-	PensionNo        string
+	ID                string
+	MerchantID        string
+	EmployeeCode      string
+	Name              string
+	NameAM            string
+	Email             string
+	Phone             string
+	TIN               string
+	FinHash           string // Fayda
+	PensionNo         string
 	BankAccountMasked string
-	BankAccountHash  string
-	BankCode         string
-	BaseSalary       decimal.Decimal
-	EmploymentDate   time.Time
-	EmploymentType   EmploymentType
-	CostCenter       string
-	Status           string
-	CreatedAt        time.Time
+	BankAccountHash   string
+	BankCode          string
+	BaseSalary        decimal.Decimal
+	EmploymentDate    time.Time
+	EmploymentType    EmploymentType
+	CostCenter        string
+	Status            string
+	CreatedAt         time.Time
 }
 
 type RunType string
+
 const (
 	RunRegular    RunType = "regular"
 	RunOffCycle   RunType = "off_cycle"
@@ -44,6 +46,7 @@ const (
 )
 
 type RunStatus string
+
 const (
 	StatusDraft           RunStatus = "draft"
 	StatusCalculating     RunStatus = "calculating"
@@ -55,21 +58,21 @@ const (
 )
 
 type PayrollRun struct {
-	ID             string
-	MerchantID     string
-	BookID         *string // each run gets own ledger book (per DATABASE)
-	RunRef         string
-	PeriodMonth    int
-	PeriodYear     int
-	Type           RunType
-	Status         RunStatus
-	TotalGross     decimal.Decimal
+	ID              string
+	MerchantID      string
+	BookID          *string // each run gets own ledger book (per DATABASE)
+	RunRef          string
+	PeriodMonth     int
+	PeriodYear      int
+	Type            RunType
+	Status          RunStatus
+	TotalGross      decimal.Decimal
 	TotalDeductions decimal.Decimal
-	TotalNet       decimal.Decimal
-	TotalTax       decimal.Decimal
-	TotalPension   decimal.Decimal
-	ApprovedBy     *string
-	CreatedAt      time.Time
+	TotalNet        decimal.Decimal
+	TotalTax        decimal.Decimal
+	TotalPension    decimal.Decimal
+	ApprovedBy      *string
+	CreatedAt       time.Time
 }
 
 type PayrollItem struct {
@@ -93,16 +96,17 @@ type PayrollItem struct {
 
 // Tax bracket table - DB driven per DATABASE v1.1.0 but struct here for optimal binary search
 type TaxBracket struct {
-	Min          decimal.Decimal // inclusive
-	Max          *decimal.Decimal // exclusive, nil = infinity
-	Rate         decimal.Decimal  // 0.1 = 10%
-	Deduction    decimal.Decimal // fixed deduction per ET law
+	Min           decimal.Decimal  // inclusive
+	Max           *decimal.Decimal // exclusive, nil = infinity
+	Rate          decimal.Decimal  // 0.1 = 10%
+	Deduction     decimal.Decimal  // fixed deduction per ET law
 	EffectiveFrom time.Time
 }
 
 // OT Rates per ET labour law
 // Weekday 1.25x, Weekend 1.5x, Holiday 2x, Night 1.3x
 type OTType string
+
 const (
 	OTWeekday OTType = "weekday"
 	OTWeekend OTType = "weekday_weekend"

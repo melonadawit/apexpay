@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/shopspring/decimal"
+	"apexpay/internal/connector"
 	"apexpay/internal/id"
 	"apexpay/internal/ledger"
 	"apexpay/internal/platform/errors"
 	"apexpay/internal/routing"
-	"apexpay/internal/connector"
+	"github.com/shopspring/decimal"
 )
 
 type Repository interface {
@@ -22,11 +22,11 @@ type Repository interface {
 }
 
 type Service struct {
-	repo      Repository
-	ledger    *ledger.Service
-	router    *routing.Service
-	registry  map[string]connector.Connector // connector_id -> Connector optimal O(1)
-	mdrRate   decimal.Decimal // 2.9%
+	repo     Repository
+	ledger   *ledger.Service
+	router   *routing.Service
+	registry map[string]connector.Connector // connector_id -> Connector optimal O(1)
+	mdrRate  decimal.Decimal                // 2.9%
 }
 
 func NewService(repo Repository, ledgerSvc *ledger.Service, router *routing.Service, registry map[string]connector.Connector, mdrRate decimal.Decimal) *Service {
@@ -138,7 +138,7 @@ func (s *Service) Verify(ctx context.Context, req VerifyRequest) (*Payment, erro
 	journal := &ledger.Journal{
 		ID: id.NewLedgerJournal(), BookID: "merchant_operating_default", // resolved via ledger svc in prod
 		PostingKey: fmt.Sprintf("payment_success:%s", p.ID),
-		Memo: "payment success", ReferenceType: "payment", ReferenceID: p.ID,
+		Memo:       "payment success", ReferenceType: "payment", ReferenceID: p.ID,
 		TransferGroup: fmt.Sprintf("pay_%s", p.ID),
 	}
 	entries := []ledger.Entry{

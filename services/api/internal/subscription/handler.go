@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"apexpay/internal/id"
+	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
-	pkghttp "apexpay/internal/platform/http"
-	"apexpay/internal/id"
 )
 
 type Handler struct{ svc *Service }
@@ -24,7 +24,9 @@ func (h *Handler) Routes(r chi.Router) {
 
 func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
 	merchantID, _ := r.Context().Value("merchant_id").(string)
-	var req struct{ Email, Phone, Name string `json:"email"` }
+	var req struct {
+		Email, Phone, Name string `json:"email"`
+	}
 	_ = json.NewDecoder(r.Body).Decode(&req)
 	cust := &Customer{ID: id.NewCustomer(), MerchantID: merchantID, Email: req.Email, Phone: req.Phone, Name: req.Name}
 	if err := h.svc.repo.CreateCustomer(r.Context(), cust); err != nil {
@@ -61,7 +63,9 @@ func (h *Handler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
 	merchantID, _ := r.Context().Value("merchant_id").(string)
-	var req struct{ CustomerID, PlanID string `json:"customer_id"` }
+	var req struct {
+		CustomerID, PlanID string `json:"customer_id"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
 		return

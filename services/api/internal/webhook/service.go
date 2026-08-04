@@ -36,7 +36,7 @@ type Service struct {
 
 func NewService(repo Repository) *Service {
 	return &Service{
-		repo: repo,
+		repo:   repo,
 		client: &http.Client{Timeout: 10 * time.Second},
 	}
 }

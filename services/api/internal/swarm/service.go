@@ -144,7 +144,7 @@ func (s *Service) Run(ctx context.Context, merchantID, userID, goal string) (*Sw
 			ID: id.New("arun"), MerchantID: merchantID, SwarmSessionID: &session.ID,
 			InputText: goal, Intent: step.Tool, ToolCalls: []ToolCall{toolCall},
 			OutputText: fmt.Sprintf("Step %d %s succeeded", i+1, step.Tool),
-			Model: "rules_v1", CreatedAt: time.Now(),
+			Model:      "rules_v1", CreatedAt: time.Now(),
 		})
 	}
 
