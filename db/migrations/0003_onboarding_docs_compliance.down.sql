@@ -1,0 +1,1 @@
+-- down: 0003_onboarding_docs_compliance - forward-only, no destructive down in prod per DATABASE policy, but provide drop if needed for local dev

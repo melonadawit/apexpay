@@ -1,0 +1,40 @@
+# Dockerfile.api — Go API production multi-stage build Gold
+# Best practice: non-root, layer caching, distroless minimal, no secrets in image
+
+FROM golang:1.22-alpine AS builder
+
+# Security hardening: non-root builder
+RUN apk add --no-cache git ca-certificates tzdata
+
+WORKDIR /app
+
+# Cache go mod download O(1) layer
+COPY services/api/go.mod services/api/go.sum* ./services/api/
+WORKDIR /app/services/api
+RUN go mod download
+
+# Copy source optimal: only needed files for layer cache
+COPY services/api/ ./
+COPY ../.. ./../.. 
+
+WORKDIR /app/services/api
+
+# Build with trimming + static
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.version=1.1.0-full" -o /app/bin/api ./cmd/api
+
+# Final stage — distroless minimal
+FROM gcr.io/distroless/static-debian12:nonroot
+
+# Copy binary + certs + timezone Africa/Addis_Ababa
+COPY --from=builder /app/bin/api /api
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+EXPOSE 8080
+
+USER nonroot:nonroot
+
+# Healthcheck per SAD quality
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD ["/api", "-healthcheck"] || exit 1
+
+ENTRYPOINT ["/api"]

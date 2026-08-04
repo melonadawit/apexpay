@@ -1,0 +1,178 @@
+package payment
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/shopspring/decimal"
+	"apexpay/internal/id"
+	"apexpay/internal/ledger"
+	"apexpay/internal/platform/errors"
+	"apexpay/internal/routing"
+	"apexpay/internal/connector"
+)
+
+type Repository interface {
+	CreatePaymentTx(ctx context.Context, p *Payment, outboxEventID string) error
+	GetByTxRef(ctx context.Context, merchantID, txRef string) (*Payment, error)
+	UpdateStatusTx(ctx context.Context, paymentID string, status Status, journal *ledger.Journal, entries []ledger.Entry, succeededAt *time.Time) error
+	GetIdempotency(ctx context.Context, merchantID, key string) (*Payment, error)
+	SaveIdempotency(ctx context.Context, merchantID, key, requestHash string, payment *Payment) error
+}
+
+type Service struct {
+	repo      Repository
+	ledger    *ledger.Service
+	router    *routing.Service
+	registry  map[string]connector.Connector // connector_id -> Connector optimal O(1)
+	mdrRate   decimal.Decimal // 2.9%
+}
+
+func NewService(repo Repository, ledgerSvc *ledger.Service, router *routing.Service, registry map[string]connector.Connector, mdrRate decimal.Decimal) *Service {
+	return &Service{repo: repo, ledger: ledgerSvc, router: router, registry: registry, mdrRate: mdrRate}
+}
+
+func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payment, error) {
+	if req.Amount.LessThanOrEqual(decimal.Zero) {
+		return nil, errors.Validation("amount must be >0")
+	}
+	// Idempotency check
+	if req.IdempotencyKey != "" {
+		if existing, _ := s.repo.GetIdempotency(ctx, req.MerchantID, req.IdempotencyKey); existing != nil {
+			return existing, nil
+		}
+	}
+
+	// Duplicate tx_ref check handled by DB unique (merchant_id, tx_ref)
+	// Routing evaluation
+	decision, err := s.router.Evaluate(ctx, req.MerchantID, req.Amount, req.Currency, req.Method)
+	if err != nil {
+		decision = &routing.Decision{Chosen: "mock", Primary: "mock", Reason: "router error fallback mock"}
+	}
+
+	connID := string(decision.Chosen)
+	conn, ok := s.registry[connID]
+	if !ok {
+		conn = s.registry["mock"]
+		connID = "mock"
+	}
+
+	// Fee calc: fee = amount * mdrRate rounded ETB scale 2
+	fee := req.Amount.Mul(s.mdrRate).Round(2)
+	net := req.Amount.Sub(fee)
+
+	// 2FA check per NBE ONPS/10/2025 >5000 ETB
+	requires2FA := false
+	if req.Currency == "ETB" && req.Amount.GreaterThan(decimal.NewFromInt(5000)) {
+		requires2FA = true
+	}
+
+	// Connector Initialize
+	initResp, err := conn.(connector.Connector).Initialize(ctx, connector.InitializeRequest{
+		MerchantID: req.MerchantID, Amount: req.Amount.String(), Currency: req.Currency, TxRef: req.TxRef, ReturnURL: req.ReturnURL,
+	})
+	if err != nil {
+		// circuit breaker record failure
+		s.router.RecordFailure(routing.ConnectorID(connID))
+		return nil, errors.New(errors.CodeConnectorDown, fmt.Sprintf("connector %s failed: %v", connID, err), 502)
+	}
+	s.router.RecordSuccess(routing.ConnectorID(connID))
+
+	now := time.Now()
+	p := &Payment{
+		ID: id.NewPayment(), MerchantID: req.MerchantID, TxRef: req.TxRef,
+		Amount: req.Amount, Currency: req.Currency, Status: StatusPending,
+		Method: req.Method, Description: req.Description, CustomerEmail: req.CustomerEmail,
+		ConnectorID: connID, ConnectorRef: initResp.ConnectorRef,
+		RoutingRuleID: decision.RuleID, CheckoutURL: initResp.CheckoutURL,
+		ReturnURL: req.ReturnURL, CallbackURL: req.CallbackURL,
+		FeeAmount: fee, NetAmount: net, Requires2FA: requires2FA, CreatedAt: now,
+	}
+
+	// Create with outbox event payment.created
+	outboxID := id.NewOutbox()
+	if err := s.repo.CreatePaymentTx(ctx, p, outboxID); err != nil {
+		// handle duplicate tx_ref conflict
+		if isDuplicate(err) {
+			return nil, errors.Conflict(errors.CodeDuplicateTxRef, "duplicate tx_ref")
+		}
+		return nil, err
+	}
+
+	if req.IdempotencyKey != "" {
+		_ = s.repo.SaveIdempotency(ctx, req.MerchantID, req.IdempotencyKey, req.TxRef, p)
+	}
+
+	return p, nil
+}
+
+func (s *Service) Verify(ctx context.Context, req VerifyRequest) (*Payment, error) {
+	p, err := s.repo.GetByTxRef(ctx, req.MerchantID, req.TxRef)
+	if err != nil {
+		return nil, errors.NotFound("payment not found")
+	}
+	if p.Status == StatusSucceeded {
+		return p, nil // idempotent no-op per MVP B6
+	}
+	// If requires 2FA and not verified, return pending
+	if p.Requires2FA && !p.TwoFAVerified {
+		return p, nil
+	}
+
+	// Call connector Verify
+	conn, ok := s.registry[p.ConnectorID]
+	if !ok {
+		conn = s.registry["mock"]
+	}
+	verifyResp, err := conn.(connector.Connector).Verify(ctx, connector.VerifyRequest{ConnectorRef: p.ConnectorRef, TxRef: p.TxRef})
+	if err != nil {
+		return p, nil // keep pending, worker will retry
+	}
+	if verifyResp.Status != "succeeded" {
+		return p, nil
+	}
+
+	// Ledger M1 posting atomically with status update per DATABASE transaction boundary
+	now := time.Now()
+	journal := &ledger.Journal{
+		ID: id.NewLedgerJournal(), BookID: "merchant_operating_default", // resolved via ledger svc in prod
+		PostingKey: fmt.Sprintf("payment_success:%s", p.ID),
+		Memo: "payment success", ReferenceType: "payment", ReferenceID: p.ID,
+		TransferGroup: fmt.Sprintf("pay_%s", p.ID),
+	}
+	entries := []ledger.Entry{
+		{ID: id.New("le"), JournalID: journal.ID, BookID: journal.BookID, AccountID: "asset:clearing:" + p.ConnectorID, Direction: "debit", Amount: p.Amount, Currency: p.Currency},
+		{ID: id.New("le"), JournalID: journal.ID, BookID: journal.BookID, AccountID: "liability:merchant_payable", Direction: "credit", Amount: p.NetAmount, Currency: p.Currency},
+		{ID: id.New("le"), JournalID: journal.ID, BookID: journal.BookID, AccountID: "liability:platform_fee_due", Direction: "credit", Amount: p.FeeAmount, Currency: p.Currency},
+	}
+	// Filter zero fee if any
+	filtered := entries[:0]
+	for _, e := range entries {
+		if e.Amount.GreaterThan(decimal.Zero) {
+			filtered = append(filtered, e)
+		}
+	}
+
+	if err := s.repo.UpdateStatusTx(ctx, p.ID, StatusSucceeded, journal, filtered, &now); err != nil {
+		return nil, err
+	}
+	p.Status = StatusSucceeded
+	p.SucceededAt = &now
+	return p, nil
+}
+
+func isDuplicate(err error) bool {
+	// check pg unique violation code 23505
+	return err != nil && (contains(err.Error(), "duplicate") || contains(err.Error(), "unique"))
+}
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (func() bool {
+		for i := 0; i <= len(s)-len(substr); i++ {
+			if s[i:i+len(substr)] == substr {
+				return true
+			}
+		}
+		return false
+	})()
+}

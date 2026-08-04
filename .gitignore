@@ -1,0 +1,26 @@
+# Go
+bin/
+*.exe
+*.test
+vendor/
+.env
+# Node
+node_modules/
+.next/
+out/
+dist/
+# Python
+__pycache__/
+.venv/
+*.pyc
+# Secrets
+.env.local
+.env.production
+*.pem
+*.key
+# MinIO data
+pgdata/
+miniodata/
+# IDE
+.vscode/
+.idea/

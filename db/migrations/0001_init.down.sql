@@ -1,0 +1,2 @@
+-- down: 0001_init - forward-only, no destructive down in prod per DATABASE policy, but provide drop if needed for local dev
+drop table if exists audit_logs, agent_runs, idempotency_keys, webhook_deliveries, webhook_endpoints, outbox_events, ledger_balances, ledger_entries, ledger_journals, ledger_accounts, ledger_books, checkout_sessions, payment_links, payments, api_keys, merchant_members, users, merchants cascade;

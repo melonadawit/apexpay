@@ -1,0 +1,1 @@
+-- down: 0012_enhancements - forward-only, no destructive down in prod per DATABASE policy, but provide drop if needed for local dev
