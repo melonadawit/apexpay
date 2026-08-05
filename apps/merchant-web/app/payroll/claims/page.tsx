@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { DocumentViewerOCR } from "@/components/payroll/DocumentViewerOCR"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -37,6 +38,14 @@ export default function ClaimsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-3">
+            <Card className="p-6">
+              <h3 className="font-semibold">Document Viewer OCR • Side-by-side • Outstanding • PyMuPDF • Tesseract OCR • Document Authenticity • NBE Checklist • Fayda Verification • Bank Letter • TIN 10-digit • Business License Expiry • File Hash Integrity • Receipt Preview Thumbs</h3>
+              <div className="mt-4">
+                <DocumentViewerOCR fileKey="merchants/mer_01H/kyc/company_registration.pdf" fileName="company_registration.pdf • Company Registration • MT/AA/12345" fileHash="hash_company_reg_001" mimeType="application/pdf" size={2*1024*1024} status="verified" ocrRaw={{ tin: "0098765432", company_name: "Apex Trading PLC", registration_no: "MT/AA/12345", license_no: "BL-2026-001", license_expiry: "2026-12-31", bank_account_name: "Apex Trading PLC", bank_account_number: "1000123456789", bank_code: "CBE", fayda_fin_last4: "1234", fayda_fan: "1234567890123456", face_score: 0.92, confidence: 0.89 }} onVerify={()=>{}} onReject={()=>{}} />
+              </div>
+            </Card>
+          </div>
           <Card className="p-6 lg:col-span-2">
             <h3 className="font-semibold">Claims • Receipt MinIO &lt;5MB pdf/jpg/png • File Key Hash Integrity • Approval Manager→Finance • Receipt Preview Thumbs • Outstanding Pipeline Visual Stepper</h3>
             <div className="mt-4 rounded-xl border overflow-hidden">

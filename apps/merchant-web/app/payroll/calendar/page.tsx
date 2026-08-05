@@ -2,6 +2,7 @@
 import * as React from "react"
 import { motion } from "framer-motion"
 import { gregorianToEthiopian, formatEthiopianDate, ethiopianPublicHolidays } from "@/lib/ethiopian-calendar"
+import { EthiopianCalendarGrid } from "@/components/payroll/EthiopianCalendarGrid"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
@@ -41,6 +42,10 @@ export default function PayrollCalendarPage() {
           </div>
           <button onClick={()=>setShowCreate(true)} className="rounded-xl bg-primary text-white h-10 px-6 text-xs">+ Create Calendar • Monthly Weekly Semimonthly</button>
         </div>
+
+        <Card className="p-6">
+          <EthiopianCalendarGrid year={2026} />
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="p-6 lg:col-span-2">
