@@ -138,6 +138,41 @@ type Repository interface {
 	CreateEnhancedPayoutLink(ctx context.Context, link *EnhancedPayoutLink) error
 	GetEnhancedPayoutLinkByToken(ctx context.Context, publicToken string) (*EnhancedPayoutLink, error)
 	ClaimEnhancedPayoutLinkTx(ctx context.Context, linkID, beneficiaryID string, journal *ledger.Journal, entries []ledger.Entry) error
+
+	// Vendor Invoices — OCR-enabled Invoice Capture + TDS Calculation
+	CreateVendorInvoice(ctx context.Context, invoice *VendorInvoice) error
+	GetVendorInvoice(ctx context.Context, merchantID, invoiceID string) (*VendorInvoice, error)
+	ListVendorInvoices(ctx context.Context, merchantID string, status *string) ([]VendorInvoice, error)
+	UpdateVendorInvoiceStatus(ctx context.Context, invoiceID, status, approvedBy string) error
+	MarkVendorInvoicePaid(ctx context.Context, invoiceID, payoutID string) error
+
+	// Purchase Orders
+	CreatePurchaseOrder(ctx context.Context, po *PurchaseOrder) error
+	ListPurchaseOrders(ctx context.Context, merchantID string) ([]PurchaseOrder, error)
+
+	// Petty Cash Budgets & Expenses — Track Petty Cash Budgets and Make Payments from Assigned Budgets
+	CreatePettyCashBudget(ctx context.Context, budget *PettyCashBudget) error
+	ListPettyCashBudgets(ctx context.Context, merchantID string) ([]PettyCashBudget, error)
+	CreatePettyCashExpense(ctx context.Context, expense *PettyCashExpense) error
+	ListPettyCashExpenses(ctx context.Context, merchantID, budgetID string) ([]PettyCashExpense, error)
+
+	// Tax Payments Automated Pre-filled Forms Challans Inbox Accountant Collaboration VAT 15% TOT Withholding 2%
+	CreateTaxPayment(ctx context.Context, tax *TaxPayment) error
+	ListTaxPayments(ctx context.Context, merchantID string, taxType *string, status *string) ([]TaxPayment, error)
+	UpdateTaxPaymentStatus(ctx context.Context, taxID, status, challanFileKey, paymentReference string) error
+	MarkTaxPaymentPaid(ctx context.Context, taxID, challanFileKey, paymentReference string) error
+
+	// Bank Account Verification Penny Testing 1 ETB
+	CreateBankVerification(ctx context.Context, v *BankAccountVerification) error
+	GetBankVerification(ctx context.Context, merchantID, verificationID string) (*BankAccountVerification, error)
+	ListBankVerifications(ctx context.Context, merchantID string, status *string) ([]BankAccountVerification, error)
+	UpdateBankVerificationStatus(ctx context.Context, verificationID, status string, beneficiaryName string, matchScore decimal.Decimal, response map[string]interface{}) error
+
+	// Virtual Accounts Smart Collect — Automatically Reconcile Incoming NEFT RTGS IMPS UPI Payments Using Virtual Accounts & UPI-IDs
+	CreateVirtualAccount(ctx context.Context, va *VirtualAccount) error
+	ListVirtualAccounts(ctx context.Context, merchantID string) ([]VirtualAccount, error)
+	CreateVirtualAccountTransaction(ctx context.Context, txn *VirtualAccountTransaction) error
+	ListVirtualAccountTransactions(ctx context.Context, merchantID, virtualAccountID string, status *string) ([]VirtualAccountTransaction, error)
 }
 
 type Service struct {
