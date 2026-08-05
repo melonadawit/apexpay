@@ -92,6 +92,11 @@ type Repository interface {
 
 	// YTD
 	GetYTDForEmployee(ctx context.Context, merchantID, employeeID string, year int) (map[string]decimal.Decimal, error)
+
+	// Employee Portal Access — magic link JWT 24h
+	CreatePortalAccess(ctx context.Context, access *EmployeePortalAccess) error
+	GetPortalAccessByHash(ctx context.Context, hash string) (*EmployeePortalAccess, error)
+	UpdatePortalAccessOnUse(ctx context.Context, hash string) error
 }
 
 type Service struct {

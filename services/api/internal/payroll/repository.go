@@ -823,6 +823,29 @@ func (r *PgRepository) GetYTDForEmployee(ctx context.Context, merchantID, employ
 	return ytd, nil
 }
 
+// ==================== Employee Portal Access ====================
+
+func (r *PgRepository) CreatePortalAccess(ctx context.Context, access *EmployeePortalAccess) error {
+	_, err := r.pool.Exec(ctx, `INSERT INTO payroll_employee_portal_access (id, merchant_id, employee_id, magic_token_hash, token_last4, expires_at, access_count, is_revoked) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (magic_token_hash) DO NOTHING`,
+		access.ID, access.MerchantID, access.EmployeeID, access.MagicTokenHash, access.TokenLast4, access.ExpiresAt, access.AccessCount, access.IsRevoked)
+	return err
+}
+
+func (r *PgRepository) GetPortalAccessByHash(ctx context.Context, hash string) (*EmployeePortalAccess, error) {
+	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, employee_id, magic_token_hash, token_last4, expires_at, last_accessed_at, access_count, is_revoked FROM payroll_employee_portal_access WHERE magic_token_hash=$1`, hash)
+	var a EmployeePortalAccess
+	err := row.Scan(&a.ID, &a.MerchantID, &a.EmployeeID, &a.MagicTokenHash, &a.TokenLast4, &a.ExpiresAt, &a.LastAccessedAt, &a.AccessCount, &a.IsRevoked)
+	if err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
+func (r *PgRepository) UpdatePortalAccessOnUse(ctx context.Context, hash string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE payroll_employee_portal_access SET last_accessed_at=now(), access_count=access_count+1 WHERE magic_token_hash=$1`, hash)
+	return err
+}
+
 // ==================== Helpers ====================
 
 func toJSON(v interface{}) string {

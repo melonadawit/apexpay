@@ -3,9 +3,11 @@ module apexpay
 go 1.22
 
 require (
+	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/joho/godotenv v1.5.0
+	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/minio/minio-go/v7 v7.0.77
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/pquerna/otp v1.5.0
