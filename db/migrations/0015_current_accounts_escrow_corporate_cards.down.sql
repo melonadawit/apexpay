@@ -1,0 +1,19 @@
+-- Down migration 0015 P0 business banking core
+drop table if exists virtual_account_transactions;
+drop table if exists virtual_accounts;
+drop table if exists bank_account_verifications;
+drop table if exists tax_accountants;
+drop table if exists tax_payments;
+drop table if exists petty_cash_expenses;
+drop table if exists petty_cash_budgets;
+drop table if exists purchase_orders;
+drop table if exists vendor_invoices;
+drop table if exists payout_links_enhanced;
+drop table if exists corporate_card_transactions;
+drop table if exists corporate_cards;
+drop table if exists escrow_agreements;
+drop table if exists escrow_accounts;
+drop table if exists debit_cards;
+drop table if exists cheque_books;
+drop table if exists current_account_opening_requests;
+drop table if exists current_accounts;
