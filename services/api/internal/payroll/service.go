@@ -124,6 +124,20 @@ type Repository interface {
 	ListClaimsByEmployee(ctx context.Context, merchantID, employeeID string, status *string) ([]ClaimEnhanced, error)
 	ApproveClaimManager(ctx context.Context, claimID, managerID string) error
 	ApproveClaimFinance(ctx context.Context, claimID, financeID string) error
+
+	// Escrow Accounts Automated Marketplace P2P Hold & Release
+	CreateEscrowAgreement(ctx context.Context, agreement *EscrowAgreement) error
+	GetEscrowAgreement(ctx context.Context, merchantID, agreementID string) (*EscrowAgreement, error)
+	CreateEscrowAccountTx(ctx context.Context, escrow *EscrowAccount, journal *ledger.Journal, entries []ledger.Entry) error
+	GetEscrowAccount(ctx context.Context, merchantID, escrowID string) (*EscrowAccount, error)
+	ReleaseEscrowTx(ctx context.Context, escrowID string, journal *ledger.Journal, entries []ledger.Entry, releaserID string) error
+	ReturnEscrowTx(ctx context.Context, escrowID string, journal *ledger.Journal, entries []ledger.Entry, returnerID, reason string) error
+	ListExpiredEscrowsForAutoRelease(ctx context.Context) ([]EscrowAccount, error)
+
+	// Payout Links Enhanced QR + Scan & Pay
+	CreateEnhancedPayoutLink(ctx context.Context, link *EnhancedPayoutLink) error
+	GetEnhancedPayoutLinkByToken(ctx context.Context, publicToken string) (*EnhancedPayoutLink, error)
+	ClaimEnhancedPayoutLinkTx(ctx context.Context, linkID, beneficiaryID string, journal *ledger.Journal, entries []ledger.Entry) error
 }
 
 type Service struct {

@@ -252,6 +252,183 @@ func (r *PgRepository) ApproveClaimFinance(ctx context.Context, claimID, finance
 	return err
 }
 
+// ==================== Escrow Accounts Automated Marketplace P2P Hold & Release ====================
+
+func (r *PgRepository) CreateEscrowAgreement(ctx context.Context, agreement *EscrowAgreement) error {
+	conditions, _ := json.Marshal(agreement.Conditions)
+	_, err := r.pool.Exec(ctx, `INSERT INTO escrow_agreements (id, merchant_id, agreement_number, title, description, buyer_merchant_id, seller_merchant_id, amount, currency, platform_fee_percent, withholding_tax_percent, conditions, auto_release, auto_release_after_days, status, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+		agreement.ID, agreement.MerchantID, agreement.AgreementNumber, agreement.Title, agreement.Description, agreement.BuyerMerchantID, agreement.SellerMerchantID, agreement.Amount.String(), agreement.Currency, agreement.PlatformFeePercent.String(), agreement.WithholdingTaxPercent.String(), string(conditions), agreement.AutoRelease, agreement.AutoReleaseAfterDays, agreement.Status, agreement.CreatedBy)
+	return err
+}
+
+func (r *PgRepository) GetEscrowAgreement(ctx context.Context, merchantID, agreementID string) (*EscrowAgreement, error) {
+	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, agreement_number, title, COALESCE(description,''), buyer_merchant_id, seller_merchant_id, amount::text, currency, platform_fee_percent::text, withholding_tax_percent::text, conditions, auto_release, auto_release_after_days, status FROM escrow_agreements WHERE merchant_id=$1 AND id=$2`, merchantID, agreementID)
+	var agr EscrowAgreement
+	var amount, feePct, taxPct, conditionsStr string
+	err := row.Scan(&agr.ID, &agr.MerchantID, &agr.AgreementNumber, &agr.Title, &agr.Description, &agr.BuyerMerchantID, &agr.SellerMerchantID, &amount, &agr.Currency, &feePct, &taxPct, &conditionsStr, &agr.AutoRelease, &agr.AutoReleaseAfterDays, &agr.Status)
+	if err != nil {
+		return nil, err
+	}
+	agr.Amount, _ = decimal.NewFromString(amount)
+	agr.PlatformFeePercent, _ = decimal.NewFromString(feePct)
+	agr.WithholdingTaxPercent, _ = decimal.NewFromString(taxPct)
+	_ = json.Unmarshal([]byte(conditionsStr), &agr.Conditions)
+	return &agr, nil
+}
+
+func (r *PgRepository) CreateEscrowAccountTx(ctx context.Context, escrow *EscrowAccount, journal *ledger.Journal, entries []ledger.Entry) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	_, err = tx.Exec(ctx, `INSERT INTO escrow_accounts (id, merchant_id, agreement_id, account_number, account_name, amount, currency, status, held_at, buyer_merchant_id, seller_merchant_id, order_id, order_amount, platform_fee, seller_amount, withholding_tax, ledger_book_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+		escrow.ID, escrow.MerchantID, escrow.AgreementID, escrow.AccountNumber, escrow.AccountName, escrow.Amount.String(), escrow.Currency, escrow.Status, escrow.HeldAt, escrow.BuyerMerchantID, escrow.SellerMerchantID, escrow.OrderID, escrow.OrderAmount.String(), escrow.PlatformFee.String(), escrow.SellerAmount.String(), escrow.WithholdingTax.String(), escrow.LedgerBookID)
+	if err != nil {
+		return err
+	}
+	// Ledger
+	_, err = tx.Exec(ctx, `INSERT INTO ledger_books (id, merchant_id, book_type, name, currency, status) VALUES ($1,$2,'escrow',$3,'ETB','open') ON CONFLICT (id) DO NOTHING`, journal.BookID, escrow.MerchantID, "Escrow "+escrow.AccountNumber)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO ledger_journals (id, book_id, posting_key, memo, reference_type, reference_id) VALUES ($1,$2,$3,$4,$5,$6)`, journal.ID, journal.BookID, journal.PostingKey, journal.Memo, journal.ReferenceType, journal.ReferenceID)
+	if err != nil {
+		return err
+	}
+	for _, e := range entries {
+		_, err = tx.Exec(ctx, `INSERT INTO ledger_entries (id, journal_id, book_id, account_id, direction, amount, currency) VALUES ($1,$2,$3,$4,$5,$6,$7)`, e.ID, e.JournalID, e.BookID, e.AccountID, e.Direction, e.Amount.String(), e.Currency)
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *PgRepository) GetEscrowAccount(ctx context.Context, merchantID, escrowID string) (*EscrowAccount, error) {
+	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, agreement_id, account_number, account_name, amount::text, currency, status, held_at, buyer_merchant_id, seller_merchant_id, order_id, order_amount::text, platform_fee::text, seller_amount::text, withholding_tax::text, ledger_book_id FROM escrow_accounts WHERE merchant_id=$1 AND id=$2`, merchantID, escrowID)
+	var esc EscrowAccount
+	var amount, orderAmount, fee, sellerAmt, withholding string
+	err := row.Scan(&esc.ID, &esc.MerchantID, &esc.AgreementID, &esc.AccountNumber, &esc.AccountName, &amount, &esc.Currency, &esc.Status, &esc.HeldAt, &esc.BuyerMerchantID, &esc.SellerMerchantID, &esc.OrderID, &orderAmount, &fee, &sellerAmt, &withholding, &esc.LedgerBookID)
+	if err != nil {
+		return nil, err
+	}
+	esc.Amount, _ = decimal.NewFromString(amount)
+	esc.OrderAmount, _ = decimal.NewFromString(orderAmount)
+	esc.PlatformFee, _ = decimal.NewFromString(fee)
+	esc.SellerAmount, _ = decimal.NewFromString(sellerAmt)
+	esc.WithholdingTax, _ = decimal.NewFromString(withholding)
+	return &esc, nil
+}
+
+func (r *PgRepository) ReleaseEscrowTx(ctx context.Context, escrowID string, journal *ledger.Journal, entries []ledger.Entry, releaserID string) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	_, err = tx.Exec(ctx, `UPDATE escrow_accounts SET status='released', release_at=now(), updated_at=now() WHERE id=$1`, escrowID)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO ledger_journals (id, book_id, posting_key, memo, reference_type, reference_id) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (book_id, posting_key) DO NOTHING`, journal.ID, journal.BookID, journal.PostingKey, journal.Memo, journal.ReferenceType, journal.ReferenceID)
+	if err != nil {
+		return err
+	}
+	for _, e := range entries {
+		_, err = tx.Exec(ctx, `INSERT INTO ledger_entries (id, journal_id, book_id, account_id, direction, amount, currency) VALUES ($1,$2,$3,$4,$5,$6,$7)`, e.ID, e.JournalID, e.BookID, e.AccountID, e.Direction, e.Amount.String(), e.Currency)
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *PgRepository) ReturnEscrowTx(ctx context.Context, escrowID string, journal *ledger.Journal, entries []ledger.Entry, returnerID, reason string) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	_, err = tx.Exec(ctx, `UPDATE escrow_accounts SET status='returned', return_at=now(), updated_at=now() WHERE id=$1`, escrowID)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO ledger_journals (id, book_id, posting_key, memo, reference_type, reference_id) VALUES ($1,$2,$3,$4,$5,$6)`, journal.ID, journal.BookID, journal.PostingKey, journal.Memo, journal.ReferenceType, journal.ReferenceID)
+	if err != nil {
+		return err
+	}
+	for _, e := range entries {
+		_, err = tx.Exec(ctx, `INSERT INTO ledger_entries (id, journal_id, book_id, account_id, direction, amount, currency) VALUES ($1,$2,$3,$4,$5,$6,$7)`, e.ID, e.JournalID, e.BookID, e.AccountID, e.Direction, e.Amount.String(), e.Currency)
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *PgRepository) ListExpiredEscrowsForAutoRelease(ctx context.Context) ([]EscrowAccount, error) {
+	rows, err := r.pool.Query(ctx, `SELECT id, merchant_id, account_number, amount::text FROM escrow_accounts WHERE status='held' AND expires_at <= now() AND (SELECT auto_release FROM escrow_agreements WHERE escrow_agreements.id = escrow_accounts.agreement_id) = true`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []EscrowAccount
+	for rows.Next() {
+		var esc EscrowAccount
+		var amount string
+		if err := rows.Scan(&esc.ID, &esc.MerchantID, &esc.AccountNumber, &amount); err != nil {
+			return nil, err
+		}
+		esc.Amount, _ = decimal.NewFromString(amount)
+		list = append(list, esc)
+	}
+	return list, nil
+}
+
+// ==================== Payout Links Enhanced QR + Scan & Pay ====================
+
+func (r *PgRepository) CreateEnhancedPayoutLink(ctx context.Context, link *EnhancedPayoutLink) error {
+	_, err := r.pool.Exec(ctx, `INSERT INTO payout_links_enhanced (id, merchant_id, amount, currency, public_token, qr_code_data, recipient_name, recipient_phone, recipient_email, purpose, status, expires_at, escrow_book_id, ledger_book_id, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+		link.ID, link.MerchantID, link.Amount.String(), link.Currency, link.PublicToken, link.QRCodeData, link.RecipientName, link.RecipientPhone, link.RecipientEmail, link.Purpose, link.Status, link.ExpiresAt, link.EscrowBookID, link.LedgerBookID, link.CreatedBy)
+	return err
+}
+
+func (r *PgRepository) GetEnhancedPayoutLinkByToken(ctx context.Context, publicToken string) (*EnhancedPayoutLink, error) {
+	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, amount::text, currency, public_token, COALESCE(qr_code_data,''), COALESCE(recipient_name,''), COALESCE(recipient_phone,''), COALESCE(recipient_email,''), COALESCE(purpose,''), status, expires_at, claimed_at, beneficiary_id, escrow_book_id, ledger_book_id FROM payout_links_enhanced WHERE public_token=$1`, publicToken)
+	var link EnhancedPayoutLink
+	var amount string
+	err := row.Scan(&link.ID, &link.MerchantID, &amount, &link.Currency, &link.PublicToken, &link.QRCodeData, &link.RecipientName, &link.RecipientPhone, &link.RecipientEmail, &link.Purpose, &link.Status, &link.ExpiresAt, &link.ClaimedAt, &link.BeneficiaryID, &link.EscrowBookID, &link.LedgerBookID)
+	if err != nil {
+		return nil, err
+	}
+	link.Amount, _ = decimal.NewFromString(amount)
+	return &link, nil
+}
+
+func (r *PgRepository) ClaimEnhancedPayoutLinkTx(ctx context.Context, linkID, beneficiaryID string, journal *ledger.Journal, entries []ledger.Entry) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	_, err = tx.Exec(ctx, `UPDATE payout_links_enhanced SET status='claimed', claimed_at=now(), beneficiary_id=$2, updated_at=now() WHERE id=$1`, linkID, beneficiaryID)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO ledger_journals (id, book_id, posting_key, memo, reference_type, reference_id) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (book_id, posting_key) DO NOTHING`, journal.ID, journal.BookID, journal.PostingKey, journal.Memo, journal.ReferenceType, journal.ReferenceID)
+	if err != nil {
+		return err
+	}
+	for _, e := range entries {
+		_, err = tx.Exec(ctx, `INSERT INTO ledger_entries (id, journal_id, book_id, account_id, direction, amount, currency) VALUES ($1,$2,$3,$4,$5,$6,$7)`, e.ID, e.JournalID, e.BookID, e.AccountID, e.Direction, e.Amount.String(), e.Currency)
+		if err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
 // ==================== Helpers for JSON ====================
 
 func toJSONLeave(v interface{}) string {
@@ -264,3 +441,4 @@ func toJSONLeave(v interface{}) string {
 
 var _ = time.Now
 var _ = toJSONLeave
+
