@@ -571,3 +571,111 @@ type AuditLog struct {
 	RequestID  string
 	CreatedAt  time.Time
 }
+
+// ==================== Payroll Calendar — Ethiopia Business Practice Cutoff 25th Disbursal 30th Pay Last Day Lock After Disbursal ====================
+
+type PayFrequency string
+
+const (
+	PayFrequencyMonthly     PayFrequency = "monthly"
+	PayFrequencySemimonthly PayFrequency = "semimonthly"
+	PayFrequencyWeekly      PayFrequency = "weekly"
+	PayFrequencyBiweekly    PayFrequency = "biweekly"
+)
+
+type PayrollCalendar struct {
+	ID           string
+	MerchantID   string
+	Name         string // e.g., Monthly Payroll Calendar 2026
+	Description  string
+	PayFrequency PayFrequency
+	Year         int
+	Month        *int // null for weekly
+	CutoffDay    int // Ethiopia business practice cutoff 25th
+	DisbursalDay int // disbursal 30th
+	PayDay       int // pay date last day of month
+	CutoffDate   time.Time // actual cutoff date e.g., 2026-07-25
+	DisbursalDate time.Time // e.g., 2026-07-30
+	PayDate      time.Time // e.g., 2026-07-31
+	IsLocked     bool
+	LockedAt     *time.Time
+	LockedBy     *string
+	CreatedBy    *string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+// ==================== Leave Management — Ethiopia Labour Proclamation 1156/2019 Art 77/82/86 ====================
+
+type LeaveBalance struct {
+	ID               string
+	MerchantID       string
+	EmployeeID       string
+	LeaveType        LeaveType
+	Year             int
+	EntitledDays     decimal.Decimal // e.g., annual 14 + years-1 up to 35 per Art 77
+	UsedDays         decimal.Decimal
+	RemainingDays    decimal.Decimal
+	CarryForwardDays decimal.Decimal
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+type LeaveRequest struct {
+	ID                         string
+	MerchantID                 string
+	EmployeeID                 string
+	LeaveType                  LeaveType
+	StartDate                  time.Time
+	EndDate                    time.Time
+	DaysRequested              decimal.Decimal // e.g., 2 days, 0.5 half day
+	Reason                     string
+	Status                     LeaveStatus
+	ApprovedBy                 *string
+	ApprovedAt                 *time.Time
+	RejectionReason            string
+	MedicalCertificateFileKey  *string // MinIO for sick >3 days per Art 82
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
+}
+
+// ==================== Loan EMI Schedule ====================
+
+type LoanEMISchedule struct {
+	ID                string
+	LoanID            string
+	InstallmentNo     int
+	DueDate           time.Time
+	EMIAmount         decimal.Decimal
+	PrincipalComponent decimal.Decimal
+	InterestComponent decimal.Decimal
+	OutstandingAfter  decimal.Decimal
+	Status            string // pending, paid, overdue, skipped
+	PaidAt            *time.Time
+	RunID             *string
+	CreatedAt         time.Time
+}
+
+// ==================== Claims Enhanced — Reimbursements MinIO ====================
+
+type ClaimEnhanced struct {
+	ID                 string
+	MerchantID         string
+	EmployeeID         string
+	RunID              *string
+	ClaimType          ClaimType
+	Amount             decimal.Decimal
+	Description        string
+	ReceiptFileKey     *string // MinIO presigned 15m TTL <5MB
+	ReceiptFileHash    *string
+	Status             string // pending, approved, rejected, paid
+	ApprovedByManager  *string
+	ApprovedByFinance  *string
+	ManagerApprovedAt  *time.Time
+	FinanceApprovedAt  *time.Time
+	RejectionReason    string
+	IsTaxable          bool
+	IsPensionable      bool
+	CreatedAt          time.Time
+}
+

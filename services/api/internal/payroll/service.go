@@ -97,6 +97,33 @@ type Repository interface {
 	CreatePortalAccess(ctx context.Context, access *EmployeePortalAccess) error
 	GetPortalAccessByHash(ctx context.Context, hash string) (*EmployeePortalAccess, error)
 	UpdatePortalAccessOnUse(ctx context.Context, hash string) error
+
+	// Payroll Calendar — Ethiopia Business Practice Cutoff 25th Disbursal 30th Pay Last Day Lock After Disbursal
+	CreateCalendar(ctx context.Context, cal *PayrollCalendar) error
+	ListCalendars(ctx context.Context, merchantID string, year int) ([]PayrollCalendar, error)
+	GetCalendar(ctx context.Context, merchantID, calendarID string) (*PayrollCalendar, error)
+	LockCalendar(ctx context.Context, merchantID, calendarID, lockedBy string) error
+	UnlockCalendar(ctx context.Context, merchantID, calendarID string) error
+
+	// Leave Management — Art 77 Annual 14+1 up to 35, Art 82 Sick 6 months, Art 86 Maternity 120 days
+	CreateLeaveBalance(ctx context.Context, balance *LeaveBalance) error
+	GetLeaveBalance(ctx context.Context, merchantID, employeeID string, leaveType LeaveType, year int) (*LeaveBalance, error)
+	UpdateLeaveBalance(ctx context.Context, balance *LeaveBalance) error
+	ListLeaveBalancesByEmployee(ctx context.Context, merchantID, employeeID string, year int) ([]LeaveBalance, error)
+	CreateLeaveRequest(ctx context.Context, req *LeaveRequest) error
+	GetLeaveRequest(ctx context.Context, merchantID, requestID string) (*LeaveRequest, error)
+	ListLeaveRequests(ctx context.Context, merchantID, employeeID string, year int, status *LeaveStatus) ([]LeaveRequest, error)
+	UpdateLeaveRequestStatus(ctx context.Context, requestID string, status LeaveStatus, approvedBy *string, rejectionReason string) error
+
+	// Loan EMI Schedule
+	CreateLoanEMIScheduleBulk(ctx context.Context, schedules []LoanEMISchedule) error
+	ListEMIScheduleByLoan(ctx context.Context, loanID string) ([]LoanEMISchedule, error)
+
+	// Claims Enhanced — Receipt Upload MinIO Approval Manager->Finance
+	CreateClaimEnhanced(ctx context.Context, claim *ClaimEnhanced) error
+	ListClaimsByEmployee(ctx context.Context, merchantID, employeeID string, status *string) ([]ClaimEnhanced, error)
+	ApproveClaimManager(ctx context.Context, claimID, managerID string) error
+	ApproveClaimFinance(ctx context.Context, claimID, financeID string) error
 }
 
 type Service struct {
