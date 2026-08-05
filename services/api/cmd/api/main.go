@@ -250,6 +250,13 @@ func main() {
 				})
 			})
 
+			// Payroll comprehensive — RazorpayX-grade full OS Week1-Week4
+			// New unified comprehensive payroll API under /v1/payroll (includes departments, structures, employees, runs, attendance, loans, compliance, F&F, portal)
+			r.Route("/payroll", func(r chi.Router) {
+				payrollHandler.Routes(r)
+			})
+
+			// Legacy compat — old paths /employees and /payroll_runs also expose full payroll handler for backward compat (will be deprecated after Week4)
 			r.Route("/employees", func(r chi.Router) {
 				payrollHandler.Routes(r)
 			})
