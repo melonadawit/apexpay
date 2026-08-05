@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { gregorianToEthiopian, formatEthiopianDate, getEnkutatashDate, isEnkutatash, ethiopianPublicHolidays } from "@/lib/ethiopian-calendar"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -20,12 +21,14 @@ const mockRequests = [
 ]
 
 export default function LeaveManagementPage() {
+  const ethToday = gregorianToEthiopian(new Date())
+  const enkutatash2026 = getEnkutatashDate(2026)
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Leave Management • የእረፍት አስተዳደር • Annual 14+1 up to 35 Sick 6 Months Maternity 120 Days (Art 77/82/86) • Ethiopia Labour Proclamation 1156/2019</h1>
-          <p className="text-sm text-muted-foreground mt-2">Annual Leave Art 77: 14 days first year +1 per year up to 35 max after 21 years cap, Sick Leave Art 82: Up to 6 months per 12 months first 30 days 100% pay next 60 days 50% pay remaining 90 days unpaid job protected medical certificate, Maternity Art 86: 120 consecutive days 30 prenatal +90 postnatal full pay, Paternity 3 days company policy beyond law, Marriage 3 days, Mourning 3 days, Unpaid, Comp Off, Study • Balance entitled used remaining carry_forward year • Request start_date end_date days_requested 0.5 half day reason status pending/approved/rejected/cancelled approved_by approved_at rejection_reason medical_certificate_file_key MinIO for sick >3 days per Art 82 • Payroll integration LOP calculation unpaid LOP+=days sick 50% LOP 50% etc • Outstanding modern UI glassmorphic</p>
+          <h1 className="text-3xl font-bold">Leave Management • የእረፍት አስተዳደር • Annual 14+1 up to 35 Sick 6 Months Maternity 120 Days (Art 77/82/86) • Ethiopian Calendar Enkutatash Meskerem 1 = Sept 11 • 13 Months</h1>
+          <p className="text-sm text-muted-foreground mt-2">Annual Leave Art 77: 14 days first year +1 per year up to 35 max after 21 years cap, Sick Leave Art 82: Up to 6 months per 12 months first 30 days 100% pay next 60 days 50% pay remaining 90 days unpaid job protected medical certificate, Maternity Art 86: 120 consecutive days 30 prenatal +90 postnatal full pay, Paternity 3 days company policy beyond law, Marriage 3 days, Mourning 3 days, Unpaid, Comp Off, Study • Balance entitled used remaining carry_forward year • Request start_date end_date days_requested 0.5 half day reason status pending/approved/rejected/cancelled approved_by approved_at rejection_reason medical_certificate_file_key MinIO for sick >3 days per Art 82 • Payroll integration LOP calculation unpaid LOP+=days sick 50% LOP 50% etc • Outstanding modern UI glassmorphic • Today Gregorian {new Date().toLocaleDateString()} • Ethiopian {ethToday.formatted} ({ethToday.formattedAm}) • Year {ethToday.year} Month {ethToday.month} {ethToday.monthName} {ethToday.monthNameAm} Day {ethToday.day} • Enkutatash {enkutatash2026.toLocaleDateString()} Meskerem 1 = Sept 11 Ethiopian New Year • አዲስ አመት • Public Holiday OT 2.0x per Art 90(2)</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
