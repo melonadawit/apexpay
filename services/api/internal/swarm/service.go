@@ -78,7 +78,7 @@ func (s *Service) Run(ctx context.Context, merchantID, userID, goal string) (*Sw
 
 	// 2. Critic checks - policy, amount thresholds, no ledger invent
 	confirmationRequired := false
-	var confData map[string]any
+	_ = map[string]any{} // confData placeholder for future confirmation data (was declared and not used)
 	totalAmount := 0.0
 	for _, step := range steps {
 		if def, ok := s.registry[step.Tool]; ok {

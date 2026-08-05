@@ -1,6 +1,7 @@
 package ledger
 
 import (
+	"context"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -32,12 +33,12 @@ type Entry struct {
 // Service handles balance updates - optimal with advisory locks per book
 type Service struct {
 	repo interface {
-		PostJournalTx(journal *Journal, entries []Entry) error
+		PostJournalTx(ctx context.Context, journal *Journal, entries []Entry) error
 	}
 }
 
 func NewService(repo interface {
-	PostJournalTx(journal *Journal, entries []Entry) error
+	PostJournalTx(ctx context.Context, journal *Journal, entries []Entry) error
 }) *Service {
 	// Define wrapper to avoid import cycle; we use same repo interface via type assertion in impl
 	return &Service{repo: repo}

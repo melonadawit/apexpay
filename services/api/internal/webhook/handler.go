@@ -25,7 +25,8 @@ func (h *Handler) Routes(r chi.Router) {
 func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 	merchantID, _ := r.Context().Value("merchant_id").(string)
 	var req struct {
-		URL, Secret string   `json:"url"`
+		URL string `json:"url"`
+		Secret string `json:"secret"`
 		Events      []string `json:"events"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -56,7 +57,7 @@ func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 	endpointID := id.New("we")
 	// In real, hash secret, store prefix whsec_
-	_, err := h.repo.pool.Exec(r.Context(), `INSERT INTO webhook_endpoints (id, merchant_id, url, secret_hash, secret_prefix, status, events) VALUES ($1,$2,$3,$4,$5,'active',$6)`,
+	_, err = h.repo.pool.Exec(r.Context(), `INSERT INTO webhook_endpoints (id, merchant_id, url, secret_hash, secret_prefix, status, events) VALUES ($1,$2,$3,$4,$5,'active',$6)`,
 		endpointID, merchantID, req.URL, "hash_"+req.Secret, req.Secret[:8], req.Events)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)

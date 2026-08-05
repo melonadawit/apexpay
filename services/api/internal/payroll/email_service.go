@@ -103,7 +103,7 @@ Content-Type: text/html; charset="UTF-8"
 <p><strong>Gross:</strong> ETB %s • <strong>Net Pay:</strong> <span style="color:#0B6E4F; font-size: 20px; font-weight: bold;">ETB %s</span></p>
 <p><strong>Password Hint:</strong> DOB DDMM + last4 %s • Bilingual EN/AM • YTD Gross/Tax/Net • Employer Pension 11%%</p>
 <p><strong>QR Verification:</strong> <a href="%s">%s</a> • Scan via ApexPay mobile app /qr/scan overlay 260 corner brackets pulse green + vibration Haptic • Signed JWT HMAC SHA256 expiry 24h</p>
-<p>Ledger M4 per run book Dr expense:salary %.2f Cr payroll_payable %.2f Cr et_income_tax %.2f Cr pension_payable balanced ValidateBalanced O(n) advisory lock • ET Tax Brackets Binary Search O(log n) • OT Map O(1) 1.25/1.5/2.0/1.3</p>
+<p>Ledger M4 per run book Dr expense:salary %s Cr payroll_payable %s Cr et_income_tax %s Cr pension_payable %s balanced ValidateBalanced O(n) advisory lock • ET Tax Brackets Binary Search O(log n) • OT Map O(1) 1.25/1.5/2.0/1.3</p>
 <p style="font-size:11px; color:#666;">This is computer generated payslip no signature required • Verified via ApexPay • FIN never logged sha256+last4 only • Encrypted AES-GCM • MinIO presigned 15m • Hash integrity • 7y retention NBE • Beyond RazorpayX: Fayda ID verification front/back <2MB + OTP consent id.gov.et VeriFayda, bank fuzzy Levenshtein <3, cost center allocation workforce Money OS, ledger per run book + payout batch + Telebirr/CBE/Bank IPS rails direct multi-bank disbursal better than RazorpayX business banking India-only, AI Swarm payroll assist goal Run payroll July bonus Sales confirmation modal outstanding, RAG compliance ask labor law 1156/2019 citations mandatory no hallucination guard 0.65 Amharic/English • Outstanding modern template QR verification signed JWT HMAC SHA256 expiry 24h • Password protected DOB DDMM + last4 • Bilingual EN/AM • Lottie confetti 3s full-screen canvas-confetti + haptics navigator.vibrate(50) • WhatsApp share share_plus + Telegram • Download ZIP 500 emps <2s p99</p>
 <p>Thank you,<br/>Apex Trading PLC • አፔክስ<br/>Payroll OS • ደሞዝ • RazorpayX-grade + Beyond Ethiopia-Native</p>
 </div>
@@ -121,7 +121,7 @@ Content-Disposition: attachment; filename="payslip_%s_%s.pdf"
 		req.Period, req.ToName, req.EmployeeCode, req.RunRef,
 		req.ToName, req.Period, req.Gross.StringFixed(2), req.NetPay.StringFixed(2),
 		req.PasswordHint, req.QRVerifyURL, req.QRVerifyURL,
-		req.Gross.InexactFloat64(), req.NetPay.InexactFloat64(), req.NetPay.InexactFloat64()*0.1, req.NetPay.InexactFloat64()*0.18,
+		req.Gross.StringFixed(2), req.NetPay.StringFixed(2), req.NetPay.Mul(decimal.NewFromFloat(0.1)).StringFixed(2), req.NetPay.Mul(decimal.NewFromFloat(0.18)).StringFixed(2),
 		req.EmployeeCode, req.Period,
 		req.EmployeeCode, req.Period,
 	)

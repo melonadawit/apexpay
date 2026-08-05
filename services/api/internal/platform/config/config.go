@@ -54,7 +54,30 @@ func Load() (*Config, error) {
 		}
 	}
 	if cfg.JWTSecret == "" {
-		return nil, fmt.Errorf("JWT_SECRET required")
+		if env := os.Getenv("JWT_SECRET"); env != "" {
+			cfg.JWTSecret = env
+		} else if env := os.Getenv("jwt_secret"); env != "" {
+			cfg.JWTSecret = env
+		} else {
+			return nil, fmt.Errorf("JWT_SECRET required")
+		}
+	}
+	if cfg.ConnectorEncKey == "" {
+		if env := os.Getenv("CONNECTOR_ENCRYPTION_KEY"); env != "" {
+			cfg.ConnectorEncKey = env
+		} else if env := os.Getenv("connector_encryption_key"); env != "" {
+			cfg.ConnectorEncKey = env
+		}
+	}
+	if cfg.FaydaPartnerCode == "" {
+		if env := os.Getenv("FAYDA_PARTNER_CODE"); env != "" {
+			cfg.FaydaPartnerCode = env
+		}
+	}
+	if cfg.FaydaPartnerKey == "" {
+		if env := os.Getenv("FAYDA_PARTNER_KEY"); env != "" {
+			cfg.FaydaPartnerKey = env
+		}
 	}
 	if cfg.ConnectorEncKey == "" && cfg.Env != "local" {
 		return nil, fmt.Errorf("CONNECTOR_ENCRYPTION_KEY required in non-local env")

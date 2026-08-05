@@ -22,7 +22,7 @@ type DeliveryRow struct {
 	Attempt    int
 }
 
-func (r *PgRepository) ListPendingDeliveries(ctx context.Context, limit int) ([]DeliveryRow, error) {
+func (r *PgRepository) ListPendingDeliveries(ctx context.Context, limit int) ([]Delivery, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT wd.id, wd.merchant_id, wd.endpoint_id, wd.event_type, wd.payload, we.url, we.secret_hash, wd.attempt_count
 		FROM webhook_deliveries wd
@@ -36,10 +36,10 @@ func (r *PgRepository) ListPendingDeliveries(ctx context.Context, limit int) ([]
 		return nil, err
 	}
 	defer rows.Close()
-	var list []DeliveryRow
+	var list []Delivery
 	for rows.Next() {
-		var d DeliveryRow
-		if err := rows.Scan(&d.ID, &d.MerchantID, &d.EndpointID, &d.EventType, &d.Payload, &d.URL, &d.Secret, &d.Attempt); err != nil {
+		var d Delivery
+		if err := rows.Scan(&d.ID, &d.MerchantID, &d.EndpointID, &d.EventType, &d.Payload, &d.URL, &d.Secret, &d.AttemptCount); err != nil {
 			return nil, err
 		}
 		list = append(list, d)

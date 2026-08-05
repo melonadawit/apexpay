@@ -368,15 +368,17 @@ func (h *Handler) BulkCreateEmployees(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	} else {
-		// CSV upload
+		// CSV upload — handle both multipart file and raw body as io.Reader O(n) papaparse
+		var reader io.Reader
 		file, _, err := r.FormFile("file")
 		if err != nil {
 			// Try reading raw body as CSV
-			file = r.Body
+			reader = r.Body
 		} else {
 			defer file.Close()
+			reader = file
 		}
-		csvReader := csv.NewReader(file)
+		csvReader := csv.NewReader(reader)
 		records, err := csvReader.ReadAll()
 		if err != nil {
 			pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "csv parse failed")
@@ -629,14 +631,16 @@ func (h *Handler) BulkAttendance(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	} else {
-		// CSV
-		file, _, err := r.FormFile("file")
+		// CSV — handle both multipart file and raw body as io.Reader O(n) papaparse
+		var reader2 io.Reader
+		file2, _, err := r.FormFile("file")
 		if err != nil {
-			file = r.Body
+			reader2 = r.Body
 		} else {
-			defer file.Close()
+			defer file2.Close()
+			reader2 = file2
 		}
-		csvReader := csv.NewReader(file)
+		csvReader := csv.NewReader(reader2)
 		records, err := csvReader.ReadAll()
 		if err != nil {
 			pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "csv parse failed")
@@ -808,7 +812,7 @@ func (h *Handler) GetPayslipPDF(w http.ResponseWriter, r *http.Request) {
 			OTHours: decimal.NewFromInt(5), OTAmount: decimal.NewFromInt(1250),
 			TaxableIncome: decimal.NewFromInt(19850), IncomeTax: decimal.NewFromInt(1800),
 			PensionEmployee: decimal.NewFromInt(1400), PensionEmployer: decimal.NewFromInt(2200),
-			NetPay: decimal.NewFromInt(16800), PaidDays: 25, LOPDays: 5, TotalDays: 0,
+			NetPay: decimal.NewFromInt(16800), PaidDays: 25, LOPDays: 5,
 			ProrationFactor: decimal.NewFromFloat(0.8333),
 			EarningsBreakdown: []EarningsBreakdown{{Code: "BASIC", Name: "Basic Salary", Amount: decimal.NewFromInt(16666)}, {Code: "HOUSING", Name: "Housing", Amount: decimal.NewFromInt(8333)}, {Code: "OT", Name: "Overtime", Amount: decimal.NewFromInt(1250)}},
 			DeductionsBreakdown: []DeductionsBreakdown{{Code: "INCOME_TAX", Name: "Income Tax", Amount: decimal.NewFromInt(1800)}, {Code: "PENSION_EMP", Name: "Pension 7%", Amount: decimal.NewFromInt(1400)}},

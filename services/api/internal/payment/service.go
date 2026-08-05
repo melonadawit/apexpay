@@ -48,7 +48,7 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	// Routing evaluation
 	decision, err := s.router.Evaluate(ctx, req.MerchantID, req.Amount, req.Currency, req.Method)
 	if err != nil {
-		decision = &routing.Decision{Chosen: "mock", Primary: "mock", Reason: "router error fallback mock"}
+		decision = &routing.RoutingDecision{Chosen: routing.ConnectorMock, Primary: routing.ConnectorMock, Reason: "router error fallback mock"}
 	}
 
 	connID := string(decision.Chosen)

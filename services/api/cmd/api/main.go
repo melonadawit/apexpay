@@ -199,7 +199,6 @@ func main() {
 			})
 
 			r.Route("/customers", func(r chi.Router) {
-				r.Post("/", subHandler.Routes) // will be handled via subHandler internal but for skeleton we expose customer create via same handler
 				// Actually mount customer endpoint directly
 				r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 					// delegate to subHandler CreateCustomer
@@ -228,10 +227,7 @@ func main() {
 			})
 
 			r.Route("/beneficiaries", func(r chi.Router) {
-				r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-					// create beneficiary via payout handler
-					payoutHandler.Routes(r)
-				})
+				r.Post("/", payoutHandler.CreateBeneficiary)
 				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 					pkghttp.WriteJSON(w, r, 200, []interface{}{})
 				})
@@ -242,12 +238,8 @@ func main() {
 			})
 
 			r.Route("/payout_batches", func(r chi.Router) {
-				r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
-					payoutHandler.Routes(r)
-				})
-				r.Post("/{id}/approve", func(w http.ResponseWriter, r *http.Request) {
-					payoutHandler.Routes(r)
-				})
+				r.Get("/{id}", payoutHandler.GetBatch)
+				r.Post("/{id}/approve", payoutHandler.ApproveBatch)
 			})
 
 			// Payroll comprehensive — RazorpayX-grade full OS Week1-Week4

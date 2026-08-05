@@ -25,7 +25,9 @@ func (h *Handler) Routes(r chi.Router) {
 func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
 	merchantID, _ := r.Context().Value("merchant_id").(string)
 	var req struct {
-		Email, Phone, Name string `json:"email"`
+		Email string `json:"email"`
+		Phone string `json:"phone"`
+		Name string `json:"name"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&req)
 	cust := &Customer{ID: id.NewCustomer(), MerchantID: merchantID, Email: req.Email, Phone: req.Phone, Name: req.Name}
@@ -64,7 +66,8 @@ func (h *Handler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
 	merchantID, _ := r.Context().Value("merchant_id").(string)
 	var req struct {
-		CustomerID, PlanID string `json:"customer_id"`
+		CustomerID string `json:"customer_id"`
+		PlanID     string `json:"plan_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")

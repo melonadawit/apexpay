@@ -491,6 +491,7 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 		"last_month_gross":      totalGross.Mul(decimal.NewFromFloat(0.95)).String(),
 		"change_reason":         "OT increase + bonus for Sales",
 	}
+	_ = variance // used for future variance report storage in payroll_runs variance_report JSON
 
 	// Bulk create items Tx
 	if err := s.repo.BulkCreateItems(ctx, items); err != nil {

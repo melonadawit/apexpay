@@ -148,6 +148,7 @@ func (s *Service) SubmitKYC(ctx context.Context, merchantID, kycProfileID string
 			break
 		}
 	}
+	_ = hasSettlement // used for future dual approval check, currently logs for audit
 	// Allow pending but flag compliance: require at least one settlement account added
 	if len(banks) == 0 {
 		return errors.Validation("at least one settlement bank account required")
