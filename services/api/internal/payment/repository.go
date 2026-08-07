@@ -46,7 +46,7 @@ func (r *PgRepository) CreatePaymentTx(ctx context.Context, p *Payment, outboxEv
 
 	if idempotencyKey != "" {
 		command, err := tx.Exec(ctx, `UPDATE idempotency_keys SET state='completed', resource_id=$3, response_code=201,
-			response_body=jsonb_build_object('id',$3) WHERE merchant_id=$1 AND key=$2 AND state='in_progress'`, p.MerchantID, idempotencyKey, p.ID)
+			response_body=jsonb_build_object('id',$3) WHERE merchant_id=$1 AND key=$2 AND state='connector_started'`, p.MerchantID, idempotencyKey, p.ID)
 		if err != nil { return err }
 		if command.RowsAffected() != 1 { return fmt.Errorf("idempotency reservation was not available for completion") }
 	}
@@ -142,9 +142,18 @@ func (r *PgRepository) ReserveIdempotency(ctx context.Context, merchantID, key, 
 	return nil, ErrIdempotencyInProgress
 }
 
+
+func (r *PgRepository) MarkConnectorStarted(ctx context.Context, merchantID, key string) error {
+	command, err := r.pool.Exec(ctx, `UPDATE idempotency_keys SET state='connector_started'
+		WHERE merchant_id=$1 AND key=$2 AND state='in_progress'`, merchantID, key)
+	if err != nil { return err }
+	if command.RowsAffected() != 1 { return fmt.Errorf("idempotency reservation was not available before connector call") }
+	return nil
+}
+
 func (r *PgRepository) FailIdempotency(ctx context.Context, merchantID, key string) error {
 	_, err := r.pool.Exec(ctx, `UPDATE idempotency_keys SET state='failed', response_code=502,
-		response_body='{"error":"initialization_failed"}'::jsonb WHERE merchant_id=$1 AND key=$2 AND state='in_progress'`, merchantID, key)
+		response_body='{"error":"initialization_failed"}'::jsonb WHERE merchant_id=$1 AND key=$2 AND state IN ('in_progress','connector_started')`, merchantID, key)
 	return err
 }
 

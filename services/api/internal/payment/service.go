@@ -21,6 +21,7 @@ type Repository interface {
 	GetByTxRef(ctx context.Context, merchantID, txRef string) (*Payment, error)
 	UpdateStatusTx(ctx context.Context, paymentID string, status Status, journal *ledger.Journal, entries []ledger.Entry, succeededAt *time.Time) error
 	ReserveIdempotency(ctx context.Context, merchantID, key, requestHash string) (*Payment, error)
+	MarkConnectorStarted(ctx context.Context, merchantID, key string) error
 	FailIdempotency(ctx context.Context, merchantID, key string) error
 	Mark2FAVerified(ctx context.Context, merchantID, paymentID string) error
 }
@@ -78,6 +79,11 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 		requires2FA = true
 	}
 
+	// Persist this boundary before the external call. A crash after this point is
+	// operationally ambiguous and must be reconciled, never blindly retried.
+	if req.IdempotencyKey != "" {
+		if err := s.repo.MarkConnectorStarted(ctx, req.MerchantID, req.IdempotencyKey); err != nil { return nil, err }
+	}
 	// Connector Initialize
 	initResp, err := conn.(connector.Connector).Initialize(ctx, connector.InitializeRequest{
 		MerchantID: req.MerchantID, Amount: req.Amount.String(), Currency: req.Currency, TxRef: req.TxRef, ReturnURL: req.ReturnURL,
