@@ -12,6 +12,9 @@ type Case struct {
 	MerchantID string `json:"merchant_id"`
 	IdempotencyKey string `json:"idempotency_key"`
 	TxRef string `json:"tx_ref"`
+	RequestHash string `json:"request_hash"`
+	ConnectorState string `json:"connector_state"`
+	CreatedAt string `json:"created_at"`
 	Status string `json:"status"`
 	ReviewerID *string `json:"reviewer_id,omitempty"`
 	ReviewerNote *string `json:"reviewer_note,omitempty"`
@@ -22,11 +25,12 @@ func NewService(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
 func (s *Service) ListOpen(ctx context.Context, limit int) ([]Case, error) {
 	if limit < 1 || limit > 100 { limit = 50 }
-	rows, err := s.pool.Query(ctx, `SELECT c.merchant_id,c.idempotency_key,COALESCE(c.tx_ref,''),c.status,c.reviewer_id,c.reviewer_note
-		FROM payment_reconciliation_cases c WHERE c.status IN ('open','requires_connector_investigation') ORDER BY c.created_at ASC LIMIT $1`, limit)
+	rows, err := s.pool.Query(ctx, `SELECT c.merchant_id,c.idempotency_key,COALESCE(c.tx_ref,''),i.request_hash,i.state,c.created_at::text,c.status,c.reviewer_id,c.reviewer_note
+		FROM payment_reconciliation_cases c JOIN idempotency_keys i ON i.merchant_id=c.merchant_id AND i.key=c.idempotency_key
+		WHERE c.status IN ('open','requires_connector_investigation') ORDER BY c.created_at ASC LIMIT $1`, limit)
 	if err != nil { return nil, err }; defer rows.Close()
 	var cases []Case
-	for rows.Next() { var c Case; if err := rows.Scan(&c.MerchantID,&c.IdempotencyKey,&c.TxRef,&c.Status,&c.ReviewerID,&c.ReviewerNote); err != nil{return nil,err}; cases=append(cases,c) }
+	for rows.Next() { var c Case; if err := rows.Scan(&c.MerchantID,&c.IdempotencyKey,&c.TxRef,&c.RequestHash,&c.ConnectorState,&c.CreatedAt,&c.Status,&c.ReviewerID,&c.ReviewerNote); err != nil{return nil,err}; cases=append(cases,c) }
 	return cases, rows.Err()
 }
 
