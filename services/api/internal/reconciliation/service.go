@@ -46,3 +46,15 @@ func (s *Service) Decide(ctx context.Context, merchantID, key, decision, reviewe
 	_,err=tx.Exec(ctx,`INSERT INTO outbox_events (id,merchant_id,aggregate_type,aggregate_id,event_type,payload) VALUES ($1,$2,'payment_reconciliation',$3,'payment.reconciliation.'||$4,jsonb_build_object('decision',$4,'idempotency_key',$3))`,id.NewOutbox(),merchantID,key,decision)
 	if err!=nil{return err}; return tx.Commit(ctx)
 }
+
+// StoreStatementLines persists already validated normalized data. The raw source
+// remains in object storage; only normalized operational fields are indexed here.
+func (s *Service) StoreStatementLines(ctx context.Context, statementID string, lines []StatementLine) error {
+	tx, err := s.pool.Begin(ctx); if err != nil { return err }; defer func(){ _ = tx.Rollback(ctx) }()
+	for _, line := range lines {
+		_, err = tx.Exec(ctx, `INSERT INTO recon_statement_lines (id,statement_id,external_transaction_id,connector_ref,amount,currency,occurred_at)
+			VALUES ($1,$2,$3,$4,$5,$6,$7)`, id.New("rline"),statementID,line.ID,line.ConnectorRef,line.Amount.String(),line.Currency,line.OccurredAt)
+		if err != nil { return err }
+	}
+	return tx.Commit(ctx)
+}
