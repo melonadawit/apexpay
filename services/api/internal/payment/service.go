@@ -2,7 +2,10 @@ package payment
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"apexpay/internal/connector"
@@ -17,7 +20,7 @@ type Repository interface {
 	CreatePaymentTx(ctx context.Context, p *Payment, outboxEventID string) error
 	GetByTxRef(ctx context.Context, merchantID, txRef string) (*Payment, error)
 	UpdateStatusTx(ctx context.Context, paymentID string, status Status, journal *ledger.Journal, entries []ledger.Entry, succeededAt *time.Time) error
-	GetIdempotency(ctx context.Context, merchantID, key string) (*Payment, error)
+	GetIdempotency(ctx context.Context, merchantID, key string) (*Payment, string, error)
 	SaveIdempotency(ctx context.Context, merchantID, key, requestHash string, payment *Payment) error
 	Mark2FAVerified(ctx context.Context, merchantID, paymentID string) error
 }
@@ -39,9 +42,12 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	if req.Amount.LessThanOrEqual(decimal.Zero) {
 		return nil, errors.Validation("amount must be >0")
 	}
-	// Idempotency check
+	// Idempotency keys are scoped to a merchant and bound to a canonical request.
+	// Reusing a key with different business inputs is a conflict, never a new charge.
+	requestHash := canonicalRequestHash(req)
 	if req.IdempotencyKey != "" {
-		if existing, _ := s.repo.GetIdempotency(ctx, req.MerchantID, req.IdempotencyKey); existing != nil {
+		if existing, storedHash, err := s.repo.GetIdempotency(ctx, req.MerchantID, req.IdempotencyKey); err == nil && existing != nil {
+			if storedHash != requestHash { return nil, errors.Conflict(errors.CodeDuplicateTxRef, "idempotency key reused with a different request") }
 			return existing, nil
 		}
 	}
@@ -103,12 +109,20 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	}
 
 	if req.IdempotencyKey != "" {
-		_ = s.repo.SaveIdempotency(ctx, req.MerchantID, req.IdempotencyKey, req.TxRef, p)
+		_ = s.repo.SaveIdempotency(ctx, req.MerchantID, req.IdempotencyKey, requestHash, p)
 	}
 
 	return p, nil
 }
 
+
+func canonicalRequestHash(req InitializeRequest) string {
+	// Delimit and normalize all fields that change the business operation.
+	// Do not include presentation-only whitespace or the idempotency key itself.
+	canonical := strings.Join([]string{req.TxRef, req.Amount.String(), strings.ToUpper(req.Currency), strings.ToLower(req.Method), req.CustomerEmail, req.ReturnURL, req.CallbackURL}, "\x1f")
+	digest := sha256.Sum256([]byte(canonical))
+	return hex.EncodeToString(digest[:])
+}
 
 // Verify2FA persists authorization before a payment can be verified/captured. A real
 // challenge provider is mandatory outside local development; the legacy demo OTP is

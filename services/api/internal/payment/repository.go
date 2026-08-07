@@ -117,14 +117,22 @@ func (r *PgRepository) UpdateStatusTx(ctx context.Context, paymentID string, sta
 	return tx.Commit(ctx)
 }
 
-func (r *PgRepository) GetIdempotency(ctx context.Context, merchantID, key string) (*Payment, error) {
-	// Simplified idempotency lookup via idempotency_keys table -> payment id
-	var paymentID string
-	err := r.pool.QueryRow(ctx, `SELECT resource_id FROM idempotency_keys WHERE merchant_id=$1 AND key=$2`, merchantID, key).Scan(&paymentID)
-	if err != nil {
-		return nil, err
-	}
-	return r.GetByTxRef(ctx, merchantID, paymentID) // placeholder, should get by id
+func (r *PgRepository) GetIdempotency(ctx context.Context, merchantID, key string) (*Payment, string, error) {
+	var paymentID, requestHash string
+	err := r.pool.QueryRow(ctx, `SELECT resource_id, request_hash FROM idempotency_keys WHERE merchant_id=$1 AND key=$2 AND resource_type='payment'`, merchantID, key).Scan(&paymentID, &requestHash)
+	if err != nil { return nil, "", err }
+	p, err := r.getByID(ctx, merchantID, paymentID)
+	if err != nil { return nil, "", err }
+	return p, requestHash, nil
+}
+
+func (r *PgRepository) getByID(ctx context.Context, merchantID, paymentID string) (*Payment, error) {
+	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, tx_ref, amount::text, currency, status, connector_id, connector_ref, fee_amount::text, net_amount::text, requires_2fa, two_fa_verified, checkout_url FROM payments WHERE merchant_id=$1 AND id=$2`, merchantID, paymentID)
+	var p Payment
+	var amount, fee, net string
+	if err := row.Scan(&p.ID, &p.MerchantID, &p.TxRef, &amount, &p.Currency, &p.Status, &p.ConnectorID, &p.ConnectorRef, &fee, &net, &p.Requires2FA, &p.TwoFAVerified, &p.CheckoutURL); err != nil { return nil, err }
+	p.Amount, _ = decimal.NewFromString(amount); p.FeeAmount, _ = decimal.NewFromString(fee); p.NetAmount, _ = decimal.NewFromString(net)
+	return &p, nil
 }
 
 func (r *PgRepository) SaveIdempotency(ctx context.Context, merchantID, key, requestHash string, payment *Payment) error {
