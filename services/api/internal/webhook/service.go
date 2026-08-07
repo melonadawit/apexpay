@@ -8,6 +8,8 @@ import (
 	"encoding/hex"
 	"net/http"
 	"time"
+
+	platformcrypto "apexpay/internal/platform/crypto"
 )
 
 // Service delivers webhooks with HMAC signing + retry exponential backoff + SSRF block
@@ -32,12 +34,13 @@ type Repository interface {
 type Service struct {
 	repo   Repository
 	client *http.Client
+	encryptionKey []byte
 }
 
-func NewService(repo Repository) *Service {
+func NewService(repo Repository, encryptionKey []byte) *Service {
 	return &Service{
 		repo:   repo,
-		client: &http.Client{Timeout: 10 * time.Second},
+		client: &http.Client{Timeout: 10 * time.Second}, encryptionKey: encryptionKey,
 	}
 }
 
@@ -54,7 +57,14 @@ func (s *Service) Deliver(ctx context.Context, d Delivery) error {
 		return s.repo.MarkFailed(ctx, d.ID, 0, "SSRF blocked private range", time.Now().Add(1*time.Hour))
 	}
 
-	sig := Sign(d.Payload, d.Secret)
+	secret := d.Secret
+	if len(d.EncryptedSecret) > 0 {
+		plain, err := platformcrypto.Decrypt(s.encryptionKey, d.EncryptedSecret)
+		if err != nil { return s.repo.MarkFailed(ctx, d.ID, 0, "webhook secret decrypt failed", time.Now().Add(time.Hour)) }
+		secret = string(plain)
+	}
+	if secret == "" { return s.repo.MarkFailed(ctx, d.ID, 0, "webhook secret unavailable", time.Now().Add(time.Hour)) }
+	sig := Sign(d.Payload, secret)
 	req, err := http.NewRequestWithContext(ctx, "POST", d.URL, bytes.NewReader(d.Payload))
 	if err != nil {
 		return err

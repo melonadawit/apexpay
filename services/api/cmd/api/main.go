@@ -116,7 +116,7 @@ func main() {
 	routingHandler := routing.NewHandler(routingSvc)
 	swarmHandler := swarm.NewHandler(swarmSvc)
 	linkHandler := link.NewHandler(linkSvc)
-	webhookHandler := webhook.NewHandler(webhookRepo)
+	webhookHandler := webhook.NewHandler(webhookRepo, []byte(cfg.ConnectorEncKey))
 	reconciliationHandler := reconciliation.NewHandler(reconciliationSvc)
 
 	authMw := mw.NewAuth(pool)

@@ -7,14 +7,15 @@ import (
 	"net/url"
 
 	"apexpay/internal/id"
+	platformcrypto "apexpay/internal/platform/crypto"
 	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 )
 
-type Handler struct{ repo *PgRepository }
+type Handler struct{ repo *PgRepository; encryptionKey []byte }
 
-func NewHandler(repo *PgRepository) *Handler { return &Handler{repo: repo} }
+func NewHandler(repo *PgRepository, encryptionKey []byte) *Handler { return &Handler{repo: repo, encryptionKey: encryptionKey} }
 
 func (h *Handler) Routes(r chi.Router) {
 	r.Post("/endpoints", h.CreateEndpoint)
@@ -56,10 +57,12 @@ func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	if len(req.Secret) < 16 { pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "webhook secret must be at least 16 characters"); return }
 	endpointID := id.New("we")
-	// In real, hash secret, store prefix whsec_
-	_, err = h.repo.pool.Exec(r.Context(), `INSERT INTO webhook_endpoints (id, merchant_id, url, secret_hash, secret_prefix, status, events) VALUES ($1,$2,$3,$4,$5,'active',$6)`,
-		endpointID, merchantID, req.URL, "hash_"+req.Secret, req.Secret[:8], req.Events)
+	encryptedSecret, err := platformcrypto.Encrypt(h.encryptionKey, []byte(req.Secret))
+	if err != nil { pkghttp.WriteError(w, r, err); return }
+	_, err = h.repo.pool.Exec(r.Context(), `INSERT INTO webhook_endpoints (id, merchant_id, url, secret_hash, secret_prefix, secret_encrypted, status, events) VALUES ($1,$2,$3,$4,$5,$6,'active',$7)`,
+		endpointID, merchantID, req.URL, "hash_"+req.Secret, req.Secret[:8], encryptedSecret, req.Events)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
 		return

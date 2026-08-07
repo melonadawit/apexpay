@@ -9,6 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"apexpay/internal/platform/config"
 	"apexpay/internal/platform/logger"
+	"apexpay/internal/webhook"
 )
 
 // Worker entrypoint - outbox drain, webhook retry, health sampler 30s, dunning 1d/3d/5d, recon daily 02:00 Africa/Addis_Ababa, swarm executor, payroll calc
@@ -30,6 +31,8 @@ func main() {
 	defer pool.Close()
 
 	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisURL})
+	webhookRepo := webhook.NewPgRepository(pool)
+	webhookSvc := webhook.NewService(webhookRepo, []byte(cfg.ConnectorEncKey))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -60,7 +63,18 @@ func main() {
 		}
 	}()
 
-	// Webhook retry goroutine - polls webhook_deliveries status pending/failed where next_attempt_at <= now()
+	// Outbox publisher and delivery executor. Claiming/publishing is transactional;
+	// delivery itself is retried with bounded exponential backoff by webhook.Service.
+	go func() {
+		ticker := time.NewTicker(time.Second); defer ticker.Stop()
+		for { select { case <-ctx.Done(): return; case <-ticker.C:
+			if _, err := webhookRepo.PublishOutbox(ctx, 100); err != nil { l.Error().Err(err).Msg("outbox publish failed") }
+			deliveries, err := webhookRepo.ListPendingDeliveries(ctx, 100); if err != nil { l.Error().Err(err).Msg("webhook delivery poll failed"); continue }
+			for _, delivery := range deliveries { if err := webhookSvc.Deliver(ctx, delivery); err != nil { l.Error().Err(err).Str("delivery_id", delivery.ID).Msg("webhook delivery failed") } }
+		} }
+	}()
+
+	// Webhook retry goroutine - retained for future dead-letter analytics.
 	go func() {
 		ticker := time.NewTicker(2 * time.Second)
 		for {
