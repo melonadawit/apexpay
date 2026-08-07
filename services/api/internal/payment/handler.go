@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"apexpay/internal/platform/errors"
+	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
@@ -23,7 +24,7 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) Initialize(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		TxRef         string `json:"tx_ref"`
 		Amount        string `json:"amount"`
@@ -73,7 +74,7 @@ func (h *Handler) Initialize(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Verify(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	txRef := chi.URLParam(r, "tx_ref")
 	p, err := h.svc.Verify(r.Context(), VerifyRequest{MerchantID: merchantID, TxRef: txRef})
 	if err != nil {

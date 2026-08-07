@@ -27,10 +27,13 @@ func MerchantIDFromContext(ctx context.Context) (string, bool) {
 	merchantID, ok := ctx.Value(CtxMerchantID).(string)
 	return merchantID, ok && merchantID != ""
 }
+// MerchantID returns an empty string only when authentication middleware did not establish a tenant.
+func MerchantID(ctx context.Context) string { merchantID, _ := MerchantIDFromContext(ctx); return merchantID }
 func UserIDFromContext(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value(CtxUserID).(string)
 	return userID, ok && userID != ""
 }
+func UserID(ctx context.Context) string { userID, _ := UserIDFromContext(ctx); return userID }
 func APIKeyIDFromContext(ctx context.Context) (string, bool) {
 	keyID, ok := ctx.Value(CtxAPIKeyID).(string)
 	return keyID, ok && keyID != ""

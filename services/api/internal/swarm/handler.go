@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 )
@@ -19,8 +20,8 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) Run(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
-	userID, _ := r.Context().Value("user_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
+	userID, _ := mw.UserID(r.Context())
 	var req struct {
 		Goal string `json:"goal"`
 	}

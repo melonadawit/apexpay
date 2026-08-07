@@ -6,6 +6,7 @@ import (
 
 	"apexpay/internal/id"
 	"apexpay/internal/platform/crypto"
+	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"apexpay/internal/platform/storage"
 	"github.com/go-chi/chi/v5"
@@ -72,7 +73,7 @@ func (h *Handler) CreateKYC(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetKYC(w http.ResponseWriter, r *http.Request) {
-	merchantID := r.Context().Value("merchant_id").(string)
+	merchantID := mw.MerchantID(r.Context())
 	idStr := chi.URLParam(r, "id")
 	p, err := h.svc.repo.GetKYCProfile(r.Context(), merchantID, idStr)
 	if err != nil {
@@ -209,8 +210,8 @@ func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {
 	merchantID := r.URL.Query().Get("merchant_id")
 	if merchantID == "" {
 		// try context
-		if v := r.Context().Value("merchant_id"); v != nil {
-			merchantID = v.(string)
+		if authenticatedMerchantID := mw.MerchantID(r.Context()); authenticatedMerchantID != "" {
+			merchantID = authenticatedMerchantID
 		}
 	}
 	profile, err := h.svc.repo.GetLatestKYCProfile(r.Context(), merchantID)

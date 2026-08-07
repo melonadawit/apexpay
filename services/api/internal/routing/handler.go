@@ -3,6 +3,7 @@ package routing
 import (
 	"net/http"
 
+	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
@@ -19,7 +20,7 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) Ranked(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	amountStr := r.URL.Query().Get("amount")
 	currency := r.URL.Query().Get("currency")
 	if currency == "" {
@@ -39,7 +40,7 @@ func (h *Handler) Ranked(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListRules(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	mID := &merchantID
 	rules, err := h.svc.repo.ListRules(r.Context(), mID)
 	if err != nil {

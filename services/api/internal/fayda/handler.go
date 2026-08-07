@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 )
@@ -27,8 +28,8 @@ func (h *Handler) Init(w http.ResponseWriter, r *http.Request) {
 	}
 	// merchant_id from context or body
 	if req.MerchantID == "" {
-		if v := r.Context().Value("merchant_id"); v != nil {
-			req.MerchantID = v.(string)
+		if merchantID := mw.MerchantID(r.Context()); merchantID != "" {
+			req.MerchantID = merchantID
 		}
 	}
 	req.ConsentIP = r.RemoteAddr

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"apexpay/internal/id"
+	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
@@ -111,7 +112,7 @@ func (h *Handler) Routes(r chi.Router) {
 // ==================== Org Hierarchy Handlers ====================
 
 func (h *Handler) CreateDepartment(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		Name       string `json:"name"`
 		NameAM     string `json:"name_am"`
@@ -135,7 +136,7 @@ func (h *Handler) CreateDepartment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListDepartments(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	list, err := h.svc.repo.ListDepartments(r.Context(), merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -145,7 +146,7 @@ func (h *Handler) ListDepartments(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateDesignation(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		Title       string `json:"title"`
 		TitleAM     string `json:"title_am"`
@@ -165,13 +166,13 @@ func (h *Handler) CreateDesignation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListDesignations(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	list, _ := h.svc.repo.ListDesignations(r.Context(), merchantID)
 	pkghttp.WriteJSON(w, r, 200, list)
 }
 
 func (h *Handler) CreateGrade(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		Name      string `json:"name"`
 		NameAM    string `json:"name_am"`
@@ -194,7 +195,7 @@ func (h *Handler) CreateGrade(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateBranch(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		Name    string `json:"name"`
 		NameAM  string `json:"name_am"`
@@ -217,7 +218,7 @@ func (h *Handler) CreateBranch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListBranches(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	list, _ := h.svc.repo.ListBranches(r.Context(), merchantID)
 	pkghttp.WriteJSON(w, r, 200, list)
 }
@@ -225,7 +226,7 @@ func (h *Handler) ListBranches(w http.ResponseWriter, r *http.Request) {
 // ==================== Salary Structure ====================
 
 func (h *Handler) CreateSalaryStructure(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		Name        string `json:"name"`
 		NameAM      string `json:"name_am"`
@@ -279,7 +280,7 @@ func (h *Handler) CreateSalaryStructure(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *Handler) ListSalaryStructures(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	list, err := h.svc.repo.ListSalaryStructures(r.Context(), merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -289,7 +290,7 @@ func (h *Handler) ListSalaryStructures(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetSalaryStructure(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	idParam := chi.URLParam(r, "id")
 	s, err := h.svc.repo.GetSalaryStructure(r.Context(), merchantID, idParam)
 	if err != nil {
@@ -302,7 +303,7 @@ func (h *Handler) GetSalaryStructure(w http.ResponseWriter, r *http.Request) {
 // ==================== Employees ====================
 
 func (h *Handler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeCode      string `json:"employee_code"`
 		Name              string `json:"name"`
@@ -364,7 +365,7 @@ func (h *Handler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) BulkCreateEmployees(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	// Accept CSV multipart or JSON array
 	// For simplicity support JSON array and CSV file upload via FormFile
 	contentType := r.Header.Get("Content-Type")
@@ -449,7 +450,7 @@ func (h *Handler) BulkCreateEmployees(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListEmployees(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	list, err := h.svc.repo.ListEmployees(r.Context(), merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -459,7 +460,7 @@ func (h *Handler) ListEmployees(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetEmployee(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	empID := chi.URLParam(r, "id")
 	emp, err := h.svc.repo.GetEmployeeWithStructure(r.Context(), merchantID, empID)
 	if err != nil {
@@ -470,7 +471,7 @@ func (h *Handler) GetEmployee(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetYTD(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	empID := chi.URLParam(r, "id")
 	yearStr := r.URL.Query().Get("year")
 	year := 2026
@@ -490,7 +491,7 @@ func (h *Handler) GetYTD(w http.ResponseWriter, r *http.Request) {
 // ==================== Salary Revisions ====================
 
 func (h *Handler) CreateSalaryRevision(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	empID := chi.URLParam(r, "id")
 	var req struct {
 		NewBase        string `json:"new_base"`
@@ -538,7 +539,7 @@ func (h *Handler) CreateSalaryRevision(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListSalaryRevisions(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	empID := chi.URLParam(r, "id")
 	list, _ := h.svc.repo.ListSalaryRevisions(r.Context(), merchantID, empID)
 	pkghttp.WriteJSON(w, r, 200, list)
@@ -547,7 +548,7 @@ func (h *Handler) ListSalaryRevisions(w http.ResponseWriter, r *http.Request) {
 // ==================== Loans ====================
 
 func (h *Handler) CreateLoan(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeID   string `json:"employee_id"`
 		LoanType     string `json:"loan_type"` // personal, salary_advance
@@ -591,7 +592,7 @@ func (h *Handler) ListLoans(w http.ResponseWriter, r *http.Request) {
 // ==================== Payroll Runs ====================
 
 func (h *Handler) CreateRun(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		RunRef       string `json:"run_ref"`
 		PeriodMonth  int    `json:"period_month"`
@@ -754,7 +755,7 @@ func (h *Handler) BulkVariableInputs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Calculate(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	runID := chi.URLParam(r, "id")
 	if err := h.svc.CalculateRun(r.Context(), merchantID, runID); err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -768,9 +769,9 @@ func (h *Handler) CalculateV2(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Approve(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	runID := chi.URLParam(r, "id")
-	userID, _ := r.Context().Value("user_id").(string)
+	userID, _ := mw.UserID(r.Context())
 	if err := h.svc.ApproveRun(r.Context(), merchantID, runID, userID); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -779,7 +780,7 @@ func (h *Handler) Approve(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Disburse(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	runID := chi.URLParam(r, "id")
 	if err := h.svc.DisburseRun(r.Context(), merchantID, runID); err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -799,7 +800,7 @@ func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetPayslipPDF(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	runID := chi.URLParam(r, "id")
 	empID := chi.URLParam(r, "employee_id")
 
@@ -941,7 +942,7 @@ func (h *Handler) GetPayslipsZip(w http.ResponseWriter, r *http.Request) {
 // ==================== Compliance Reports ====================
 
 func (h *Handler) GetPensionReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	report, err := h.svc.repo.GetComplianceReport(r.Context(), merchantID, year, month, ReportPensionContribution)
@@ -953,7 +954,7 @@ func (h *Handler) GetPensionReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetERCAReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	report, err := h.svc.repo.GetComplianceReport(r.Context(), merchantID, year, month, ReportERCAWithholding)
@@ -965,7 +966,7 @@ func (h *Handler) GetERCAReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetBankDisbursalReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	report, _ := h.svc.repo.GetComplianceReport(r.Context(), merchantID, year, month, ReportBankDisbursalFile)
@@ -977,7 +978,7 @@ func (h *Handler) GetBankDisbursalReport(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *Handler) GetCostCenterReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	// Try fetch cost center report if exists, else mock
@@ -996,7 +997,7 @@ func (h *Handler) GetCostCenterReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAnnualTaxCertificate(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	employeeID := r.URL.Query().Get("employee_id")
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	if year == 0 {
@@ -1116,7 +1117,7 @@ func (h *Handler) GetAnnualTaxCertificate(w http.ResponseWriter, r *http.Request
 }
 
 func (h *Handler) GetPayrollRegister(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	runID := r.URL.Query().Get("run_id")
 	format := r.URL.Query().Get("format") // csv, json, xlsx
 
@@ -1185,7 +1186,7 @@ func (h *Handler) GetPayrollRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetVarianceReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	format := r.URL.Query().Get("format")
@@ -1231,7 +1232,7 @@ func (h *Handler) GetVarianceReport(w http.ResponseWriter, r *http.Request) {
 // ==================== Final Settlement ====================
 
 func (h *Handler) CreateFinalSettlement(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeID        string  `json:"employee_id"`
 		ResignationDate   string  `json:"resignation_date"`
@@ -1331,7 +1332,7 @@ func ptrDec(d decimal.Decimal) *decimal.Decimal { return &d }
 // ==================== Payroll Calendar CRUD — Ethiopia Business Practice Cutoff 25th Disbursal 30th Pay Last Day Lock After Disbursal ====================
 
 func (h *Handler) CreateCalendar(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		Name          string `json:"name"`
 		Description   string `json:"description"`
@@ -1410,7 +1411,7 @@ func (h *Handler) CreateCalendar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListCalendars(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	if year == 0 {
 		year = 2026
@@ -1424,7 +1425,7 @@ func (h *Handler) ListCalendars(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetCalendar(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	calID := chi.URLParam(r, "id")
 	cal, err := h.svc.repo.GetCalendar(r.Context(), merchantID, calID)
 	if err != nil {
@@ -1435,9 +1436,9 @@ func (h *Handler) GetCalendar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) LockCalendar(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	calID := chi.URLParam(r, "id")
-	userID, _ := r.Context().Value("user_id").(string)
+	userID, _ := mw.UserID(r.Context())
 	if err := h.svc.repo.LockCalendar(r.Context(), merchantID, calID, userID); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -1446,7 +1447,7 @@ func (h *Handler) LockCalendar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UnlockCalendar(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	calID := chi.URLParam(r, "id")
 	if err := h.svc.repo.UnlockCalendar(r.Context(), merchantID, calID); err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -1458,7 +1459,7 @@ func (h *Handler) UnlockCalendar(w http.ResponseWriter, r *http.Request) {
 // ==================== Leave Management — Art 77 Annual 14+1 up to 35, Art 82 Sick 6 months, Art 86 Maternity 120 days ====================
 
 func (h *Handler) CreateLeaveBalance(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeID       string `json:"employee_id"`
 		LeaveType        string `json:"leave_type"` // annual/sick/maternity/paternity/marriage/mourning/unpaid/comp_off/study
@@ -1492,7 +1493,7 @@ func (h *Handler) CreateLeaveBalance(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListLeaveBalances(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	employeeID := r.URL.Query().Get("employee_id")
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	if year == 0 {
@@ -1514,7 +1515,7 @@ func (h *Handler) ListLeaveBalances(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateLeaveRequest(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeID         string  `json:"employee_id"`
 		LeaveType          string  `json:"leave_type"`
@@ -1550,7 +1551,7 @@ func (h *Handler) CreateLeaveRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListLeaveRequests(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	employeeID := r.URL.Query().Get("employee_id")
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	if year == 0 {
@@ -1572,7 +1573,7 @@ func (h *Handler) ListLeaveRequests(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ApproveLeaveRequest(w http.ResponseWriter, r *http.Request) {
 	reqID := chi.URLParam(r, "id")
-	userID, _ := r.Context().Value("user_id").(string)
+	userID, _ := mw.UserID(r.Context())
 	if err := h.svc.repo.UpdateLeaveRequestStatus(r.Context(), reqID, LeaveApproved, &userID, ""); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -1596,7 +1597,7 @@ func (h *Handler) RejectLeaveRequest(w http.ResponseWriter, r *http.Request) {
 // ==================== Claims Enhanced — Receipt Upload MinIO Approval Manager->Finance ====================
 
 func (h *Handler) CreateClaim(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeID     string `json:"employee_id"`
 		ClaimType      string `json:"claim_type"` // expense/medical/travel/other
@@ -1631,7 +1632,7 @@ func (h *Handler) CreateClaim(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListClaims(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	employeeID := r.URL.Query().Get("employee_id")
 	status := r.URL.Query().Get("status")
 	var statusPtr *string
@@ -1648,7 +1649,7 @@ func (h *Handler) ListClaims(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ApproveClaimManager(w http.ResponseWriter, r *http.Request) {
 	claimID := chi.URLParam(r, "id")
-	userID, _ := r.Context().Value("user_id").(string)
+	userID, _ := mw.UserID(r.Context())
 	if err := h.svc.repo.ApproveClaimManager(r.Context(), claimID, userID); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -1658,7 +1659,7 @@ func (h *Handler) ApproveClaimManager(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ApproveClaimFinance(w http.ResponseWriter, r *http.Request) {
 	claimID := chi.URLParam(r, "id")
-	userID, _ := r.Context().Value("user_id").(string)
+	userID, _ := mw.UserID(r.Context())
 	if err := h.svc.repo.ApproveClaimFinance(r.Context(), claimID, userID); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return

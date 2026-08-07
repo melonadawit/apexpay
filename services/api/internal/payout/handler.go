@@ -6,6 +6,7 @@ import (
 
 	"apexpay/internal/id"
 	"apexpay/internal/platform/crypto"
+	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
@@ -24,7 +25,7 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) CreateBeneficiary(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct{ Name, AccountNo, BankCode, BankName, Type string }
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
@@ -42,7 +43,7 @@ func (h *Handler) CreateBeneficiary(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreatePayout(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct{ BeneficiaryID, PayoutRef, Amount, Currency, Method string }
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
@@ -59,7 +60,7 @@ func (h *Handler) CreatePayout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateBulk(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req CreateBulkRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
@@ -75,9 +76,9 @@ func (h *Handler) CreateBulk(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ApproveBatch(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	batchID := chi.URLParam(r, "id")
-	userID, _ := r.Context().Value("user_id").(string)
+	userID, _ := mw.UserID(r.Context())
 	if err := h.svc.ApproveBatch(r.Context(), merchantID, batchID, userID); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -86,7 +87,7 @@ func (h *Handler) ApproveBatch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetBatch(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	batchID := chi.URLParam(r, "id")
 	b, err := h.svc.repo.GetBatch(r.Context(), merchantID, batchID)
 	if err != nil {

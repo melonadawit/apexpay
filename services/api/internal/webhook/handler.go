@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"apexpay/internal/id"
+	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 )
@@ -23,7 +24,7 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		URL string `json:"url"`
 		Secret string `json:"secret"`
@@ -67,7 +68,7 @@ func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListEndpoints(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	rows, err := h.repo.pool.Query(r.Context(), `SELECT id, url, status FROM webhook_endpoints WHERE merchant_id=$1`, merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -84,7 +85,7 @@ func (h *Handler) ListEndpoints(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListDeliveries(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	rows, err := h.repo.pool.Query(r.Context(), `SELECT id, event_type, status, attempt_count, last_status_code FROM webhook_deliveries WHERE merchant_id=$1 ORDER BY created_at DESC LIMIT 50`, merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)

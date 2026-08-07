@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"apexpay/internal/id"
+	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
@@ -23,7 +24,7 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		Email string `json:"email"`
 		Phone string `json:"phone"`
@@ -39,7 +40,7 @@ func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreatePlan(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		Name          string `json:"name"`
 		Description   string `json:"description"`
@@ -64,7 +65,7 @@ func (h *Handler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	var req struct {
 		CustomerID string `json:"customer_id"`
 		PlanID     string `json:"plan_id"`
@@ -82,7 +83,7 @@ func (h *Handler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := r.Context().Value("merchant_id").(string)
+	merchantID, _ := mw.MerchantID(r.Context())
 	list, err := h.svc.repo.ListSubscriptions(r.Context(), merchantID, nil)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
