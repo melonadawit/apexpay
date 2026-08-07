@@ -1,0 +1,11 @@
+services:
+  seed-integration:
+    image: postgres:16-alpine
+    environment: { PGPASSWORD: apexpay_dev }
+    command: ["/bin/sh", "-ec", "until pg_isready -h postgres -U apexpay; do sleep 1; done; psql -h postgres -U apexpay -d apexpay -v ON_ERROR_STOP=1 -c \"INSERT INTO merchants (id,legal_name,display_name,email,status) VALUES ('mer_docker_smoke','Docker Smoke PLC','Docker Smoke','docker-smoke@example.et','active') ON CONFLICT (id) DO NOTHING; INSERT INTO api_keys (id,merchant_id,name,key_type,key_prefix,secret_hash,environment,status,scopes) VALUES ('key_docker_smoke','mer_docker_smoke','integration','secret','sk_test_demo','cc081db7827589a0f9d454de130b981be34315e01c9a440943bf74bb176b2b45','test','active','[\\\"role:ops\\\"]') ON CONFLICT (id) DO NOTHING; INSERT INTO ledger_books (id,merchant_id,book_type,name,currency,status) VALUES ('book_docker_smoke','mer_docker_smoke','merchant_operating','Docker Smoke operating','ETB','open') ON CONFLICT (merchant_id,book_type) DO NOTHING; INSERT INTO ledger_accounts (id,book_id,code,name,normal_balance) VALUES ('la_docker_clear','book_docker_smoke','asset:clearing:mock','Mock clearing','debit'),('la_docker_payable','book_docker_smoke','liability:merchant_payable','Merchant payable','credit'),('la_docker_fee','book_docker_smoke','liability:platform_fee_due','Platform fee','credit') ON CONFLICT (book_id,code) DO NOTHING;\""]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+  integration:
+    image: curlimages/curl:8.10.1
+    volumes: ["../../scripts/integration/api_smoke.sh:/tests/api_smoke.sh:ro"]
+    entrypoint: ["/bin/sh", "/tests/api_smoke.sh"]
+    depends_on: { api: { condition: service_started }, seed-integration: { condition: service_completed_successfully } }

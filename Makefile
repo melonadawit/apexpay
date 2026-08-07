@@ -46,3 +46,7 @@ rag-test:
 gen-mocks:
 	mockgen -source=services/api/internal/onboarding/service.go -destination=services/api/internal/onboarding/mock_repo.go
 	mockgen -source=services/api/internal/fayda/service.go -destination=services/api/internal/fayda/mock_repo.go
+
+.PHONY: integration-smoke
+integration-smoke:
+	docker compose -f deploy/docker/docker-compose.yml -f deploy/docker/docker-compose.integration.yml up --build --abort-on-container-exit --exit-code-from integration integration
