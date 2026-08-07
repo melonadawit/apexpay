@@ -17,11 +17,11 @@ import (
 )
 
 type Repository interface {
-	CreatePaymentTx(ctx context.Context, p *Payment, outboxEventID string) error
+	CreatePaymentTx(ctx context.Context, p *Payment, outboxEventID, idempotencyKey string) error
 	GetByTxRef(ctx context.Context, merchantID, txRef string) (*Payment, error)
 	UpdateStatusTx(ctx context.Context, paymentID string, status Status, journal *ledger.Journal, entries []ledger.Entry, succeededAt *time.Time) error
-	GetIdempotency(ctx context.Context, merchantID, key string) (*Payment, string, error)
-	SaveIdempotency(ctx context.Context, merchantID, key, requestHash string, payment *Payment) error
+	ReserveIdempotency(ctx context.Context, merchantID, key, requestHash string) (*Payment, error)
+	FailIdempotency(ctx context.Context, merchantID, key string) error
 	Mark2FAVerified(ctx context.Context, merchantID, paymentID string) error
 }
 
@@ -46,10 +46,12 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	// Reusing a key with different business inputs is a conflict, never a new charge.
 	requestHash := canonicalRequestHash(req)
 	if req.IdempotencyKey != "" {
-		if existing, storedHash, err := s.repo.GetIdempotency(ctx, req.MerchantID, req.IdempotencyKey); err == nil && existing != nil {
-			if storedHash != requestHash { return nil, errors.Conflict(errors.CodeDuplicateTxRef, "idempotency key reused with a different request") }
-			return existing, nil
+		existing, err := s.repo.ReserveIdempotency(ctx, req.MerchantID, req.IdempotencyKey, requestHash)
+		if err != nil {
+			if err == ErrIdempotencyConflict || err == ErrIdempotencyInProgress { return nil, errors.Conflict(errors.CodeConflict, err.Error()) }
+			return nil, err
 		}
+		if existing != nil { return existing, nil }
 	}
 
 	// Duplicate tx_ref check handled by DB unique (merchant_id, tx_ref)
@@ -83,6 +85,7 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	if err != nil {
 		// circuit breaker record failure
 		s.router.RecordFailure(routing.ConnectorID(connID))
+		if req.IdempotencyKey != "" { _ = s.repo.FailIdempotency(ctx, req.MerchantID, req.IdempotencyKey) }
 		return nil, errors.New(errors.CodeConnectorDown, fmt.Sprintf("connector %s failed: %v", connID, err), 502)
 	}
 	s.router.RecordSuccess(routing.ConnectorID(connID))
@@ -100,17 +103,15 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 
 	// Create with outbox event payment.created
 	outboxID := id.NewOutbox()
-	if err := s.repo.CreatePaymentTx(ctx, p, outboxID); err != nil {
+	if err := s.repo.CreatePaymentTx(ctx, p, outboxID, req.IdempotencyKey); err != nil {
 		// handle duplicate tx_ref conflict
 		if isDuplicate(err) {
 			return nil, errors.Conflict(errors.CodeDuplicateTxRef, "duplicate tx_ref")
 		}
+		if req.IdempotencyKey != "" { _ = s.repo.FailIdempotency(ctx, req.MerchantID, req.IdempotencyKey) }
 		return nil, err
 	}
 
-	if req.IdempotencyKey != "" {
-		_ = s.repo.SaveIdempotency(ctx, req.MerchantID, req.IdempotencyKey, requestHash, p)
-	}
 
 	return p, nil
 }

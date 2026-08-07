@@ -15,11 +15,16 @@ type PgRepository struct {
 	ledgerRepo *ledger.PgRepository
 }
 
+var (
+	ErrIdempotencyConflict = ErrIdempotencyConflict
+	ErrIdempotencyInProgress = ErrIdempotencyInProgress
+)
+
 func NewPgRepository(pool *pgxpool.Pool, ledgerRepo *ledger.PgRepository) *PgRepository {
 	return &PgRepository{pool: pool, ledgerRepo: ledgerRepo}
 }
 
-func (r *PgRepository) CreatePaymentTx(ctx context.Context, p *Payment, outboxEventID string) error {
+func (r *PgRepository) CreatePaymentTx(ctx context.Context, p *Payment, outboxEventID, idempotencyKey string) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -39,6 +44,12 @@ func (r *PgRepository) CreatePaymentTx(ctx context.Context, p *Payment, outboxEv
 		return err
 	}
 
+	if idempotencyKey != "" {
+		command, err := tx.Exec(ctx, `UPDATE idempotency_keys SET state='completed', resource_id=$3, response_code=201,
+			response_body=jsonb_build_object('id',$3) WHERE merchant_id=$1 AND key=$2 AND state='in_progress'`, p.MerchantID, idempotencyKey, p.ID)
+		if err != nil { return err }
+		if command.RowsAffected() != 1 { return fmt.Errorf("idempotency reservation was not available for completion") }
+	}
 	return tx.Commit(ctx)
 }
 
@@ -117,13 +128,24 @@ func (r *PgRepository) UpdateStatusTx(ctx context.Context, paymentID string, sta
 	return tx.Commit(ctx)
 }
 
-func (r *PgRepository) GetIdempotency(ctx context.Context, merchantID, key string) (*Payment, string, error) {
-	var paymentID, requestHash string
-	err := r.pool.QueryRow(ctx, `SELECT resource_id, request_hash FROM idempotency_keys WHERE merchant_id=$1 AND key=$2 AND resource_type='payment'`, merchantID, key).Scan(&paymentID, &requestHash)
-	if err != nil { return nil, "", err }
-	p, err := r.getByID(ctx, merchantID, paymentID)
-	if err != nil { return nil, "", err }
-	return p, requestHash, nil
+func (r *PgRepository) ReserveIdempotency(ctx context.Context, merchantID, key, requestHash string) (*Payment, error) {
+	command, err := r.pool.Exec(ctx, `INSERT INTO idempotency_keys (merchant_id, key, request_hash, response_code, response_body, resource_type, state)
+		VALUES ($1,$2,$3,0,'{}'::jsonb,'payment','in_progress') ON CONFLICT (merchant_id, key) DO NOTHING`, merchantID, key, requestHash)
+	if err != nil { return nil, err }
+	if command.RowsAffected() == 1 { return nil, nil }
+
+	var storedHash, state, paymentID string
+	err = r.pool.QueryRow(ctx, `SELECT request_hash, state, COALESCE(resource_id,'') FROM idempotency_keys WHERE merchant_id=$1 AND key=$2 AND resource_type='payment'`, merchantID, key).Scan(&storedHash, &state, &paymentID)
+	if err != nil { return nil, err }
+	if storedHash != requestHash { return nil, ErrIdempotencyConflict }
+	if state == "completed" && paymentID != "" { return r.getByID(ctx, merchantID, paymentID) }
+	return nil, ErrIdempotencyInProgress
+}
+
+func (r *PgRepository) FailIdempotency(ctx context.Context, merchantID, key string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE idempotency_keys SET state='failed', response_code=502,
+		response_body='{"error":"initialization_failed"}'::jsonb WHERE merchant_id=$1 AND key=$2 AND state='in_progress'`, merchantID, key)
+	return err
 }
 
 func (r *PgRepository) getByID(ctx context.Context, merchantID, paymentID string) (*Payment, error) {
@@ -133,12 +155,6 @@ func (r *PgRepository) getByID(ctx context.Context, merchantID, paymentID string
 	if err := row.Scan(&p.ID, &p.MerchantID, &p.TxRef, &amount, &p.Currency, &p.Status, &p.ConnectorID, &p.ConnectorRef, &fee, &net, &p.Requires2FA, &p.TwoFAVerified, &p.CheckoutURL); err != nil { return nil, err }
 	p.Amount, _ = decimal.NewFromString(amount); p.FeeAmount, _ = decimal.NewFromString(fee); p.NetAmount, _ = decimal.NewFromString(net)
 	return &p, nil
-}
-
-func (r *PgRepository) SaveIdempotency(ctx context.Context, merchantID, key, requestHash string, payment *Payment) error {
-	_, err := r.pool.Exec(ctx, `INSERT INTO idempotency_keys (merchant_id, key, request_hash, response_code, response_body, resource_type, resource_id) VALUES ($1,$2,$3,200,$4,'payment',$5) ON CONFLICT (merchant_id, key) DO NOTHING`,
-		merchantID, key, requestHash, fmt.Sprintf(`{"id":"%s","checkout_url":"%s"}`, payment.ID, payment.CheckoutURL), payment.ID)
-	return err
 }
 
 func (r *PgRepository) Mark2FAVerified(ctx context.Context, merchantID, paymentID string) error {
