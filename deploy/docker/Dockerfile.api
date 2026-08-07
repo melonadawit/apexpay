@@ -15,7 +15,6 @@ RUN go mod download
 
 # Copy source optimal: only needed files for layer cache
 COPY services/api/ ./
-COPY ../.. ./../.. 
 
 WORKDIR /app/services/api
 
@@ -35,6 +34,4 @@ EXPOSE 8080
 USER nonroot:nonroot
 
 # Healthcheck per SAD quality
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD ["/api", "-healthcheck"] || exit 1
-
 ENTRYPOINT ["/api"]

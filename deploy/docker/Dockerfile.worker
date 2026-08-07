@@ -9,16 +9,14 @@ WORKDIR /app
 
 # Cache mod
 COPY services/api/go.mod services/api/go.sum* ./services/api/
-COPY services/worker/ ./services/worker/
 WORKDIR /app/services/api
 RUN go mod download
 
 COPY services/api/ ./
-COPY ../worker/ ../worker/
 
-WORKDIR /app/services/worker
+WORKDIR /app/services/api
 
-# Build worker binary O(1) - static
+# Worker is a command in the same Go module, so internal packages are legal.
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/bin/worker ./cmd/worker
 
 FROM gcr.io/distroless/static-debian12:nonroot

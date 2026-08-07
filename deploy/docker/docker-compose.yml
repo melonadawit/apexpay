@@ -24,6 +24,28 @@ services:
     ports: ["9000:9000","9001:9001"]
     volumes: ["miniodata:/data"]
 
+  migrate:
+    image: postgres:16-alpine
+    working_dir: /migrations
+    volumes: ["../../db/migrations:/migrations:ro"]
+    environment:
+      PGPASSWORD: apexpay_dev
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        psql -h postgres -U apexpay -d apexpay -v ON_ERROR_STOP=1 -c 'CREATE TABLE IF NOT EXISTS schema_migrations (filename text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())'
+        for f in $$(find . -name '*.up.sql' | sort); do
+          n=$$(basename "$$f")
+          applied=$$(psql -h postgres -U apexpay -d apexpay -tAc "SELECT 1 FROM schema_migrations WHERE filename='$$n'")
+          if [ "$$applied" != 1 ]; then
+            echo "Applying $$n"
+            psql -h postgres -U apexpay -d apexpay -v ON_ERROR_STOP=1 -f "$$f"
+            psql -h postgres -U apexpay -d apexpay -v ON_ERROR_STOP=1 -c "INSERT INTO schema_migrations (filename) VALUES ('$$n')"
+          fi
+        done
+    depends_on: {postgres: {condition: service_healthy}}
+
   api:
     build: {context: ../.., dockerfile: deploy/docker/Dockerfile.api}
     ports: ["8080:8080"]
@@ -41,7 +63,7 @@ services:
       FAYDA_MODE: mock
       FAYDA_PARTNER_CODE: APEXPAY_TEST
       FAYDA_PARTNER_KEY: mock_key
-    depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}, minio: {condition: service_started}}
+    depends_on: {migrate: {condition: service_completed_successfully}, redis: {condition: service_healthy}, minio: {condition: service_started}}
 
   worker:
     build: {context: ../.., dockerfile: deploy/docker/Dockerfile.worker}
@@ -59,15 +81,15 @@ services:
     build: {context: ../../apps/merchant-web, dockerfile: Dockerfile}
     ports: ["3000:3000"]
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080/v1
-      NEXT_PUBLIC_CHECKOUT_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: /v1
+      NEXT_PUBLIC_CHECKOUT_URL: /c
     depends_on: [api]
 
   checkout-web:
     build: {context: ../../apps/checkout-web, dockerfile: Dockerfile}
     ports: ["3001:3001"]
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080/v1
+      NEXT_PUBLIC_API_URL: /v1
     depends_on: [api]
 
 volumes:

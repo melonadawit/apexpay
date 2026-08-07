@@ -117,6 +117,7 @@ func main() {
 	webhookHandler := webhook.NewHandler(webhookRepo)
 
 	authMw := mw.NewAuth(pool)
+	rateLimiter := mw.NewRateLimiter(rdb)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -124,6 +125,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(15 * time.Second))
 	r.Use(middleware.Compress(5))
+	r.Use(rateLimiter.General100PerMin)
 
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -177,7 +179,8 @@ func main() {
 		r.Route("/onboarding", func(r chi.Router) {
 			r.Use(authMw.APIKeyAuth)
 			onboardingHandler.Routes(r)
-			r.Route("/fayda", func(r chi.Router) {
+				r.Route("/fayda", func(r chi.Router) {
+				r.Use(rateLimiter.FaydaOTP5PerHour)
 				faydaHandler.Routes(r)
 			})
 		})

@@ -36,9 +36,8 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, status int, data interfac
 func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	// Map AppError to stable code per SAD
 	if appErr, ok := err.(*appErrors.AppError); ok {
-		WriteJSON(w, r, appErr.Status(), nil)
-		// Override with error body
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(appErr.Status())
 		resp := Response{
 			Success:   false,
 			Error:     &ErrorBody{Code: string(appErr.Code), Message: appErr.Message},

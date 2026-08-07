@@ -24,3 +24,6 @@ miniodata/
 # IDE
 .vscode/
 .idea/
+
+# TypeScript compiler build cache
+*.tsbuildinfo

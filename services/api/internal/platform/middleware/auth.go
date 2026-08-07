@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"context"
+	"crypto/sha256"
+	"crypto/subtle"
 	"net/http"
 	"strings"
 
@@ -10,8 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Auth middleware - API keys pk_/sk_ with hashed secrets at rest per DATABASE
-
+// Private key types prevent collisions with values set by other middleware.
 type contextKey string
 
 const (
@@ -21,74 +22,78 @@ const (
 	CtxRole       contextKey = "role"
 )
 
-type AuthMiddleware struct {
-	pool *pgxpool.Pool
+// MerchantIDFromContext is the only supported way for handlers to read the authenticated tenant.
+func MerchantIDFromContext(ctx context.Context) (string, bool) {
+	merchantID, ok := ctx.Value(CtxMerchantID).(string)
+	return merchantID, ok && merchantID != ""
+}
+func UserIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(CtxUserID).(string)
+	return userID, ok && userID != ""
+}
+func APIKeyIDFromContext(ctx context.Context) (string, bool) {
+	keyID, ok := ctx.Value(CtxAPIKeyID).(string)
+	return keyID, ok && keyID != ""
 }
 
+type AuthMiddleware struct{ pool *pgxpool.Pool }
 func NewAuth(pool *pgxpool.Pool) *AuthMiddleware { return &AuthMiddleware{pool: pool} }
 
+// APIKeyAuth verifies the whole bearer secret, not merely its public prefix. secret_hash
+// must contain a lowercase SHA-256 hex digest of the complete generated API key. New key
+// issuance must generate high-entropy values and persist only this digest.
 func (a *AuthMiddleware) APIKeyAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "Authorization Bearer required")
-			return
-		}
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "Bearer token required")
+		parts := strings.Fields(r.Header.Get("Authorization"))
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || len(parts[1]) < 16 {
+			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "Bearer API key required")
 			return
 		}
 		token := parts[1]
-		if len(token) < 8 {
-			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "invalid token format")
+		prefixLen := 12
+		if len(token) < prefixLen { // defensive; retained separately to make prefix policy explicit
+			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "invalid API key")
 			return
 		}
-		prefix := token[:12] // sk_test_ab12 etc
-		// Lookup by prefix optimal O(1) index api_keys_prefix_uidx
-		var merchantID, keyID, environment, status string
-		err := a.pool.QueryRow(r.Context(), `SELECT merchant_id, id, environment, status FROM api_keys WHERE key_prefix=$1`, prefix).Scan(&merchantID, &keyID, &environment, &status)
-		if err != nil {
-			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "invalid api key prefix")
+
+		var merchantID, keyID, status, storedHash string
+		err := a.pool.QueryRow(r.Context(), `SELECT merchant_id, id, status, COALESCE(secret_hash, '') FROM api_keys WHERE key_prefix=$1`, token[:prefixLen]).Scan(&merchantID, &keyID, &status, &storedHash)
+		if err != nil || status != "active" || storedHash == "" {
+			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "invalid API key")
 			return
 		}
-		if status != "active" {
-			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "api key revoked")
+		digest := sha256.Sum256([]byte(token))
+		if subtle.ConstantTimeCompare([]byte(strings.ToLower(storedHash)), []byte(fmtSHA256(digest))) != 1 {
+			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "invalid API key")
 			return
 		}
-		// In real, verify secret_hash via bcrypt/argon2 - placeholder: hash comparison O(1)
-		// secret_hash stored = sha256(salt+secret) or bcrypt
 
 		ctx := context.WithValue(r.Context(), CtxMerchantID, merchantID)
 		ctx = context.WithValue(ctx, CtxAPIKeyID, keyID)
-		// Update last_used_at async best effort - non-blocking
-		go func() {
-			_, _ = a.pool.Exec(context.Background(), `UPDATE api_keys SET last_used_at=now() WHERE id=$1`, keyID)
-		}()
+		// Compatibility bridge while all handlers are migrated to the typed accessors.
+		// Do not add new reads using string keys.
+		ctx = context.WithValue(ctx, "merchant_id", merchantID)
+		go func() { _, _ = a.pool.Exec(context.Background(), `UPDATE api_keys SET last_used_at=now() WHERE id=$1`, keyID) }()
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-// RBAC middleware - optimal map O(1) role check
+func fmtSHA256(sum [sha256.Size]byte) string {
+	const hexdigits = "0123456789abcdef"
+	buf := make([]byte, sha256.Size*2)
+	for i, b := range sum { buf[i*2], buf[i*2+1] = hexdigits[b>>4], hexdigits[b&0x0f] }
+	return string(buf)
+}
+
 func RBAC(allowedRoles ...string) func(http.Handler) http.Handler {
 	allowedMap := make(map[string]bool, len(allowedRoles))
-	for _, r := range allowedRoles {
-		allowedMap[r] = true
-	}
+	for _, r := range allowedRoles { allowedMap[r] = true }
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			role, ok := r.Context().Value(CtxRole).(string)
-			if !ok {
-				role = "owner" // default for merchant api keys - owner full access
-			}
-			if len(allowedMap) == 0 || allowedMap[role] {
-				next.ServeHTTP(w, r)
-				return
-			}
-			pkghttp.WriteErrorWithBody(w, r, http.StatusForbidden, string(appErrors.CodeForbidden), "role not allowed: "+role)
+			if !ok || role == "" { pkghttp.WriteErrorWithBody(w, r, http.StatusForbidden, string(appErrors.CodeForbidden), "role required"); return }
+			if allowedMap[role] { next.ServeHTTP(w, r); return }
+			pkghttp.WriteErrorWithBody(w, r, http.StatusForbidden, string(appErrors.CodeForbidden), "role not allowed")
 		})
 	}
 }
-
-// Rate limit middleware - Redis token bucket per key/IP per DATABASE rate limit spec
-// Simplified skeleton, real uses redis go-redis Eval Lua script
