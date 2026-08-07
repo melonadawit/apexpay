@@ -63,10 +63,29 @@ func (r *PgRepository) UpdateStatusTx(ctx context.Context, paymentID string, sta
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	_, err = tx.Exec(ctx, `UPDATE payments SET status=$1, succeeded_at=$2, updated_at=now() WHERE id=$3`, status, succeededAt, paymentID)
-	if err != nil {
-		return err
+	// Resolve the active merchant operating book and account *IDs* in this same
+	// transaction. Services pass account codes; database foreign keys require IDs.
+	var bookID, clearingID, payableID, feeID string
+	err = tx.QueryRow(ctx, `SELECT lb.id,
+		MAX(la.id) FILTER (WHERE la.code=$2),
+		MAX(la.id) FILTER (WHERE la.code='liability:merchant_payable'),
+		MAX(la.id) FILTER (WHERE la.code='liability:platform_fee_due')
+		FROM ledger_books lb JOIN ledger_accounts la ON la.book_id=lb.id
+		JOIN payments p ON p.merchant_id=lb.merchant_id
+		WHERE p.id=$1 AND lb.book_type='merchant_operating' AND lb.status='open'
+		GROUP BY lb.id ORDER BY lb.id LIMIT 1`, paymentID, entries[0].AccountID).Scan(&bookID, &clearingID, &payableID, &feeID)
+	if err != nil || clearingID == "" || payableID == "" || feeID == "" { return fmt.Errorf("payment ledger accounts unavailable: %w", err) }
+	journal.BookID = bookID
+	for i := range entries {
+		entries[i].BookID = bookID
+		switch entries[i].AccountID {
+		case "liability:merchant_payable": entries[i].AccountID = payableID
+		case "liability:platform_fee_due": entries[i].AccountID = feeID
+		default: entries[i].AccountID = clearingID
+		}
 	}
+	_, err = tx.Exec(ctx, `UPDATE payments SET status=$1, succeeded_at=$2, updated_at=now() WHERE id=$3 AND status IN ('created','pending','processing')`, status, succeededAt, paymentID)
+	if err != nil { return err }
 
 	// Ledger post in same Tx per DATABASE transaction boundary
 	_, err = tx.Exec(ctx, `INSERT INTO ledger_journals (id, book_id, posting_key, memo, reference_type, reference_id, transfer_group) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (book_id, posting_key) DO NOTHING`,
@@ -112,4 +131,13 @@ func (r *PgRepository) SaveIdempotency(ctx context.Context, merchantID, key, req
 	_, err := r.pool.Exec(ctx, `INSERT INTO idempotency_keys (merchant_id, key, request_hash, response_code, response_body, resource_type, resource_id) VALUES ($1,$2,$3,200,$4,'payment',$5) ON CONFLICT (merchant_id, key) DO NOTHING`,
 		merchantID, key, requestHash, fmt.Sprintf(`{"id":"%s","checkout_url":"%s"}`, payment.ID, payment.CheckoutURL), payment.ID)
 	return err
+}
+
+func (r *PgRepository) Mark2FAVerified(ctx context.Context, merchantID, paymentID string) error {
+	command, err := r.pool.Exec(ctx, `UPDATE payments
+		SET two_fa_verified=true, updated_at=now()
+		WHERE id=$1 AND merchant_id=$2 AND requires_2fa=true AND status IN ('created','pending','processing')`, paymentID, merchantID)
+	if err != nil { return err }
+	if command.RowsAffected() != 1 { return fmt.Errorf("payment not found or not awaiting 2FA") }
+	return nil
 }

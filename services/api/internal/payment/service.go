@@ -19,6 +19,7 @@ type Repository interface {
 	UpdateStatusTx(ctx context.Context, paymentID string, status Status, journal *ledger.Journal, entries []ledger.Entry, succeededAt *time.Time) error
 	GetIdempotency(ctx context.Context, merchantID, key string) (*Payment, error)
 	SaveIdempotency(ctx context.Context, merchantID, key, requestHash string, payment *Payment) error
+	Mark2FAVerified(ctx context.Context, merchantID, paymentID string) error
 }
 
 type Service struct {
@@ -27,10 +28,11 @@ type Service struct {
 	router   *routing.Service
 	registry map[string]connector.Connector // connector_id -> Connector optimal O(1)
 	mdrRate  decimal.Decimal                // 2.9%
+	allowDemoOTP bool // strictly local-only until a real challenge provider is wired
 }
 
-func NewService(repo Repository, ledgerSvc *ledger.Service, router *routing.Service, registry map[string]connector.Connector, mdrRate decimal.Decimal) *Service {
-	return &Service{repo: repo, ledger: ledgerSvc, router: router, registry: registry, mdrRate: mdrRate}
+func NewService(repo Repository, ledgerSvc *ledger.Service, router *routing.Service, registry map[string]connector.Connector, mdrRate decimal.Decimal, allowDemoOTP bool) *Service {
+	return &Service{repo: repo, ledger: ledgerSvc, router: router, registry: registry, mdrRate: mdrRate, allowDemoOTP: allowDemoOTP}
 }
 
 func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payment, error) {
@@ -105,6 +107,17 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	}
 
 	return p, nil
+}
+
+
+// Verify2FA persists authorization before a payment can be verified/captured. A real
+// challenge provider is mandatory outside local development; the legacy demo OTP is
+// deliberately unavailable in staging/production.
+func (s *Service) Verify2FA(ctx context.Context, merchantID, paymentID, otp string) error {
+	if !s.allowDemoOTP || otp != "123456" {
+		return errors.New(errors.CodeValidation, "invalid or unavailable 2FA challenge", 400)
+	}
+	return s.repo.Mark2FAVerified(ctx, merchantID, paymentID)
 }
 
 func (s *Service) Verify(ctx context.Context, req VerifyRequest) (*Payment, error) {

@@ -188,10 +188,11 @@ func (r *PgRepository) ApproveMerchantTx(ctx context.Context, merchantID, kycPro
 
 	// Create operating book - idempotent
 	bookID := id.NewLedgerBook()
-	_, err = tx.Exec(ctx, `INSERT INTO ledger_books (id, merchant_id, book_type, name, currency, status) VALUES ($1,$2,'merchant_operating',$3,'ETB','open') ON CONFLICT (id) DO NOTHING`, bookID, merchantID, fmt.Sprintf("Operating book %s", merchantID))
-	if err != nil {
-		return err
-	}
+	err = tx.QueryRow(ctx, `INSERT INTO ledger_books (id, merchant_id, book_type, name, currency, status)
+		VALUES ($1,$2,'merchant_operating',$3,'ETB','open')
+		ON CONFLICT (merchant_id, book_type) DO UPDATE SET name=EXCLUDED.name
+		RETURNING id`, bookID, merchantID, fmt.Sprintf("Operating book %s", merchantID)).Scan(&bookID)
+	if err != nil { return err }
 
 	// Seed standard accounts - optimal batch
 	accounts := [][]string{

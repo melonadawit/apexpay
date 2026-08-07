@@ -92,7 +92,7 @@ func main() {
 
 	routingSvc := routing.NewService(routingRepo, rdb)
 	connRegistry := map[string]connector.Connector{"mock": connector.NewMock()}
-	paymentSvc := payment.NewService(paymentRepo, ledgerSvc, routingSvc, connRegistry, decimal.NewFromFloat(0.029))
+	paymentSvc := payment.NewService(paymentRepo, ledgerSvc, routingSvc, connRegistry, decimal.NewFromFloat(0.029), cfg.Env == "local")
 	refundSvc := refund.NewService(refundRepo, ledgerSvc)
 	subSvc := subscription.NewService(subRepo)
 	payoutSvc := payout.NewService(payoutRepo, ledgerSvc)

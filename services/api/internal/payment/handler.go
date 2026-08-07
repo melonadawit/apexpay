@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"apexpay/internal/platform/errors"
 	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
 	"github.com/go-chi/chi/v5"
@@ -24,7 +23,7 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) Initialize(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		TxRef         string `json:"tx_ref"`
 		Amount        string `json:"amount"`
@@ -74,7 +73,7 @@ func (h *Handler) Initialize(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Verify(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	txRef := chi.URLParam(r, "tx_ref")
 	p, err := h.svc.Verify(r.Context(), VerifyRequest{MerchantID: merchantID, TxRef: txRef})
 	if err != nil {
@@ -90,20 +89,10 @@ func (h *Handler) Verify(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Verify2FA(w http.ResponseWriter, r *http.Request) {
-	// NBE ONPS/10/2025 2FA mandatory >5000 ETB - OTP verify
-	var req struct {
-		PaymentID string `json:"payment_id"`
-		OTP       string `json:"otp"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
-		return
-	}
-	// In real, verify OTP via SMS/Email 2FA service - mock OTP 123456 passes
-	if req.OTP != "123456" {
-		pkghttp.WriteError(w, r, errors.New(errors.CodeValidation, "invalid 2FA OTP", 400))
-		return
-	}
-	// Update payment two_fa_verified true - simplified via repo direct query would be in service
+	merchantID := mw.MerchantID(r.Context())
+	paymentID := chi.URLParam(r, "id")
+	var req struct { OTP string `json:"otp"` }
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json"); return }
+	if err := h.svc.Verify2FA(r.Context(), merchantID, paymentID, req.OTP); err != nil { pkghttp.WriteError(w, r, err); return }
 	pkghttp.WriteJSON(w, r, 200, map[string]bool{"two_fa_verified": true, "can_verify_now": true})
 }
