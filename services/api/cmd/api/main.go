@@ -24,6 +24,7 @@ import (
 	"apexpay/internal/platform/storage"
 
 	"apexpay/internal/connector"
+	"apexpay/internal/bankverification"
 	"apexpay/internal/fayda"
 	"apexpay/internal/ledger"
 	"apexpay/internal/link"
@@ -118,6 +119,7 @@ func main() {
 	linkHandler := link.NewHandler(linkSvc)
 	webhookHandler := webhook.NewHandler(webhookRepo, []byte(cfg.ConnectorEncKey))
 	reconciliationHandler := reconciliation.NewHandler(reconciliationSvc)
+	bankVerificationHandler := bankverification.NewHandler(pool)
 
 	authMw := mw.NewAuth(pool)
 	rateLimiter := mw.NewRateLimiter(rdb)
@@ -200,7 +202,9 @@ func main() {
 				linkHandler.Routes(r)
 			})
 
-			r.Route("/refunds", func(r chi.Router) {
+				bankVerificationHandler.Routes(r)
+
+		r.Route("/refunds", func(r chi.Router) {
 				refundHandler.Routes(r)
 			})
 
