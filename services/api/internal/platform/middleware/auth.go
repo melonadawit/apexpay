@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -59,8 +60,8 @@ func (a *AuthMiddleware) APIKeyAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		var merchantID, keyID, status, storedHash string
-		err := a.pool.QueryRow(r.Context(), `SELECT merchant_id, id, status, COALESCE(secret_hash, '') FROM api_keys WHERE key_prefix=$1`, token[:prefixLen]).Scan(&merchantID, &keyID, &status, &storedHash)
+		var merchantID, keyID, status, storedHash, scopesJSON string
+		err := a.pool.QueryRow(r.Context(), `SELECT merchant_id, id, status, COALESCE(secret_hash, ''), scopes::text FROM api_keys WHERE key_prefix=$1`, token[:prefixLen]).Scan(&merchantID, &keyID, &status, &storedHash, &scopesJSON)
 		if err != nil || status != "active" || storedHash == "" {
 			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "invalid API key")
 			return
@@ -73,6 +74,7 @@ func (a *AuthMiddleware) APIKeyAuth(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(r.Context(), CtxMerchantID, merchantID)
 		ctx = context.WithValue(ctx, CtxAPIKeyID, keyID)
+		if role := roleFromScopes(scopesJSON); role != "" { ctx = context.WithValue(ctx, CtxRole, role) }
 		// Compatibility bridge while all handlers are migrated to the typed accessors.
 		// Do not add new reads using string keys.
 		ctx = context.WithValue(ctx, "merchant_id", merchantID)
@@ -99,4 +101,20 @@ func RBAC(allowedRoles ...string) func(http.Handler) http.Handler {
 			pkghttp.WriteErrorWithBody(w, r, http.StatusForbidden, string(appErrors.CodeForbidden), "role not allowed")
 		})
 	}
+}
+
+
+// roleFromScopes fails closed. Only explicitly issued operational scopes can
+// reach admin routes; ordinary merchant payment scopes never imply an admin role.
+func roleFromScopes(scopesJSON string) string {
+	var scopes []string
+	if json.Unmarshal([]byte(scopesJSON), &scopes) != nil { return "" }
+	for _, scope := range scopes {
+		switch strings.ToLower(scope) {
+		case "role:admin": return "admin"
+		case "role:ops": return "ops"
+		case "role:compliance": return "compliance"
+		}
+	}
+	return ""
 }
