@@ -143,9 +143,10 @@ func (r *PgRepository) ReserveIdempotency(ctx context.Context, merchantID, key, 
 }
 
 
-func (r *PgRepository) MarkConnectorStarted(ctx context.Context, merchantID, key string) error {
-	command, err := r.pool.Exec(ctx, `UPDATE idempotency_keys SET state='connector_started'
-		WHERE merchant_id=$1 AND key=$2 AND state='in_progress'`, merchantID, key)
+func (r *PgRepository) MarkConnectorStarted(ctx context.Context, merchantID, key, txRef string) error {
+	command, err := r.pool.Exec(ctx, `UPDATE idempotency_keys
+		SET state='connector_started', response_body=jsonb_build_object('tx_ref',$3)
+		WHERE merchant_id=$1 AND key=$2 AND state='in_progress'`, merchantID, key, txRef)
 	if err != nil { return err }
 	if command.RowsAffected() != 1 { return fmt.Errorf("idempotency reservation was not available before connector call") }
 	return nil

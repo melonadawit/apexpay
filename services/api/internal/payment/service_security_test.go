@@ -18,7 +18,7 @@ func (r *securityTestRepo) CreatePaymentTx(context.Context, *Payment, string, st
 func (r *securityTestRepo) GetByTxRef(context.Context, string, string) (*Payment, error) { return nil, nil }
 func (r *securityTestRepo) UpdateStatusTx(context.Context, string, Status, *ledger.Journal, []ledger.Entry, *time.Time) error { return nil }
 func (r *securityTestRepo) ReserveIdempotency(context.Context, string, string, string) (*Payment, error) { return nil, nil }
-func (r *securityTestRepo) MarkConnectorStarted(context.Context, string, string) error { return nil }
+func (r *securityTestRepo) MarkConnectorStarted(context.Context, string, string, string) error { return nil }
 func (r *securityTestRepo) FailIdempotency(context.Context, string, string) error { return nil }
 func (r *securityTestRepo) Mark2FAVerified(_ context.Context, merchantID, paymentID string) error {
 	r.verifiedMerchant, r.verifiedPayment = merchantID, paymentID

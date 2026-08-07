@@ -34,18 +34,22 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Outbox drain goroutine - polls outbox_unpublished_idx where published_at null
+	// Ambiguous external-payment guard. A connector-started idempotency record older
+	// than 15 minutes is moved to manual_review, never retried automatically. Operations
+	// must reconcile its tx_ref against the rail before any customer retry is permitted.
 	go func() {
-		ticker := time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(time.Minute)
+		defer ticker.Stop()
 		for {
 			select {
-			case <-ctx.Done():
-				return
+			case <-ctx.Done(): return
 			case <-ticker.C:
-				// Drain outbox_events: SELECT * WHERE published_at IS NULL ORDER BY created_at LIMIT 100 FOR UPDATE SKIP LOCKED
-				// For each event, create webhook_deliveries for merchant's active endpoints + mark published_at now()
-				// Simplified skeleton logs
-				l.Debug().Msg("outbox drain tick")
+				command, err := pool.Exec(ctx, `UPDATE idempotency_keys
+					SET state='manual_review', response_code=409,
+					response_body=COALESCE(response_body,'{}'::jsonb) || jsonb_build_object('error','connector_reconciliation_required')
+					WHERE state='connector_started' AND created_at < now() - interval '15 minutes'`)
+				if err != nil { l.Error().Err(err).Msg("idempotency reconciliation sweep failed"); continue }
+				if command.RowsAffected() > 0 { l.Warn().Int64(command.RowsAffected()).Msg("payments moved to manual reconciliation") }
 			}
 		}
 	}()
