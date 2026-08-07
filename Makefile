@@ -1,25 +1,24 @@
 # ApexPay Makefile - senior engineer best practices
 # Usage: make test, make lint, make migrate-up, make k6-smoke
 
-GO := go
-PKG := ./services/api/internal/...
+# Go commands run only inside Docker; no Go toolchain/module cache is required locally.
+DOCKER_BUILD := docker build -f deploy/docker/Dockerfile.api .
 
 .PHONY: test ledger-test test-race lint gosec migrate-up migrate-down k6-smoke fmt
 
 test:
-	$(GO) test $(PKG) -v -count=1 -race -cover
+	$(DOCKER_BUILD) --target test
 
 ledger-test:
-	$(GO) test ./services/api/internal/ledger -v -count=1 -run TestLedger -cover
-	$(GO) test ./services/api/internal/ledger -v -count=1 -run TestPayroll -cover
-	$(GO) test ./services/api/internal/ledger -run TestLedgerBalancedProperty_10k -count=1 -v
+	$(DOCKER_BUILD) --target test
 
 test-race:
-	$(GO) test ./services/api/internal/... -race -count=1
+	@echo "Add a dedicated Docker race-test target before enabling this command."
+	@exit 1
 
 fmt:
-	$(GO) fmt $(PKG)
-	gofmt -w .
+	@echo "Run gofmt only inside a dedicated Docker tooling target; do not install Go locally."
+	@exit 1
 
 lint:
 	golangci-lint run ./services/api/...
@@ -30,10 +29,11 @@ gosec:
 	gosec ./services/api/...
 
 migrate-up:
-	goose -dir db/migrations postgres "postgres://apexpay:apexpay_dev@localhost:5432/apexpay?sslmode=disable" up
+	docker compose -f deploy/docker/docker-compose.yml run --rm migrate
 
 migrate-down:
-	goose -dir db/migrations postgres "postgres://apexpay:apexpay_dev@localhost:5432/apexpay?sslmode=disable" down
+	@echo "Down migrations are intentionally disabled; use a disposable development database instead."
+	@exit 1
 
 k6-smoke:
 	k6 run scripts/k6/smoke.js

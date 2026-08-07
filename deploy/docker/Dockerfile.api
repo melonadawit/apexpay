@@ -35,3 +35,8 @@ USER nonroot:nonroot
 
 # Healthcheck per SAD quality
 ENTRYPOINT ["/api"]
+
+# Explicit CI-only target. It runs entirely inside Docker and is never part of
+# the production image. Invoke: docker build --target test -f deploy/docker/Dockerfile.api .
+FROM builder AS test
+RUN go test ./... -count=1
