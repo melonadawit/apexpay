@@ -44,11 +44,17 @@ func main() {
 			select {
 			case <-ctx.Done(): return
 			case <-ticker.C:
-				command, err := pool.Exec(ctx, `UPDATE idempotency_keys
-					SET state='manual_review', response_code=409,
+				tx, err := pool.Begin(ctx)
+				if err != nil { l.Error().Err(err).Msg("idempotency reconciliation transaction failed"); continue }
+				command, err := tx.Exec(ctx, `WITH moved AS (
+					UPDATE idempotency_keys SET state='manual_review', response_code=409,
 					response_body=COALESCE(response_body,'{}'::jsonb) || jsonb_build_object('error','connector_reconciliation_required')
-					WHERE state='connector_started' AND created_at < now() - interval '15 minutes'`)
-				if err != nil { l.Error().Err(err).Msg("idempotency reconciliation sweep failed"); continue }
+					WHERE state='connector_started' AND created_at < now() - interval '15 minutes'
+					RETURNING merchant_id,key,COALESCE(response_body->>'tx_ref','') AS tx_ref)
+					INSERT INTO payment_reconciliation_cases (merchant_id,idempotency_key,tx_ref)
+					SELECT merchant_id,key,tx_ref FROM moved ON CONFLICT (merchant_id,idempotency_key) DO NOTHING`)
+				if err != nil { _ = tx.Rollback(ctx); l.Error().Err(err).Msg("idempotency reconciliation sweep failed"); continue }
+				if err = tx.Commit(ctx); err != nil { l.Error().Err(err).Msg("idempotency reconciliation commit failed"); continue }
 				if command.RowsAffected() > 0 { l.Warn().Int64(command.RowsAffected()).Msg("payments moved to manual reconciliation") }
 			}
 		}

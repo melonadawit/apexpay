@@ -32,6 +32,7 @@ import (
 	"apexpay/internal/payout"
 	"apexpay/internal/payroll"
 	"apexpay/internal/refund"
+	"apexpay/internal/reconciliation"
 	"apexpay/internal/routing"
 	"apexpay/internal/subscription"
 	"apexpay/internal/swarm"
@@ -101,6 +102,7 @@ func main() {
 	swarmSvc := swarm.NewService(swarmRepo, swarmExecutor, &swarm.RulesPlanner{}, swarm.DefaultRegistry())
 	linkSvc := link.NewService(linkRepo)
 	webhookSvc := webhook.NewService(webhookRepo) // for future use in worker, handler uses repo directly for simplicity
+	reconciliationSvc := reconciliation.NewService(pool)
 	_ = webhookSvc
 
 	// --- Handlers ---
@@ -115,6 +117,7 @@ func main() {
 	swarmHandler := swarm.NewHandler(swarmSvc)
 	linkHandler := link.NewHandler(linkSvc)
 	webhookHandler := webhook.NewHandler(webhookRepo)
+	reconciliationHandler := reconciliation.NewHandler(reconciliationSvc)
 
 	authMw := mw.NewAuth(pool)
 	rateLimiter := mw.NewRateLimiter(rdb)
@@ -342,7 +345,8 @@ func main() {
 				}
 				pkghttp.WriteJSON(w, r, 200, health)
 			})
-			r.Get("/recon/breaks", func(w http.ResponseWriter, r *http.Request) {
+				reconciliationHandler.Routes(r)
+		r.Get("/recon/breaks", func(w http.ResponseWriter, r *http.Request) {
 				pkghttp.WriteJSON(w, r, 200, []interface{}{})
 			})
 			r.Get("/evidence", func(w http.ResponseWriter, r *http.Request) {

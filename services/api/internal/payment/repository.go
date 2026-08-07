@@ -139,6 +139,10 @@ func (r *PgRepository) ReserveIdempotency(ctx context.Context, merchantID, key, 
 	if err != nil { return nil, err }
 	if storedHash != requestHash { return nil, ErrIdempotencyConflict }
 	if state == "completed" && paymentID != "" { return r.getByID(ctx, merchantID, paymentID) }
+	if state == "retry_authorized" {
+		command, err := r.pool.Exec(ctx, `UPDATE idempotency_keys SET state='in_progress',response_code=0,response_body='{}'::jsonb WHERE merchant_id=$1 AND key=$2 AND state='retry_authorized'`, merchantID, key)
+		if err != nil { return nil, err }; if command.RowsAffected() == 1 { return nil, nil }
+	}
 	return nil, ErrIdempotencyInProgress
 }
 
