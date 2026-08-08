@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -10,6 +11,7 @@ import (
 
 	"apexpay/internal/connector"
 	"apexpay/internal/id"
+	"apexpay/internal/notify"
 	"apexpay/internal/platform/config"
 	platformcrypto "apexpay/internal/platform/crypto"
 	"apexpay/internal/platform/logger"
@@ -147,9 +149,21 @@ func main() {
 
 	// ------------------------------------------------------------------
 	// 6. Notifications — poll unread notifications and send FCM / in-app pushes.
+	//    Plus real email/SMS delivery honoring each user's notification_preferences.
+	//    SMTP creds via APEXPAY_SMTP_*; falls back to console logs when unset (dev).
 	// ------------------------------------------------------------------
 	pushWorker := notifications.NewPushWorker(pool)
 	go pushWorker.RunTicker(ctx)
+
+	notifySender := notify.NewEmailSMSDeliverer(&notify.SMTPConfig{
+		Host:     os.Getenv("APEXPAY_SMTP_HOST"),
+		Port:     os.Getenv("APEXPAY_SMTP_PORT"),
+		Username: os.Getenv("APEXPAY_SMTP_USER"),
+		Password: os.Getenv("APEXPAY_SMTP_PASS"),
+		From:     os.Getenv("APEXPAY_SMTP_FROM"),
+	})
+	deliveryWorker := notifications.NewDeliveryWorker(pool, notifySender)
+	go deliveryWorker.RunTicker(ctx)
 
 	// ------------------------------------------------------------------
 	// 7. Connector health sampler — probe each enabled connector every 30s, persist a

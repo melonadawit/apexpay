@@ -309,7 +309,53 @@ that's expected. To run them, point `DATABASE_URL` at a Postgres.
 
 ---
 
-## 11. Repository map (where things live)
+
+## 11. Extended modules (compliance, notifications, assets, analytics, 2FA)
+
+Beyond the core payments/checkout/payroll/banking flows, ApexPay ships an operating-system suite.
+All are session-authenticated under `/v1/` (login required):
+
+| Module | Routes | Purpose |
+|--------|--------|---------|
+| Workforce OS | `/v1/hris/*` | teams, contracts, shifts, attendance clocking, onboarding, reviews |
+| Risk & Fraud | `/v1/risk/*` | rules, flags, evaluation engine |
+| Treasury | `/v1/treasury/*` | cash position, internal transfers, cash-flow forecast |
+| Invoicing | `/v1/invoices/*` | invoice builder (VAT/withholding), hosted payment, AR aging |
+| Team & Approvals | `/v1/team/*` | member roles + maker-checker approvals inbox |
+| Compliance | `/v1/compliance-console/*` | KYC/license/tax/pension/AML expiry tracking |
+| Notifications | `/v1/notifications/preferences/*` | per-user channel toggles |
+| Fixed Assets | `/v1/fixed-assets/*` | straight-line/declining-balance depreciation |
+| Analytics | `/v1/analytics/*` | revenue, success by method, cohort retention |
+| 2FA (TOTP) | `/v1/2fa/*` | real RFC 6238 authenticator-app enrollment + verify |
+
+### Notification delivery (email/SMS)
+The worker delivers unread notifications over each user's preferred channels. Configure a real
+SMTP server (production) — otherwise it console-logs (dev):
+
+```bash
+export APEXPAY_SMTP_HOST=smtp.example.com
+export APEXPAY_SMTP_PORT=587
+export APEXPAY_SMTP_USER=user
+export APEXPAY_SMTP_PASS=pass
+export APEXPAY_SMTP_FROM="ApexPay <noreply@apexpay.et>"
+```
+
+For SMS, implement `notify.Sender.SendSMS` against your provider (the framework has a
+Twilio-compatible hook) and wire it via `SetSMSProvider`.
+
+### Secrets
+`internal/platform/secrets.Vault` abstracts secret storage. Dev uses `EnvVault` (reads
+`APEXPAY_SECRET_*`); for production, implement the same interface backed by AWS/GCP KMS or
+HashiCorp Vault and wire it in `main`.
+
+### Production rails
+The connector adapters already point at configurable endpoints with HMAC signing. To go live,
+point `connector_configs.config` (decrypted) at the real rail endpoints and switch the registry
+environment from `test` to `live`. The sandbox server (in-process) simulates every rail for
+tests — no external credentials required for local/dev.
+
+
+## 12. Repository map (where things live)
 
 ```
 services/api/cmd/api        HTTP API entrypoint
