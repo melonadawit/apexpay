@@ -59,7 +59,11 @@ INSERT INTO ledger_accounts (id, book_id, code, name, normal_balance)
 VALUES
   ('la_docker_clear', 'book_docker_smoke', 'asset:clearing:mock', 'Mock clearing', 'debit'),
   ('la_docker_payable', 'book_docker_smoke', 'liability:merchant_payable', 'Merchant payable', 'credit'),
-  ('la_docker_fee', 'book_docker_smoke', 'liability:platform_fee_due', 'Platform fee', 'credit')
+  ('la_docker_fee', 'book_docker_smoke', 'liability:platform_fee_due', 'Platform fee', 'credit'),
+  ('la_docker_bank', 'book_docker_smoke', 'asset:bank', 'Cash & Bank', 'debit'),
+  ('la_docker_rev', 'book_docker_smoke', 'revenue:product', 'Product Revenue', 'credit'),
+  ('la_docker_exp', 'book_docker_smoke', 'expense:operating', 'Operating Expenses', 'debit'),
+  ('la_docker_equity', 'book_docker_smoke', 'equity:owner', 'Owner''s Equity', 'credit')
 ON CONFLICT (book_id, code) DO NOTHING;
 
 -- API key with explicit ops scope (RBAC admin routes).

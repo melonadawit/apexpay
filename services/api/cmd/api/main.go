@@ -55,6 +55,7 @@ import (
 	"apexpay/internal/payout"
 	"apexpay/internal/payroll"
 	"apexpay/internal/platform/twofa"
+	"apexpay/internal/procurement"
 	"apexpay/internal/reconciliation"
 	"apexpay/internal/refund"
 	"apexpay/internal/risk"
@@ -164,11 +165,13 @@ func main() {
 	analyticsHandler := analytics.NewHandler(analytics.NewRepository(pool))
 	accountingRepo := accounting.NewRepository(pool)
 	accountingRepo.SetCache(accounting.NewCache(rdb))
-	accountingHandler := accounting.NewHandler(accountingRepo)
+	accountingSvc := accounting.NewService(accountingRepo, ledgerRepo)
+	accountingHandler := accounting.NewHandler(accountingRepo, accountingSvc)
 	inventoryHandler := inventory.NewHandler(inventory.NewRepository(pool))
 	disputeHandler := dispute.NewHandler(dispute.NewRepository(pool))
 	loyaltyHandler := loyalty.NewHandler(loyalty.NewRepository(pool))
 	lendingHandler := lending.NewHandler(lending.NewRepository(pool))
+	procurementHandler := procurement.NewHandler(procurement.NewRepository(pool))
 
 	// Apex Assistant — role-scoped read-only conversational agent (merchant + employee actors).
 	assistantRepo := assistant.NewRepository(pool)
@@ -345,6 +348,12 @@ func main() {
 		r.Route("/assistant", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			assistantHandler.Routes(r)
+		})
+
+		// Procurement & Accounts Payable (session-authenticated): vendors, POs, receipts, AP.
+		r.Route("/procurement", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			procurementHandler.Routes(r)
 		})
 
 		// Inventory & Sales (software POS) — session-authenticated.

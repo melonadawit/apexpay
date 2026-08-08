@@ -41,3 +41,40 @@ type CashFlowLine struct {
 	Amount string `json:"amount"`
 	Kind   string `json:"kind"`
 }
+
+// JournalLine is one debit/credit leg of a manual journal entry.
+type JournalLine struct {
+	AccountCode string `json:"account_code"`
+	AccountName string `json:"account_name,omitempty"`
+	Direction   string `json:"direction"` // debit | credit
+	Amount      string `json:"amount"`
+}
+
+// JournalEntryRequest is the input to create a manual journal entry.
+type JournalEntryRequest struct {
+	Memo          string        `json:"memo"`
+	ReferenceType string        `json:"reference_type,omitempty"`
+	ReferenceID   string        `json:"reference_id,omitempty"`
+	Lines         []JournalLine `json:"lines"`
+}
+
+// JournalEntry is a persisted manual journal entry with its legs.
+type JournalEntry struct {
+	ID         string        `json:"id"`
+	Memo       string        `json:"memo"`
+	Period     string        `json:"period"` // YYYY-MM
+	PostingKey string        `json:"posting_key,omitempty"`
+	Lines      []JournalLine `json:"lines"`
+	CreatedAt  string        `json:"created_at"`
+}
+
+// FiscalPeriod tracks open/closed status of an accounting period (month) so postings can
+// be locked once books are closed.
+type FiscalPeriod struct {
+	ID       string `json:"id"`
+	Merchant string `json:"merchant_id"`
+	Period   string `json:"period"` // YYYY-MM
+	Status   string `json:"status"` // open | closed
+	ClosedAt string `json:"closed_at,omitempty"`
+	ClosedBy string `json:"closed_by,omitempty"`
+}

@@ -1,5 +1,9 @@
 # ApexPay — Assistant, Comprehensive GL & Management-Suite Design & Roadmap
 
+> **Status:** Part A (P1, read-only assistant) ✅ · Part B (real GL: journal entries + period
+> close) ✅ · Part C (1) Procurement/AP ✅ · Part C (2) Expenses and Part B remainder
+> (inventory costing, depreciation, multi-currency, tax) — next.
+>
 > Senior Engineering Manager view — grounded in what already exists in the codebase.
 > Goal: deliver the *Apex Assistant* (role-scoped conversational agents for merchants,
 > vendors, employees, employers), turn the accounting engine into a real, light-weight

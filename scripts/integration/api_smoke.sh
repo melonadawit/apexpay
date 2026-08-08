@@ -197,4 +197,63 @@ grep -q '"messages"' /tmp/assistant_thread.json
 # Assistant must be rejected without a session.
 test "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/v1/assistant/chat" -H 'Content-Type: application/json' -d '{"message":"hi"}' )" = "401"
 
+# ---- 20. Real GL: manual journal entries + fiscal period close. ----
+# Balanced entry posts (201).
+test "$(curl -s -o /tmp/gl_ok.json -w '%{http_code}' -X POST "$API/v1/accounting/journal-entries" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"memo":"smoke manual entry","lines":[{"account_code":"asset:bank","direction":"debit","amount":"2500.00"},{"account_code":"revenue:product","direction":"credit","amount":"2500.00"}]}')" = "201"
+grep -q '"id"' /tmp/gl_ok.json
+# Unbalanced entry rejected (400).
+test "$(curl -s -o /tmp/gl_bad.json -w '%{http_code}' -X POST "$API/v1/accounting/journal-entries" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"memo":"bad","lines":[{"account_code":"asset:bank","direction":"debit","amount":"100"},{"account_code":"revenue:product","direction":"credit","amount":"90"}]}')" = "400"
+# List journal entries (200).
+test "$(curl -s -o /tmp/gl_list.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/journal-entries")" = "200"
+# Period close: close current month, then a posting is rejected.
+PERIOD=$(date +%Y-%m)
+test "$(curl -s -o /tmp/gl_close.json -w '%{http_code}' -X POST "$API/v1/accounting/periods/close" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d "{\"period\":\"$PERIOD\"}")" = "200"
+test "$(curl -s -o /tmp/gl_closed.json -w '%{http_code}' -X POST "$API/v1/accounting/journal-entries" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"memo":"after close","lines":[{"account_code":"asset:bank","direction":"debit","amount":"50"},{"account_code":"revenue:product","direction":"credit","amount":"50"}]}')" = "400"
+grep -q 'closed' /tmp/gl_closed.json
+# Reopen then posting succeeds again (201).
+test "$(curl -s -o /tmp/gl_reopen.json -w '%{http_code}' -X POST "$API/v1/accounting/periods/reopen" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d "{\"period\":\"$PERIOD\"}")" = "200"
+test "$(curl -s -o /tmp/gl_ok2.json -w '%{http_code}' -X POST "$API/v1/accounting/journal-entries" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"memo":"after reopen","lines":[{"account_code":"asset:bank","direction":"debit","amount":"50"},{"account_code":"revenue:product","direction":"credit","amount":"50"}]}')" = "201"
+# Period list (200).
+test "$(curl -s -o /tmp/gl_periods.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/periods")" = "200"
+
+# ---- 21. Procurement & Accounts Payable: vendors, POs, receipts, AP invoices, aging. ----
+# Create a vendor (201).
+test "$(curl -s -o /tmp/pr_vendor.json -w '%{http_code}' -X POST "$API/v1/procurement/vendors" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"name":"Smoke Supplies Co","payment_terms_days":30}')" = "201"
+grep -q '"id"' /tmp/pr_vendor.json
+PR_VID=$(sed -n 's/.*"id":"\([^"]*\)".*/\1/p' /tmp/pr_vendor.json | head -1)
+test -n "$PR_VID"
+# Create a PO (201) and capture its id.
+test "$(curl -s -o /tmp/pr_po.json -w '%{http_code}' -X POST "$API/v1/procurement/purchase-orders" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d "{\"vendor_id\":\"$PR_VID\",\"po_number\":\"PO-SMOKE-1\",\"order_date\":\"2026-08-01\",\"tax_rate\":\"0.15\",\"items\":[{\"item_name\":\"Widget\",\"quantity\":\"10\",\"unit_price\":\"100\"}]}")" = "201"
+grep -q '"po_number"' /tmp/pr_po.json
+PR_POID=$(sed -n 's/.*"id":"\([^"]*\)".*/\1/p' /tmp/pr_po.json | head -1)
+test -n "$PR_POID"
+# Receive the PO (201).
+test "$(curl -s -o /tmp/pr_recv.json -w '%{http_code}' -X POST "$API/v1/procurement/purchase-orders/$PR_POID/receive" \
+  -H "Authorization: Bearer $SESSION_TOKEN")" = "201"
+grep -q '"receipt_number"' /tmp/pr_recv.json
+# AP invoice linked to the PO totals 1150 (subtotal 1000 + tax 150) -> matched (201).
+test "$(curl -s -o /tmp/pr_inv.json -w '%{http_code}' -X POST "$API/v1/procurement/invoices" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d "{\"vendor_id\":\"$PR_VID\",\"purchase_order_id\":\"$PR_POID\",\"invoice_number\":\"INV-SMOKE-AP\",\"invoice_date\":\"2026-08-05\",\"due_date\":\"2026-09-04\",\"subtotal\":\"1000\",\"tax_amount\":\"150\"}")" = "201"
+grep -q '"match_status":"matched"' /tmp/pr_inv.json
+# List invoices (200) and aging (200).
+test "$(curl -s -o /tmp/pr_list.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/procurement/invoices")" = "200"
+test "$(curl -s -o /tmp/pr_aging.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/procurement/aging")" = "200"
+
 echo 'Docker API smoke suite passed'
