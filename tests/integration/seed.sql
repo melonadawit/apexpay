@@ -94,3 +94,17 @@ WHERE id = 'user_docker_admin' AND (password_hash IS NULL OR password_hash = '')
 INSERT INTO merchant_members (merchant_id, user_id, role)
 VALUES ('mer_docker_smoke', 'user_docker_admin', 'owner')
 ON CONFLICT (merchant_id, user_id) DO NOTHING;
+
+-- Banking module seed rows for smoke-testing the real banking read endpoints.
+INSERT INTO forex_rates (id, from_currency, to_currency, rate, buy_rate, sell_rate, source)
+VALUES ('fx_smoke_usd', 'ETB', 'USD', 57.50, 56.80, 58.20, 'nbe')
+ON CONFLICT (from_currency, to_currency) DO NOTHING;
+
+INSERT INTO notifications (id, merchant_id, user_id, type, title, message, data, is_read, action_url)
+VALUES ('notif_smoke', 'mer_docker_smoke', 'user_docker_admin', 'current_account_opened', 'Current Account Opened',
+        'Your current account is ready', '{"account":"smoke"}', false, '/banking/current-accounts')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO current_accounts (id, merchant_id, account_number, account_name, account_type, currency, bank_code, partner_bank_name, status, balance, available_balance)
+VALUES ('ca_smoke', 'mer_docker_smoke', 'ETB-CBE-7778889990', 'Docker Smoke PLC', 'current', 'ETB', 'CBE', 'Commercial Bank of Ethiopia', 'active', 125000.00, 125000.00)
+ON CONFLICT (id) DO NOTHING;

@@ -80,6 +80,125 @@ function post<T>(path: string, body?: unknown): Promise<T> {
   })
 }
 
+export type CurrentAccount = {
+  id: string
+  account_number: string
+  account_name: string
+  account_type: string
+  currency: string
+  bank_code: string
+  partner_bank_name: string
+  status: string
+  balance: string
+  available_balance: string
+  overdraft_limit: string
+  is_primary: boolean
+  is_lite: boolean
+  is_virtual: boolean
+  cheque_book_issued: boolean
+  debit_card_issued: boolean
+}
+
+export type CreditLine = {
+  id: string
+  credit_limit: string
+  available_credit: string
+  utilized_credit: string
+  interest_rate: string
+  status: string
+  credit_score?: number
+}
+
+export type ForexRequest = {
+  id: string
+  from_currency: string
+  to_currency: string
+  from_amount: string
+  to_amount: string
+  rate_used: string
+  forex_fee_percent: string
+  forex_fee_amount: string
+  purpose: string
+  status: string
+  nbe_approval_status?: string
+  created_at: string
+}
+
+export type ForexRate = {
+  from_currency: string
+  to_currency: string
+  rate: string
+  buy_rate: string
+  sell_rate: string
+  source: string
+  last_updated_at: string
+}
+
+export type VirtualAccount = {
+  id: string
+  virtual_account_number: string
+  customer_id: string
+  purpose: string
+  status: string
+  bank_code: string
+  created_at: string
+}
+
+export type Notification = {
+  id: string
+  type: string
+  title: string
+  message: string
+  is_read: boolean
+  action_url?: string
+  created_at: string
+}
+
+export type CorporateCard = {
+  id: string
+  card_number_masked: string
+  card_type: string
+  card_network: string
+  cardholder_name: string
+  cardholder_email: string
+  status: string
+  credit_limit: string
+  available_credit: string
+  forex_markup_percent: string
+  cashback_percent: string
+}
+
+export type EscrowAccount = {
+  id: string
+  agreement_id?: string
+  account_number?: string
+  account_name?: string
+  amount: string
+  status: string
+  order_id?: string
+  platform_fee: string
+  seller_amount: string
+}
+
+export type SupportTicket = {
+  id: string
+  subject: string
+  priority: string
+  status: string
+  assigned_to?: string
+  created_at: string
+}
+
+export type BankVerification = {
+  id: string
+  bank_code: string
+  account_number_masked: string
+  account_name: string
+  verification_method: string
+  status: string
+  created_at: string
+}
+
 export const api = {
   // Dashboard
   summary: () => get<DashboardSummary>("dashboard"),
@@ -93,4 +212,18 @@ export const api = {
 
   // Hosted checkout links
   createLink: (payload: unknown) => post<PaymentLink>("payment_links", payload),
+
+  // Banking modules (session-authenticated via proxy)
+  banking: {
+    currentAccounts: () => get<CurrentAccount[]>("banking/current_accounts"),
+    creditLines: () => get<CreditLine[]>("banking/credit_lines"),
+    forexRates: () => get<ForexRate[]>("banking/forex/rates"),
+    forexRequests: () => get<ForexRequest[]>("banking/forex/requests"),
+    virtualAccounts: () => get<VirtualAccount[]>("banking/virtual_accounts"),
+    notifications: () => get<Notification[]>("banking/notifications"),
+    corporateCards: () => get<CorporateCard[]>("banking/corporate_cards"),
+    escrow: () => get<EscrowAccount[]>("banking/escrow"),
+    supportTickets: () => get<SupportTicket[]>("banking/support_tickets"),
+    bankVerifications: () => get<BankVerification[]>("banking/bank_verifications"),
+  },
 }

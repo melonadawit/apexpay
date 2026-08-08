@@ -1,70 +1,40 @@
 "use client"
-import * as React from "react"
+import { BankingPage, type Column } from "@/components/banking/page"
+import { api, type BankVerification } from "@/lib/api/client"
 
-function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
-function Badge({ children, variant = "default" }: any) {
-  const map: any = { default: "bg-neutral-100", success: "bg-green-500/15 text-green-700 border", warning: "bg-amber-500/15 text-amber-700 border", danger: "bg-red-500/15 text-red-700 border" }
-  return <span className={`px-2 py-0.5 rounded-full text-[11px] border ${map[variant]}`}>{children}</span>
-}
-
-const mockVerifications = [
-  { id: "ver_001", bank_code: "CBE", account_number_masked: "****1234", account_number_hash: "hash_1234", account_name: "Apex Trading PLC", verification_method: "penny_test", amount: "1.00", connector_id: "bank_ips", status: "verified", verification_response: { beneficiary_name: "Apex Trading PLC", account_name_match_score: 100, bank_details: "CBE - Commercial Bank of Ethiopia" }, beneficiary_name_returned: "Apex Trading PLC", match_score: "100.00", verified_at: "2026-07-25T10:00:00Z", expires_at: "2026-08-25T10:00:00Z" },
-  { id: "ver_002", bank_code: "AWASH", account_number_masked: "****5678", account_number_hash: "hash_5678", account_name: "Abebe Kebede", verification_method: "penny_test", amount: "1.00", connector_id: "bank_ips", status: "verified", verification_response: { beneficiary_name: "Abebe Kebede", account_name_match_score: 95, bank_details: "Awash Bank" }, beneficiary_name_returned: "Abebe Kebede", match_score: "95.00", verified_at: "2026-07-26T10:00:00Z", expires_at: "2026-08-26T10:00:00Z" },
-  { id: "ver_003", bank_code: "DASHEN", account_number_masked: "****9012", account_number_hash: "hash_9012", account_name: "Almaz Tadesse", verification_method: "bank_letter", amount: "0", connector_id: "manual", status: "pending", verification_response: {}, beneficiary_name_returned: "", match_score: "0", verified_at: null, expires_at: null },
+const columns: Column<BankVerification>[] = [
+  { key: "id", label: "ID" },
+  { key: "bank_code", label: "Bank Code" },
+  { key: "account_number_masked", label: "Account" },
+  { key: "account_name", label: "Account Name" },
+  { key: "verification_method", label: "Method" },
+  {
+    key: "status",
+    label: "Status",
+    render: (v) => (
+      <span
+        className={`px-2 py-0.5 rounded-full text-[11px] border ${
+          v.status === "verified"
+            ? "bg-green-500/15 text-green-700"
+            : v.status === "pending"
+            ? "bg-amber-500/15 text-amber-700"
+            : "bg-red-500/15 text-red-700"
+        }`}
+      >
+        {v.status}
+      </span>
+    ),
+  },
+  { key: "created_at", label: "Created" },
 ]
 
 export default function BankVerificationPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold">Bank Account Verification • ባንክ ሂሳብ ማረጋገጫ • Penny Testing 1 ETB Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name • Fund Account Validation • RazorpayX Parity • P0 • Ethiopia PayAtlas</h1>
-            <p className="text-sm text-muted-foreground mt-2">Penny testing or fund account validation is service provided by Razorpay which can be used to verify authenticity of end beneficiary's bank account or UPI ID achieved by depositing single rupee into intended account which returns validated bank details along with beneficiary's name of account number provided by end beneficiary account verification verify customer or vendor bank account details to ensure secure transactions instant beneficiary addition with no limit manage all business contacts in one dashboard • Ethiopia: Bank account verification via 1 ETB penny test via partner bank API Bank IPS Telebirr CBE Birr + account name fuzzy Levenshtein &lt;3 per PayAtlas ET PSP settlement bank account name == legal name • Bank Letter Required • Bank Code CBE/AWASH/DASHEN with logos account name auto-check must match legal • Outstanding modern UI glassmorphic</p>
-          </div>
-          <button className="rounded-xl bg-primary text-white h-10 px-6 text-xs">+ Verify Bank Account • Penny Testing 1 ETB • Fund Account Validation • Bank Letter • Manual • Outstanding</button>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="p-6 lg:col-span-2">
-            <h3 className="font-semibold">Bank Account Verifications • Penny Testing 1 ETB Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name • Fund Account Validation • Status Pending/Processing/Verified/Failed/Expired • Outstanding Pipeline Visual Stepper</h3>
-            <div className="mt-4 rounded-xl border overflow-hidden">
-              <div className="grid grid-cols-7 gap-2 bg-muted p-3 text-[11px] font-semibold"><span>Bank Code • CBE/AWASH/DASHEN • Bank Name • Commercial Bank of Ethiopia</span><span>Account Number Masked • ****1234 • Account Number Hash • Hash • Account Name</span><span>Verification Method • Penny Test/Micro Deposit/Bank Letter/Manual • Amount 1.00 ETB • Connector ID Bank IPS Telebirr</span><span>Status • Pending/Processing/Verified/Failed/Expired • Verification Response JSON • Beneficiary Name Returned • Match Score Fuzzy Levenshtein &lt;3</span><span>Verified At • Expires At • Created At • Created At • Updated At</span><span>Action • Verify • Penny Testing 1 ETB • Fund Account Validation • Bank Letter • Manual</span></div>
-              {mockVerifications.map(v => (
-                <div key={v.id} className="grid grid-cols-7 gap-2 p-3 border-t text-xs hover:bg-muted/50">
-                  <span><Badge>{v.bank_code}</Badge><span className="block text-[10px]">{v.bank_code==="CBE" ? "Commercial Bank of Ethiopia • የኢትዮጵያ ንግድ ባንክ" : v.bank_code==="AWASH" ? "Awash Bank • አዋሽ ባንክ" : "Dashen Bank • ዳሽን ባንክ"} • Type {v.verification_method} • Amount {v.amount} ETB • Connector {v.connector_id} • Bank IPS Telebirr CBE Birr • Bank Code CBE/AWASH/DASHEN with logos</span></span>
-                  <span>Masked {v.account_number_masked} • Hash {v.account_number_hash} • Name {v.account_name} • Account Name must match legal name fuzzy Levenshtein &lt;3 per PayAtlas ET PSP settlement bank account name == legal name • Bank Letter Required • Bank Code CBE/AWASH/DASHEN with logos account name auto-check must match legal • Outstanding modern UI glassmorphic • Receipt preview thumbs • Hash integrity • Progress donut</span>
-                  <span>Method {v.verification_method} • Amount {v.amount} ETB • Connector {v.connector_id} • Bank IPS Telebirr CBE Birr • Penny Testing 1 ETB Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name • Fund Account Validation • Instant beneficiary addition with no limit • Manage all business contacts in one dashboard • Outstanding modern UI glassmorphic • Receipt preview thumbs • Hash integrity • Progress donut • DocumentViewer.tsx side-by-side OCR • Preview thumbs • Hash integrity</span>
-                  <span><Badge variant={v.status==="verified" ? "success" : v.status==="pending" ? "warning" : "danger"}>{v.status}</Badge><span className="block text-[10px]">Verification Response {JSON.stringify(v.verification_response)} • Beneficiary Name Returned {v.beneficiary_name_returned} • Match Score Fuzzy Levenshtein &lt;3 {v.match_score} • Beneficiary Name Returned {v.beneficiary_name_returned} • Match Score 100% • Account Name Match Score 100 • Bank Details CBE - Commercial Bank of Ethiopia • Verified At {v.verified_at || "—"} • Expires At {v.expires_at || "—"}</span></span>
-                  <span className="text-[11px]">Verified At {v.verified_at || "—"} • Expires At {v.expires_at || "—"} • Created At • Updated At • Outstanding • For Reconciliation • Audit Trail • Tracking Who Created Approved and Processed Every Single Payout for Easy Reconciliation and Auditing • Outstanding modern UI glassmorphic • Receipt preview thumbs • Hash integrity • Progress donut • DocumentViewer.tsx side-by-side OCR</span>
-                  <span className="flex flex-col gap-1"><button className="rounded-xl bg-primary text-white h-7 px-3 text-[10px]">Verify • Penny Testing 1 ETB • Fund Account Validation • Bank Letter • Manual • Outstanding • Bank Account Verification Penny Testing 1 ETB Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name • Fund Account Validation • Instant beneficiary addition with no limit • Manage all business contacts in one dashboard</button><button className="rounded-xl border h-7 px-3 text-[10px]">View Response • Verification Response JSON • Beneficiary Name Returned • Match Score Fuzzy Levenshtein &lt;3 • Bank Details CBE • Masked ****1234 • Hash • Outstanding modern UI glassmorphic • Receipt preview thumbs</button></span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="font-semibold">Penny Testing • Fund Account Validation • 1 ETB Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name • Outstanding • RazorpayX Parity • P0 • Ethiopia PayAtlas • Fuzzy Levenshtein &lt;3</h3>
-            <div className="mt-4 space-y-3 text-xs">
-              <div className="rounded-xl bg-muted p-3"><p className="font-medium">Penny Testing 1 ETB • Fund Account Validation • Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name • Per RazorpayX Penny Testing</p><p className="text-[11px] text-muted-foreground mt-1">Penny testing or fund account validation is service provided by Razorpay which can be used to verify authenticity of end beneficiary's bank account or UPI ID achieved by depositing single rupee into intended account which returns validated bank details along with beneficiary's name of account number provided by end beneficiary account verification verify customer or vendor bank account details to ensure secure transactions instant beneficiary addition with no limit manage all business contacts in one dashboard • Ethiopia: Bank account verification via 1 ETB penny test via partner bank API Bank IPS Telebirr CBE Birr + account name fuzzy Levenshtein &lt;3 per PayAtlas ET PSP settlement bank account name == legal name • Bank Letter Required • Bank Code CBE/AWASH/DASHEN with logos account name auto-check must match legal • Outstanding modern UI glassmorphic • Receipt preview thumbs • Hash integrity • Progress donut • DocumentViewer.tsx side-by-side OCR • Preview thumbs • Hash integrity</p></div>
-              <div className="rounded-xl border p-3"><p className="font-medium">Verification Methods • Penny Test • Micro Deposit • Bank Letter • Manual</p><p className="text-[11px]">Penny Test: Deposit 1 ETB into intended account which returns validated bank details along with beneficiary's name of account number provided by end beneficiary per RazorpayX Penny Testing • Micro Deposit: Deposit small amount 1 ETB and ask recipient to confirm amount? Actually micro deposit 1 ETB and verify? • Bank Letter: Bank letter manual verification bank letter required • Manual: Manual verification by compliance team • Outstanding modern UI glassmorphic • Receipt preview thumbs • Hash integrity • Progress donut • DocumentViewer.tsx side-by-side OCR</p></div>
-              <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-3 text-[11px]">
-                <p className="font-semibold">Fuzzy Levenshtein &lt;3 per PayAtlas ET PSP settlement bank account name == legal name • Bank Letter Required • Bank Code CBE/AWASH/DASHEN with logos account name auto-check must match legal • Outstanding modern UI glassmorphic • Receipt preview thumbs • Hash integrity • Progress donut • DocumentViewer.tsx side-by-side OCR • Preview thumbs • Hash integrity</p>
-                <p className="mt-1">Levenshtein distance O(n*m) DP for name validation in payout/beneficiary creation payroll employee bank_account_name must match employee name Levenshtein &lt;3 else require bank letter verification • For payroll, employee bank_account_name must match employee name Levenshtein &lt;3, else require bank letter verification • For vendor payments, vendor bank_account_name must match vendor legal name Levenshtein &lt;3 • For payout links, recipient bank_account_name must match recipient name Levenshtein &lt;3 • Outstanding modern UI glassmorphic • Receipt preview thumbs • Hash integrity • Progress donut • DocumentViewer.tsx side-by-side OCR • Preview thumbs • Hash integrity</p>
-              </div>
-              <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-4 text-[11px]">
-                <p className="font-semibold">Create Bank Verification • Penny Testing 1 ETB • Fund Account Validation • Bank Letter • Manual • Outstanding Form</p>
-                <div className="mt-3 space-y-3">
-                  <div><label className="text-muted-foreground text-[11px]">Bank Code • CBE/AWASH/DASHEN • Bank Name • Commercial Bank of Ethiopia • የኢትዮጵያ ንግድ ባንክ • Awash Bank • አዋሽ ባንክ • Dashen Bank • ዳሽን ባንክ</label><select className="mt-1 w-full rounded-xl border h-9 px-3 text-xs"><option>CBE • Commercial Bank of Ethiopia • የኢትዮጵያ ንግድ ባንክ</option><option>AWASH • Awash Bank • አዋሽ ባንክ</option><option>DASHEN • Dashen Bank • ዳሽን ባንክ</option></select></div>
-                  <div><label className="text-muted-foreground text-[11px]">Account Number • Masked • ****1234 • Account Number Hash • Hash • Account Name • Apex Trading PLC • Abebe Kebede • Bank Account Name Must Match Legal Name Fuzzy Levenshtein &lt;3 per PayAtlas ET PSP</label><input placeholder="1000123456789" className="mt-1 w-full rounded-xl border h-9 px-3 text-xs" /></div>
-                  <div><label className="text-muted-foreground text-[11px]">Verification Method • Penny Test/Micro Deposit/Bank Letter/Manual • Amount 1.00 ETB • Connector ID Bank IPS Telebirr CBE Birr • Status Pending/Processing/Verified/Failed/Expired • Verification Response JSON • Beneficiary Name Returned • Match Score Fuzzy Levenshtein &lt;3 • Verified At Expires At</label><select className="mt-1 w-full rounded-xl border h-9 px-3 text-xs"><option>penny_test • Penny Testing 1 ETB Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name • Fund Account Validation • Instant beneficiary addition with no limit</option><option>micro_deposit • Micro Deposit • Deposit small amount 1 ETB and ask recipient to confirm amount</option><option>bank_letter • Bank Letter • Bank letter manual verification bank letter required</option><option>manual • Manual • Manual verification by compliance team</option></select></div>
-                  <button className="w-full rounded-xl bg-primary text-white h-10 text-xs">Verify Bank Account • Penny Testing 1 ETB • Fund Account Validation • Bank Letter • Manual • Outstanding • Bank Account Verification Penny Testing 1 ETB Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name • Fund Account Validation • Instant beneficiary addition with no limit • Manage all business contacts in one dashboard</button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
+    <BankingPage
+      title="Bank Account Verification • ባንክ ሂሳብ ማረጋገጫ"
+      subtitle="Penny testing / fund account validation — 1 ETB deposit returns validated bank details."
+      columns={columns}
+      loader={() => api.banking.bankVerifications()}
+    />
   )
 }

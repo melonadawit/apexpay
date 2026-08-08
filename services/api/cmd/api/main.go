@@ -31,6 +31,7 @@ import (
 
 	"apexpay/internal/admin"
 	"apexpay/internal/auth"
+	"apexpay/internal/banking"
 	"apexpay/internal/bankverification"
 	"apexpay/internal/checkout"
 	"apexpay/internal/connector"
@@ -131,6 +132,7 @@ func main() {
 	adminHandler := admin.NewHandler(admin.NewRepository(pool))
 	authSvc := auth.NewService(auth.NewRepository(pool))
 	authHandler := auth.NewHandler(authSvc)
+	bankingHandler := banking.NewHandler(banking.NewRepository(pool))
 	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
 		sess, err := authSvc.Validate(ctx, token)
 		if err != nil {
@@ -202,6 +204,12 @@ func main() {
 				r.Post("/logout", authHandler.Logout)
 				r.Get("/me", authHandler.Me)
 			})
+		})
+
+		// Dashboard banking modules (session-authenticated, like the dashboard pages).
+		r.Route("/banking", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			bankingHandler.Routes(r)
 		})
 
 		// Public checkout token verification (no auth) — outstanding for checkout-web mobile 420px

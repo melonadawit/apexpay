@@ -93,4 +93,14 @@ test "$(curl -s -o /tmp/auth_logout.json -w '%{http_code}' -X POST -H "Authoriza
 # Revoked session must now be rejected.
 test "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/auth/me")" = "401"
 
+# ---- 12. Banking modules (session-authenticated): current accounts, forex, notifications. ----
+test "$(curl -s -o /tmp/bank_acct.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/banking/current_accounts")" = "200"
+grep -q 'ETB-CBE-7778889990' /tmp/bank_acct.json
+test "$(curl -s -o /tmp/bank_fx.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/banking/forex/rates")" = "200"
+grep -q 'USD' /tmp/bank_fx.json
+test "$(curl -s -o /tmp/bank_notif.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/banking/notifications")" = "200"
+grep -q 'Current Account Opened' /tmp/bank_notif.json
+# Banking without a session must be rejected.
+test "$(curl -s -o /dev/null -w '%{http_code}' "$API/v1/banking/current_accounts")" = "401"
+
 echo 'Docker API smoke suite passed'
