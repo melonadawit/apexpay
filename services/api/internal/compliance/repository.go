@@ -21,7 +21,7 @@ func (r *Repository) GetStatus(ctx context.Context, merchantID string) (*Status,
 	var s Status
 	s.MerchantID = merchantID
 	err := r.pool.QueryRow(ctx, `
-		SELECT m.onboarding_status, COALESCE(k.license_expiry,'')::text, m.fayda_verified, COALESCE(m.risk_tier,'low'),
+		SELECT m.onboarding_status, COALESCE(k.license_expiry::text,''), m.fayda_verified, COALESCE(m.risk_tier,'low'),
 		       COALESCE(to_char(c.kyc_expiry_date,'YYYY-MM-DD'),''),
 		       COALESCE(to_char(c.next_erca_due,'YYYY-MM-DD'),''),
 		       COALESCE(to_char(c.next_pension_due,'YYYY-MM-DD'),''),

@@ -69,11 +69,11 @@ func (s *Service) Decide(ctx context.Context, merchantID, key, decision, reviewe
 			return err
 		}
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO audit_logs (id,merchant_id,actor_type,actor_id,action,resource_type,resource_id,data) VALUES ($1,$2,'operations',$3,$4,'payment_reconciliation',$5,jsonb_build_object('decision',$4,'note',$6))`, id.New("audit"), merchantID, reviewerID, decision, key, note)
+	_, err = tx.Exec(ctx, `INSERT INTO audit_logs (id,merchant_id,actor_type,actor_id,action,resource_type,resource_id,data) VALUES ($1,$2,'operations',$3,$4,'payment_reconciliation',$5,jsonb_build_object('decision',$4::text,'note',$6::text))`, id.New("audit"), merchantID, reviewerID, decision, key, note)
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO outbox_events (id,merchant_id,aggregate_type,aggregate_id,event_type,payload) VALUES ($1,$2,'payment_reconciliation',$3,'payment.reconciliation.'||$4,jsonb_build_object('decision',$4,'idempotency_key',$3))`, id.NewOutbox(), merchantID, key, decision)
+	_, err = tx.Exec(ctx, `INSERT INTO outbox_events (id,merchant_id,aggregate_type,aggregate_id,event_type,payload) VALUES ($1,$2,'payment_reconciliation',$3,'payment.reconciliation.'||$4,jsonb_build_object('decision',$4::text,'idempotency_key',$3::text))`, id.NewOutbox(), merchantID, key, decision)
 	if err != nil {
 		return err
 	}

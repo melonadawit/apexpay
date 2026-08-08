@@ -55,16 +55,19 @@ func (r *Repository) ListLoans(ctx context.Context, merchantID, status string, l
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
-	query := `SELECT id, amount::text, currency, purpose, status, interest_rate::text,
-		COALESCE(to_char(due_date,'YYYY-MM-DD'),''), repaid_amount::text, outstanding_amount::text,
-		to_char(created_at AT TIME ZONE 'Africa/Addis_Ababa','YYYY-MM-DD"T"HH24:MI:SS')
-		FROM loan_disbursements WHERE merchant_id=$1`
+	query := `SELECT ld.id, ld.amount::text, ld.currency, ld.purpose, ld.status,
+		COALESCE(cl.interest_rate,0)::text,
+		COALESCE(to_char(ld.due_date,'YYYY-MM-DD'),''), ld.repaid_amount::text, ld.outstanding_amount::text,
+		to_char(ld.created_at AT TIME ZONE 'Africa/Addis_Ababa','YYYY-MM-DD"T"HH24:MI:SS')
+		FROM loan_disbursements ld
+		LEFT JOIN credit_lines cl ON cl.id = ld.credit_line_id
+		WHERE ld.merchant_id=$1`
 	args := []interface{}{merchantID}
 	if status != "" {
-		query += ` AND status=$2`
+		query += ` AND ld.status=$2`
 		args = append(args, status)
 	}
-	query += ` ORDER BY created_at DESC LIMIT $` + itoa(len(args)+1)
+	query += ` ORDER BY ld.created_at DESC LIMIT $` + itoa(len(args)+1)
 	args = append(args, limit)
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {

@@ -65,7 +65,7 @@ func (r *Repository) AmountInWindow(ctx context.Context, merchantID string, wind
 	var s string
 	err := r.pool.QueryRow(ctx, `
 		SELECT COALESCE(SUM(amount),0)::text FROM payments
-		WHERE merchant_id=$1 AND created_at >= now() - ($2 || ' minutes')::interval
+		WHERE merchant_id=$1 AND created_at >= now() - ($2 * interval '1 minute')
 		  AND status IN ('succeeded','failed')`, merchantID, int(window.Minutes())).Scan(&s)
 	if err != nil {
 		return decimal.Zero, err
@@ -78,7 +78,7 @@ func (r *Repository) CountInWindow(ctx context.Context, merchantID string, windo
 	var n int
 	err := r.pool.QueryRow(ctx, `
 		SELECT COUNT(*) FROM payments
-		WHERE merchant_id=$1 AND created_at >= now() - ($2 || ' minutes')::interval
+		WHERE merchant_id=$1 AND created_at >= now() - ($2 * interval '1 minute')
 		  AND status IN ('succeeded','failed')`, merchantID, int(window.Minutes())).Scan(&n)
 	return n, err
 }
@@ -88,7 +88,7 @@ func (r *Repository) FailureRateInWindow(ctx context.Context, merchantID string,
 	var f float64
 	err := r.pool.QueryRow(ctx, `
 		SELECT COALESCE(COUNT(*) FILTER (WHERE status='failed')::float / NULLIF(COUNT(*),0),0)
-		FROM payments WHERE merchant_id=$1 AND created_at >= now() - ($2 || ' minutes')::interval
+		FROM payments WHERE merchant_id=$1 AND created_at >= now() - ($2 * interval '1 minute')
 		  AND status IN ('succeeded','failed')`, merchantID, int(window.Minutes())).Scan(&f)
 	if err != nil {
 		return decimal.Zero, err

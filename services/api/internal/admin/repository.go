@@ -198,7 +198,7 @@ func (r *Repository) provisionOperatingBook(ctx context.Context, tx pgx.Tx, merc
 	// Emit merchant.activated for the outbox publisher.
 	outboxID := id.New("outbox")
 	if _, err := tx.Exec(ctx, `INSERT INTO outbox_events (id, merchant_id, event_type, payload)
-		VALUES ($1,$2,'merchant.activated', jsonb_build_object('merchant_id',$2,'activated_at', now()))`,
+		VALUES ($1,$2,'merchant.activated', jsonb_build_object('merchant_id',$2::text,'activated_at', now()))`,
 		outboxID, merchantID); err != nil {
 		return err
 	}
@@ -440,8 +440,8 @@ func (r *Repository) MerchantExam(ctx context.Context, merchantID string) (Merch
 	rrows.Close()
 
 	// Bank accounts (masked).
-	brows, err := r.pool.Query(ctx, `SELECT id, COALESCE(bank_code,''), account_number, account_name, is_verified
-		FROM bank_accounts WHERE merchant_id=$1 ORDER BY created_at ASC`, merchantID)
+	brows, err := r.pool.Query(ctx, `SELECT id, COALESCE(bank_code,''), account_number_masked, account_name,
+		(verification_status = 'verified') FROM bank_accounts WHERE merchant_id=$1 ORDER BY created_at ASC`, merchantID)
 	if err != nil {
 		return exam, err
 	}

@@ -89,6 +89,12 @@ func (s *Service) Logout(ctx context.Context, token string) error {
 // Me returns the current user and all their merchant memberships.
 func (s *Service) Me(ctx context.Context, userID string) (*SessionResult, error) {
 	var res SessionResult
+	// Include the authenticated user (email/name/status).
+	u, err := s.repo.findUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	res.User = User{ID: u.ID, Email: u.Email, Name: u.Name, Status: u.Status}
 	// Reuse memberships for the merchant list.
 	all, err := s.repo.memberships(ctx, userID)
 	if err != nil {

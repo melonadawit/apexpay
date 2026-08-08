@@ -102,6 +102,12 @@ test "$(curl -s -o /tmp/auth_logout.json -w '%{http_code}' -X POST -H "Authoriza
 # Revoked session must now be rejected.
 test "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/auth/me")" = "401"
 
+# Re-login for the session-authenticated module sections (the prior token was revoked).
+test "$(curl -s -o /tmp/auth2.json -w '%{http_code}' -X POST "$API/v1/auth/login" \
+  -H 'Content-Type: application/json' -d '{"email":"demo@apexpay.et","password":"Admin@12345"}')" = "200"
+SESSION_TOKEN=$(sed -n 's/.*"token":"\([^"]*\)".*/\1/p' /tmp/auth2.json | head -1)
+test -n "$SESSION_TOKEN"
+
 # ---- 12. Banking modules (session-authenticated): current accounts, forex, notifications. ----
 test "$(curl -s -o /tmp/bank_acct.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/banking/current_accounts")" = "200"
 grep -q 'ETB-CBE-7778889990' /tmp/bank_acct.json

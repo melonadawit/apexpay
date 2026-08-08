@@ -138,3 +138,17 @@ func hashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
 }
+
+// findUserByID returns a user row by id (for /auth/me).
+func (r *Repository) findUserByID(ctx context.Context, userID string) (*userRow, error) {
+	var u userRow
+	err := r.pool.QueryRow(ctx, `SELECT id, email, name, status, COALESCE(password_hash,'') FROM users WHERE id=$1`, userID).
+		Scan(&u.ID, &u.Email, &u.Name, &u.Status, &u.PasswordHash)
+	if err == pgx.ErrNoRows {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}

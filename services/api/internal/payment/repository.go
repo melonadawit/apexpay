@@ -49,7 +49,7 @@ func (r *PgRepository) CreatePaymentTx(ctx context.Context, p *Payment, outboxEv
 
 	if idempotencyKey != "" {
 		command, err := tx.Exec(ctx, `UPDATE idempotency_keys SET state='completed', resource_id=$3, response_code=201,
-			response_body=jsonb_build_object('id',$3) WHERE merchant_id=$1 AND key=$2 AND state='connector_started'`, p.MerchantID, idempotencyKey, p.ID)
+			response_body=jsonb_build_object('id',$3::text) WHERE merchant_id=$1 AND key=$2 AND state='connector_started'`, p.MerchantID, idempotencyKey, p.ID)
 		if err != nil {
 			return err
 		}

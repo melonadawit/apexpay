@@ -26,7 +26,7 @@ func (r *Repository) Revenue(ctx context.Context, merchantID string, days int) (
 		       COUNT(*) FILTER (WHERE status='failed'),
 		       COALESCE(SUM(amount) FILTER (WHERE status IN ('refunded','partially_refunded')),0)::text
 		FROM payments
-		WHERE merchant_id=$1 AND created_at >= current_date - ($2 || ' days')::interval
+		WHERE merchant_id=$1 AND created_at >= current_date - ($2 * interval '1 day')
 		GROUP BY date_trunc('day', created_at) ORDER BY 1 DESC`, merchantID, days)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (r *Repository) MethodBreakdown(ctx context.Context, merchantID string, day
 		SELECT COALESCE(method,'unknown'),
 		       COUNT(*), COUNT(*) FILTER (WHERE status='succeeded'), COALESCE(SUM(amount),0)::text
 		FROM payments
-		WHERE merchant_id=$1 AND created_at >= current_date - ($2 || ' days')::interval
+		WHERE merchant_id=$1 AND created_at >= current_date - ($2 * interval '1 day')
 		GROUP BY method ORDER BY 2 DESC`, merchantID, days)
 	if err != nil {
 		return nil, err
