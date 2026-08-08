@@ -168,6 +168,23 @@ APEXPAY_API_URL=http://localhost:8080 npm run dev -- -p 3001
 The browser still talks to the Next proxy (`/api/proxy`), so no CORS issues — only the
 server needs to reach the Go API.
 
+### 5.3.1 Flutter mobile app
+
+The app is **source-only** (`lib/` + `pubspec.yaml`). Regenerate the platform folders
+once, then run:
+
+```bash
+cd apps/mobile
+flutter create .                     # regenerate android/ios (safe; keeps lib/)
+flutter run --dart-define=APEXPAY_API_URL=http://10.0.2.2:8080/v1
+```
+
+- `10.0.2.2` is the host loopback from an Android emulator; use your machine's LAN IP for a
+  physical device.
+- FCM pushes need a committed `google-services.json` (see `apps/mobile/.gitignore`); without
+  it the app runs but push registration is skipped.
+- Fonts come from the `google_fonts` package at runtime — no bundled `.ttf` needed.
+
 ### 5.4 RAG service
 
 ```bash
