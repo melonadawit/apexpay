@@ -64,6 +64,7 @@ type Repository interface {
 
 	// Items
 	BulkCreateItems(ctx context.Context, items []PayrollItem) error
+	FinalizeCalculateRunTx(ctx context.Context, runID string, status RunStatus, totals map[string]decimal.Decimal, variance map[string]interface{}, items []PayrollItem) error
 	ListItems(ctx context.Context, runID string) ([]PayrollItem, error)
 
 	// Tax
@@ -95,6 +96,9 @@ type Repository interface {
 	// Variance
 	GetPreviousRunGross(ctx context.Context, merchantID string, periodMonth, periodYear int) (decimal.Decimal, error)
 	SetVarianceReport(ctx context.Context, runID string, variance map[string]interface{}) error
+
+	// Leave integration
+	ApprovedLeaveDaysForPeriod(ctx context.Context, merchantID string, month, year int) (map[string]decimal.Decimal, error)
 
 	// Audit
 	CreateAuditLog(ctx context.Context, log *AuditLog) error
@@ -291,12 +295,13 @@ func (s *Service) CalculateEarningsFromStructure(structure *SalaryStructure, var
 		vars["GROSS"] = gross.Add(amount)
 
 		earning := EarningsBreakdown{
-			Code:         comp.Code,
-			Name:         comp.Name,
-			NameAM:       comp.NameAM,
-			Amount:       amount,
-			IsTaxable:    comp.IsTaxable,
-			IsProratable: comp.IsProratable,
+			Code:           comp.Code,
+			Name:           comp.Name,
+			NameAM:         comp.NameAM,
+			Amount:         amount,
+			IsTaxable:      comp.IsTaxable,
+			IsProratable:   comp.IsProratable,
+			TaxExemptLimit: comp.TaxExemptLimit,
 		}
 		earnings = append(earnings, earning)
 		if comp.IsPartOfGross {
@@ -336,6 +341,11 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 	variableInputs, err := s.repo.ListVariableInputsByRun(ctx, runID)
 	if err != nil {
 		variableInputs = []VariableInput{}
+	}
+	// Approved leave for the period: ensures approved leave counts as paid days (not LOP).
+	approvedLeave, err := s.repo.ApprovedLeaveDaysForPeriod(ctx, merchantID, r.PeriodMonth, r.PeriodYear)
+	if err != nil {
+		approvedLeave = map[string]decimal.Decimal{}
 	}
 
 	// Build maps O(n) for fast lookup
@@ -398,6 +408,20 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 			totalDays = att.TotalDays
 			if totalDays > 0 {
 				prorationFactor = decimal.NewFromInt(int64(paidDays)).Div(decimal.NewFromInt(int64(totalDays))).Round(4)
+			}
+		}
+		// Approved leave in this period counts as paid days, so it does not reduce pay.
+		// Leave days are added on top of attendance paid days, capped at total days.
+		if leaveDays, ok := approvedLeave[emp.ID]; ok && leaveDays.GreaterThan(decimal.Zero) {
+			effective := paidDays + int(leaveDays.IntPart())
+			if effective > totalDays {
+				effective = totalDays
+			}
+			if effective != paidDays {
+				paidDays = effective
+				if totalDays > 0 {
+					prorationFactor = decimal.NewFromInt(int64(paidDays)).Div(decimal.NewFromInt(int64(totalDays))).Round(4)
+				}
 			}
 		}
 
@@ -485,18 +509,9 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 		pensionEmp := pensionableGross.Mul(decimal.NewFromFloat(0.07)).Round(2)   // 7%
 		pensionEmplr := pensionableGross.Mul(decimal.NewFromFloat(0.11)).Round(2) // 11%
 
-		// Taxable income = gross - pensionEmp - tax_exempt_allowances
+		// Taxable income = gross - pensionEmp - tax_exempt_allowances.
 		taxable := gross.Sub(pensionEmp)
-		// Subtract tax exempt limits from components O(n)
-		for _, e := range earnings {
-			// Find component tax_exempt_limit if any
-			// For simplicity, if medical allowance code MEDICAL with exempt limit 1000, subtract
-			// We can lookup structure component meta
-			if e.Code == "MEDICAL" || e.Code == "TRANSPORT" {
-				// Example exempt 600? Configurable per component tax_exempt_limit — we should have access to component map
-				// For now assume no exempt, will be handled via structure component field
-			}
-		}
+		taxable = taxable.Sub(TaxExemptAllowances(earnings))
 		if taxable.LessThan(decimal.Zero) {
 			taxable = decimal.Zero
 		}
@@ -598,11 +613,8 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 	}
 
 	// Bulk create items Tx
-	if err := s.repo.BulkCreateItems(ctx, items); err != nil {
-		return err
-	}
-
-	// Update run totals
+	// Persist items + run totals + variance atomically so a failure cannot leave orphaned
+	// items or a run with totals but no items (and vice-versa).
 	totals := map[string]decimal.Decimal{
 		"total_gross":            totalGross,
 		"total_deductions":       totalDeductions,
@@ -613,8 +625,9 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 		"total_employer_cost":    totalEmployerCost,
 		"total_employees_paid":   decimal.NewFromInt(int64(len(items) - failedCount)),
 	}
-	_ = s.repo.UpdateRunStatus(ctx, runID, StatusPendingApproval, totals)
-	_ = s.repo.SetVarianceReport(ctx, runID, variance)
+	if err := s.repo.FinalizeCalculateRunTx(ctx, runID, StatusPendingApproval, totals, variance, items); err != nil {
+		return err
+	}
 
 	// Audit log
 	_ = s.repo.CreateAuditLog(ctx, &AuditLog{
@@ -1046,4 +1059,21 @@ func (s *Service) CreateFinalSettlement(ctx context.Context, fs *FinalSettlement
 		fs.NetPayable = decimal.Zero
 	}
 	return s.repo.CreateFinalSettlement(ctx, fs)
+}
+
+// TaxExemptAllowances sums the exempt portion of each taxable earning, where the exempt
+// amount is min(amount, TaxExemptLimit) for components with a limit (e.g. MEDICAL/TRANSPORT).
+// O(n) over the earnings breakdown.
+func TaxExemptAllowances(earnings []EarningsBreakdown) decimal.Decimal {
+	total := decimal.Zero
+	for _, e := range earnings {
+		if e.TaxExemptLimit.GreaterThan(decimal.Zero) && e.Amount.GreaterThan(decimal.Zero) {
+			exempt := e.TaxExemptLimit
+			if exempt.GreaterThan(e.Amount) {
+				exempt = e.Amount
+			}
+			total = total.Add(exempt)
+		}
+	}
+	return total
 }

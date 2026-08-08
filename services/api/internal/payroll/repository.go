@@ -964,3 +964,63 @@ func (r *PgRepository) SetVarianceReport(ctx context.Context, runID string, vari
 	_, err := r.pool.Exec(ctx, `UPDATE payroll_runs SET variance_report=$1::jsonb WHERE id=$2`, toJSON(variance), runID)
 	return err
 }
+
+// FinalizeCalculateRunTx atomically persists payroll items, the run totals/status, and the
+// variance report in one transaction. This prevents orphaned items if the run-status update
+// were to fail after items were inserted.
+func (r *PgRepository) FinalizeCalculateRunTx(ctx context.Context, runID string, status RunStatus, totals map[string]decimal.Decimal, variance map[string]interface{}, items []PayrollItem) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	// Insert all items.
+	for _, it := range items {
+		earnings, _ := json.Marshal(it.EarningsBreakdown)
+		deductions, _ := json.Marshal(it.DeductionsBreakdown)
+		employerContrib, _ := json.Marshal(it.EmployerContributionsBreakdown)
+		ytd, _ := json.Marshal(it.YTD)
+		_, err = tx.Exec(ctx, `INSERT INTO payroll_items (
+			id, run_id, employee_id, gross, ctc_monthly, ot_hours, ot_amount, commission, bonus, other_allowances,
+			taxable_income, income_tax, pension_employee, pension_employer, other_deductions, net_pay,
+			status, failure_reason, earnings_breakdown, deductions_breakdown, employer_contributions_breakdown, ytd,
+			paid_days, lop_days, proration_factor, is_on_hold, hold_reason
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)`,
+			it.ID, it.RunID, it.EmployeeID, it.Gross.String(), it.CTCMonthly.String(),
+			it.OTHours.String(), it.OTAmount.String(), it.Commission.String(), it.Bonus.String(), it.OtherAllowances.String(),
+			it.TaxableIncome.String(), it.IncomeTax.String(), it.PensionEmployee.String(), it.PensionEmployer.String(),
+			it.OtherDeductions.String(), it.NetPay.String(), it.Status, it.FailureReason,
+			string(earnings), string(deductions), string(employerContrib), string(ytd),
+			it.PaidDays, it.LOPDays, it.ProrationFactor.String(), it.IsOnHold, it.HoldReason)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Update run totals + status.
+	gross := getDecimal(totals, "total_gross")
+	ded := getDecimal(totals, "total_deductions")
+	net := getDecimal(totals, "total_net")
+	tax := getDecimal(totals, "total_tax")
+	pension := getDecimal(totals, "total_pension")
+	employerPension := getDecimal(totals, "employer_total_pension")
+	employerCost := getDecimal(totals, "total_employer_cost")
+	paid := 0
+	if v, ok := totals["total_employees_paid"]; ok {
+		paid = int(v.IntPart())
+	}
+	_, err = tx.Exec(ctx, `UPDATE payroll_runs SET status=$1, total_gross=$2, total_deductions=$3, total_net=$4, total_tax=$5, total_pension=$6, employer_total_pension=$7, total_employer_cost=$8, total_employees_paid=$9, updated_at=now() WHERE id=$10`,
+		status, gross.String(), ded.String(), net.String(), tax.String(), pension.String(), employerPension.String(), employerCost.String(), paid, runID)
+	if err != nil {
+		return err
+	}
+
+	// Persist variance report.
+	_, err = tx.Exec(ctx, `UPDATE payroll_runs SET variance_report=$1::jsonb WHERE id=$2`, toJSON(variance), runID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}

@@ -442,3 +442,29 @@ func toJSONLeave(v interface{}) string {
 
 var _ = time.Now
 var _ = toJSONLeave
+
+// ApprovedLeaveDaysForPeriod returns the total approved leave days per employee whose
+// leave falls within the given month/year. Used by CalculateRun to ensure approved leave
+// counts as paid days (not LOP) automatically.
+func (r *PgRepository) ApprovedLeaveDaysForPeriod(ctx context.Context, merchantID string, month, year int) (map[string]decimal.Decimal, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT employee_id, COALESCE(SUM(days_requested),0)::text
+		FROM payroll_leave_requests
+		WHERE merchant_id=$1 AND status='approved'
+		  AND EXTRACT(MONTH FROM start_date)=$2 AND EXTRACT(YEAR FROM start_date)=$3
+		GROUP BY employee_id`, merchantID, month, year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]decimal.Decimal{}
+	for rows.Next() {
+		var empID, days string
+		if err := rows.Scan(&empID, &days); err != nil {
+			return nil, err
+		}
+		d, _ := decimal.NewFromString(days)
+		out[empID] = d
+	}
+	return out, rows.Err()
+}

@@ -230,6 +230,9 @@ type EarningsBreakdown struct {
 	Amount       decimal.Decimal `json:"amount"`
 	IsTaxable    bool            `json:"is_taxable"`
 	IsProratable bool            `json:"is_proratable,omitempty"`
+	// TaxExemptLimit is the ETB amount of this component excluded from taxable income
+	// (e.g. MEDICAL/TRANSPORT allowances). Applied up to the component amount.
+	TaxExemptLimit decimal.Decimal `json:"tax_exempt_limit,omitempty"`
 }
 
 type DeductionsBreakdown struct {

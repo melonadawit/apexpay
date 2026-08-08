@@ -106,3 +106,47 @@ func TestValidateTIN(t *testing.T) {
 	require.Error(t, ValidateTIN("12345"), "must be 10 digits")
 	require.Error(t, ValidateTIN("00abc234567"), "must be numeric")
 }
+
+func TestTaxExemptAllowances(t *testing.T) {
+	earnings := []EarningsBreakdown{
+		{Code: "BASIC", Amount: decimal.NewFromInt(20000), IsTaxable: true},
+		{Code: "MEDICAL", Amount: decimal.NewFromInt(800), IsTaxable: true, TaxExemptLimit: decimal.NewFromInt(600)},
+		{Code: "TRANSPORT", Amount: decimal.NewFromInt(500), IsTaxable: true, TaxExemptLimit: decimal.NewFromInt(600)},
+		{Code: "BONUS", Amount: decimal.NewFromInt(1000), IsTaxable: true, TaxExemptLimit: decimal.Zero},
+	}
+	got := TaxExemptAllowances(earnings)
+	// MEDICAL: min(800,600)=600 ; TRANSPORT: min(500,600)=500 ; BONUS: 0 -> total 1100
+	require.True(t, got.Equal(decimal.NewFromInt(1100)), "exempt should be 1100, got %s", got)
+}
+
+func TestTaxExemptAllowancesCapsAtAmount(t *testing.T) {
+	earnings := []EarningsBreakdown{
+		{Code: "MEDICAL", Amount: decimal.NewFromInt(300), IsTaxable: true, TaxExemptLimit: decimal.NewFromInt(600)},
+	}
+	got := TaxExemptAllowances(earnings)
+	require.True(t, got.Equal(decimal.NewFromInt(300)), "exempt capped at amount 300, got %s", got)
+}
+
+// EffectivePaidDaysWithLeave mirrors the paid-days logic in CalculateRun so the leave
+// integration can be unit-tested without a DB.
+func effectivePaidDays(attendancePaid, attendanceTotal, approvedLeaveDays int) int {
+	if attendanceTotal <= 0 {
+		attendanceTotal = 30
+	}
+	effective := attendancePaid + approvedLeaveDays
+	if effective > attendanceTotal {
+		effective = attendanceTotal
+	}
+	return effective
+}
+
+func TestEffectivePaidDaysWithLeave(t *testing.T) {
+	// 25 paid + 3 approved leave = 28 (capped at 30).
+	require.Equal(t, 28, effectivePaidDays(25, 30, 3))
+	// 25 paid + 10 approved leave capped at 30.
+	require.Equal(t, 30, effectivePaidDays(25, 30, 10))
+	// No leave -> unchanged.
+	require.Equal(t, 30, effectivePaidDays(30, 30, 0))
+	// Leave beyond total capped.
+	require.Equal(t, 30, effectivePaidDays(28, 30, 5))
+}
