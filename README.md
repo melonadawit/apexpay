@@ -88,10 +88,24 @@ M9 Mobile + Gold: Flutter glass UI + QR FaydaEncode + approvals biometric + FCM 
 ## Testing
 
 ```bash
-make test # ledger invariant property 10k iter
-make lint # gosec
+make test       # ledger invariant property 10k iter (via Docker)
+make lint       # gosec
 k6 run scripts/k6/smoke.js
 flutter test
+
+# DB-backed API smoke suite (real Postgres/Redis/MinIO via Docker compose)
+docker compose -f deploy/docker/docker-compose.yml \
+  -f deploy/docker/docker-compose.integration.yml up \
+  --build --abort-on-container-exit --exit-code-from integration integration
+```
+
+Go unit tests live under `services/api/internal/**/*_test.go`. The **DB integration tests** live
+under `services/api/internal/integration/` behind the `integration` build tag — they compile
+against a real Postgres (`DATABASE_URL`) and skip when one is unavailable:
+
+```bash
+cd services/api
+go test -tags integration ./internal/integration/...   # requires a reachable Postgres
 ```
 
 *End of README v1.1.0-full*

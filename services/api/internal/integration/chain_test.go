@@ -10,18 +10,18 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/redis/go-redis/v9"
 
+	"apexpay/internal/connector"
+	"apexpay/internal/fayda"
 	"apexpay/internal/id"
 	"apexpay/internal/ledger"
 	"apexpay/internal/onboarding"
-	"apexpay/internal/fayda"
-	"apexpay/internal/routing"
 	"apexpay/internal/payment"
-	"apexpay/internal/connector"
+	"apexpay/internal/routing"
 )
 
 // Full chain integration test per MVP §7 expanded script 1-35
@@ -65,7 +65,7 @@ func TestOnboardingFaydaPaymentLedgerWebhookChain(t *testing.T) {
 	routingSvc := routing.NewService(routingRepo, rdb)
 
 	connRegistry := map[string]connector.Connector{"mock": connector.NewMock()}
-	paymentSvc := payment.NewService(paymentRepo, ledgerSvc, routingSvc, connRegistry, decimal.NewFromFloat(0.029))
+	paymentSvc := payment.NewService(paymentRepo, ledgerSvc, routingSvc, connRegistry, decimal.NewFromFloat(0.029), true)
 
 	// 1. Create merchant (via direct SQL for test setup)
 	merchantID := id.NewMerchant()
@@ -80,7 +80,7 @@ func TestOnboardingFaydaPaymentLedgerWebhookChain(t *testing.T) {
 		BusinessType: onboarding.BusinessTypePLC, RegistrationNumber: "MT/AA/123456",
 		TINNumber: "0023456789", Industry: onboarding.IndustryEcommerce,
 		Description: "E-commerce test per PayAtlas + Chapa onboarding requires TIN + business license + address",
-		Region: "Addis Ababa", City: "Addis Ababa", SubCity: "Bole", Woreda: "03",
+		Region:      "Addis Ababa", City: "Addis Ababa", SubCity: "Bole", Woreda: "03",
 		AddressFull: "Bole, Woreda 03, House 123", ContactPersonName: "Abebe Kebede", ContactPersonRole: "owner",
 		ContactEmail: "abebe@example.et", ContactPhone: "0911111111",
 		ExpectedMonthlyTPV: decimal.NewFromInt(500000), AvgTicketAmount: decimal.NewFromInt(500),
@@ -110,7 +110,7 @@ func TestOnboardingFaydaPaymentLedgerWebhookChain(t *testing.T) {
 		FrontFileKey: fmt.Sprintf("merchants/%s/kyc/fayda_front_%s.jpg", merchantID, owner.ID),
 		BackFileKey:  fmt.Sprintf("merchants/%s/kyc/fayda_back_%s.jpg", merchantID, owner.ID),
 		SelfieKey:    fmt.Sprintf("merchants/%s/kyc/selfie_%s.jpg", merchantID, owner.ID),
-		ConsentIP: "127.0.0.1",
+		ConsentIP:    "127.0.0.1",
 	}
 	faydaVerif, err := faydaSvc.Init(ctx, faydaReq)
 	require.NoError(t, err)
@@ -284,10 +284,10 @@ func TestOnboardingFaydaPaymentLedgerWebhookChain(t *testing.T) {
 	t.Logf("Idempotent second verify no-op journal count: %d", journalCount)
 
 	// 14. Duplicate tx_ref rejected per MVP B2 409 duplicate_tx_ref — try create duplicate tx_ref should fail
-	_, err = paymentRepo.CreatePaymentTx(ctx, &payment.Payment{
+	err = paymentRepo.CreatePaymentTx(ctx, &payment.Payment{
 		ID: id.NewPayment(), MerchantID: merchantID, TxRef: txRef, Amount: amount, Currency: "ETB", Status: payment.StatusPending,
 		ConnectorID: "mock", CheckoutURL: "https://example.et",
-	}, id.New("outbox"))
+	}, id.New("outbox"), "")
 	assert.Error(t, err)
 	t.Logf("Duplicate tx_ref correctly rejected: %v", err)
 

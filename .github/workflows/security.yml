@@ -34,6 +34,16 @@ jobs:
         run: cd services/api && go vet ./...
       - name: go test ./...
         run: cd services/api && go test ./... -count=1
+      - name: go vet -tags integration (DB integration tests compile)
+        run: cd services/api && go vet -tags integration ./internal/integration/...
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run DB-backed API smoke suite in Docker compose
+        run: |
+          docker compose -f deploy/docker/docker-compose.yml -f deploy/docker/docker-compose.integration.yml up --build --abort-on-container-exit --exit-code-from integration integration
 
   trivy:
     runs-on: ubuntu-latest
