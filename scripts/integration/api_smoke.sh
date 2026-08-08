@@ -4,11 +4,16 @@ API="http://api:8080"
 KEY="sk_test_demo_6c0b88c984e74070b870"
 
 wait_ready() {
-  for i in $(seq 1 60); do
-    curl -fsS "$API/healthz" >/dev/null 2>&1 && return 0
-    sleep 1
+  # Allow ample time for cold-start: image pulls, migrations, and the API binding to :8080.
+  # Each attempt is bounded by curl --max-time so a hanging connect can't stall the loop.
+  for i in $(seq 1 90); do
+    if curl -fsS --max-time 3 "$API/healthz" >/dev/null 2>&1; then
+      echo "API ready (attempt $i)"
+      return 0
+    fi
+    sleep 2
   done
-  echo "API did not become ready" >&2
+  echo "API did not become ready after 90 attempts" >&2
   exit 1
 }
 wait_ready
