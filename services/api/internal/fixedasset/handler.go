@@ -11,9 +11,10 @@ import (
 
 type Handler struct {
 	repo *Repository
+	svc  *Service
 }
 
-func NewHandler(repo *Repository) *Handler { return &Handler{repo: repo} }
+func NewHandler(repo *Repository, svc *Service) *Handler { return &Handler{repo: repo, svc: svc} }
 
 func (h *Handler) Routes(r chi.Router) {
 	r.Post("/", h.Create)
@@ -49,7 +50,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Depreciate(w http.ResponseWriter, r *http.Request) {
-	e, err := h.repo.Depreciate(r.Context(), middleware.MerchantID(r.Context()), chi.URLParam(r, "id"))
+	e, err := h.svc.Depreciate(r.Context(), middleware.MerchantID(r.Context()), chi.URLParam(r, "id"))
 	if err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 404, "not_found", "asset not found")
 		return

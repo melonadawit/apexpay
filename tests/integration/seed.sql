@@ -63,7 +63,9 @@ VALUES
   ('la_docker_bank', 'book_docker_smoke', 'asset:bank', 'Cash & Bank', 'debit'),
   ('la_docker_rev', 'book_docker_smoke', 'revenue:product', 'Product Revenue', 'credit'),
   ('la_docker_exp', 'book_docker_smoke', 'expense:operating', 'Operating Expenses', 'debit'),
-  ('la_docker_equity', 'book_docker_smoke', 'equity:owner', 'Owner''s Equity', 'credit')
+  ('la_docker_equity', 'book_docker_smoke', 'equity:owner', 'Owner''s Equity', 'credit'),
+  ('la_docker_dep_exp', 'book_docker_smoke', 'expense:depreciation', 'Depreciation', 'debit'),
+  ('la_docker_accum_dep', 'book_docker_smoke', 'asset:accumulated_depreciation', 'Accumulated Depreciation', 'credit')
 ON CONFLICT (book_id, code) DO NOTHING;
 
 -- API key with explicit ops scope (RBAC admin routes).

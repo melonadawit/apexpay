@@ -256,4 +256,15 @@ grep -q '"match_status":"matched"' /tmp/pr_inv.json
 test "$(curl -s -o /tmp/pr_list.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/procurement/invoices")" = "200"
 test "$(curl -s -o /tmp/pr_aging.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/procurement/aging")" = "200"
 
+# ---- 22. Depreciation posts to the GL (accumulated depreciation + depreciation expense). ----
+# Depreciate the seeded asset (200) — this records an entry AND posts a ledger journal.
+test "$(curl -s -o /tmp/fa_dep.json -w '%{http_code}' -X POST "$API/v1/fixed-assets/fa_smoke/depreciate" \
+  -H "Authorization: Bearer $SESSION_TOKEN")" = "200"
+grep -q '"amount"' /tmp/fa_dep.json
+# The GL trial balance now contains the depreciation expense and accumulated depreciation
+# accounts with non-zero balances (proves the journal was posted to the ledger).
+test "$(curl -s -o /tmp/fa_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
+grep -q 'expense:depreciation' /tmp/fa_tb.json
+grep -q 'accumulated_depreciation' /tmp/fa_tb.json
+
 echo 'Docker API smoke suite passed'

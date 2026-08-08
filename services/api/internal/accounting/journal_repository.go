@@ -43,6 +43,7 @@ func (r *Repository) EnsureOperatingBook(ctx context.Context, merchantID string)
 		{"asset:receivable", "Accounts Receivable", "debit"},
 		{"asset:inventory", "Inventory", "debit"},
 		{"asset:fixed", "Fixed Assets", "debit"},
+		{"asset:accumulated_depreciation", "Accumulated Depreciation", "credit"},
 		{"liability:payable", "Accounts Payable", "credit"},
 		{"liability:tax", "Tax Payable", "credit"},
 		{"equity:owner", "Owner's Equity", "credit"},
