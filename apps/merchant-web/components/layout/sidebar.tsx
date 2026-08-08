@@ -6,7 +6,8 @@ import { motion } from "framer-motion"
 import {
   LayoutDashboard, Receipt, RefreshCcw, Landmark,
   Users, HandCoins, KeySquare, ShieldCheck, LogOut,
-  Building2, ShieldAlert, Wallet, FileText, UserCog, TrendingUp, Bell, Settings, BookOpenCheck
+  Building2, ShieldAlert, Wallet, FileText, UserCog, TrendingUp, Bell, Settings, BookOpenCheck,
+  Package, Scale, Gift, HandCoins as Lend
 } from "lucide-react"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
@@ -29,6 +30,10 @@ export function Sidebar({ isCollapsed }: { isCollapsed?: boolean }) {
     { href: "/risk",         icon: ShieldAlert,       label: t("Risk & Fraud",  "አደጋ") },
     { href: "/analytics",    icon: TrendingUp,        label: t("Analytics",     "ትንታኔ") },
     { href: "/accounting",   icon: BookOpenCheck,     label: t("Accounting",    "ሂሳብ") },
+    { href: "/inventory",    icon: Package,           label: t("Inventory/Sales", "እቃዎች") },
+    { href: "/disputes",     icon: Scale,             label: t("Disputes",     "ክርክር") },
+    { href: "/loyalty",      icon: Gift,              label: t("Loyalty",      "ታማኝነት") },
+    { href: "/lending",      icon: Lend,              label: t("Lending",      "ብድር") },
     { href: "/fixed-assets", icon: Building2,         label: t("Fixed Assets",  "ቋሚ ንብረት") },
     { href: "/compliance-console", icon: ShieldCheck, label: t("Compliance",   "ተገዢነት") },
     { href: "/team",         icon: UserCog,           label: t("Team",          "ቡድን") },

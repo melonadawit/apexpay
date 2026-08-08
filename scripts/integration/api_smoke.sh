@@ -161,3 +161,11 @@ test "$(curl -s -o /tmp/acc_bs.json -w '%{http_code}' -H "Authorization: Bearer 
 grep -q 'Assets' /tmp/acc_bs.json
 
 echo 'Docker API smoke suite passed'
+
+# ---- 18. Inventory, Disputes, Loyalty, Lending. ----
+test "$(curl -s -o /tmp/prods.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/inventory/products")" = "200"
+test "$(curl -s -o /tmp/disputes.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/disputes")" = "200"
+test "$(curl -s -o /tmp/loyalty.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/loyalty/accounts")" = "200"
+test "$(curl -s -o /tmp/lending.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/lending")" = "200"
+
+echo 'Docker API smoke suite passed'

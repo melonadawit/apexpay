@@ -322,6 +322,22 @@ export type Cohort = { cohort_month: string; customers: number; month1_retention
 // ---- 2FA ----
 export type TwoFAEnroll = { secret: string; otpauth_url: string; issuer: string }
 
+// ---- Inventory & Sales ----
+export type Product = { id: string; name: string; description?: string; sku?: string; price: string; cost_price: string; currency: string; vat_category: string; stock_qty: string; low_stock_threshold: string; status: string }
+export type Order = { id: string; order_number: string; customer_name?: string; customer_email?: string; status: string; subtotal: string; tax_amount: string; total_amount: string; items: Array<{ product_id?: string; description: string; quantity: string; unit_price: string; line_total: string }>; created_at: string }
+export type StockMovement = { id: string; product_id: string; qty: string; direction: string; reference?: string; note?: string; created_at: string }
+
+// ---- Disputes ----
+export type Dispute = { id: string; payment_id?: string; amount: string; currency: string; reason_code: string; status: string; evidence: Array<{ file_key: string; description?: string }>; resolution?: string; fee: string; created_at: string }
+
+// ---- Loyalty ----
+export type LoyaltyTier = { id: string; name: string; min_spend: string; cashback_percent: string }
+export type LoyaltyAccount = { id: string; customer_email?: string; customer_phone?: string; points: string; tier_id?: string; tier_name?: string; total_spend: string }
+export type CashbackTx = { id: string; payment_id?: string; amount: string; type: string; created_at: string }
+
+// ---- Lending ----
+export type Loan = { id: string; amount: string; currency: string; purpose: string; status: string; interest_rate: string; due_date?: string; repaid_amount: string; outstanding_amount: string; created_at: string }
+
 // ---- Accounting & Bookkeeping ----
 export type Account = { code: string; name: string; category: string; normal_side: string; is_active: boolean }
 export type TrialBalanceRow = { code: string; name: string; debit: string; credit: string }
@@ -460,5 +476,40 @@ export const api = {
     profitLoss: (from = "", to = "") => get<FinancialStatement>(`accounting/profit-loss${from ? `?from=${from}&to=${to}` : ""}`),
     balanceSheet: () => get<FinancialStatement>("accounting/balance-sheet"),
     cashFlow: (from = "", to = "") => get<CashFlowLine[]>(`accounting/cash-flow${from ? `?from=${from}&to=${to}` : ""}`),
+  },
+
+  // Inventory & Sales
+  inventory: {
+    products: () => get<Product[]>("inventory/products"),
+    createProduct: (p: unknown) => post<Product>("inventory/products", p),
+    addStock: (id: string, qty: string, note = "") => post<StockMovement>(`inventory/products/${id}/stock`, { qty, note }),
+    orders: (status = "") => get<Order[]>(`inventory/orders${status ? `?status=${status}` : ""}`),
+    createOrder: (p: unknown) => post<Order>("inventory/orders", p),
+    markPaid: (id: string, paymentId: string) => post<unknown>(`inventory/orders/${id}/mark-paid`, { payment_id: paymentId }),
+    stockMovements: () => get<StockMovement[]>("inventory/stock-movements"),
+  },
+
+  // Disputes
+  disputes: {
+    list: (status = "") => get<Dispute[]>(`disputes${status ? `?status=${status}` : ""}`),
+    create: (p: unknown) => post<Dispute>("disputes", p),
+    evidence: (id: string, evidence: unknown[]) => post<unknown>(`disputes/${id}/evidence`, { evidence }),
+    decide: (id: string, decision: string, resolution = "", fee = "0") => post<unknown>(`disputes/${id}/decide`, { decision, resolution, fee }),
+  },
+
+  // Loyalty
+  loyalty: {
+    tiers: () => get<LoyaltyTier[]>("loyalty/tiers"),
+    createTier: (p: unknown) => post<LoyaltyTier>("loyalty/tiers", p),
+    accounts: () => get<LoyaltyAccount[]>("loyalty/accounts"),
+    earn: (id: string, amount: string, paymentId = "") => post<CashbackTx>(`loyalty/accounts/${id}/earn`, { amount, payment_id: paymentId }),
+    transactions: () => get<CashbackTx[]>("loyalty/transactions"),
+  },
+
+  // Lending
+  lending: {
+    loans: (status = "") => get<Loan[]>(`lending${status ? `?status=${status}` : ""}`),
+    create: (p: unknown) => post<Loan>("lending", p),
+    repay: (id: string, amount: string) => post<unknown>(`lending/${id}/repay`, { amount }),
   },
 }

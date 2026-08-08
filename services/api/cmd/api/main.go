@@ -38,12 +38,16 @@ import (
 	"apexpay/internal/checkout"
 	"apexpay/internal/compliance"
 	"apexpay/internal/connector"
+	"apexpay/internal/dispute"
 	"apexpay/internal/fayda"
 	"apexpay/internal/fixedasset"
 	"apexpay/internal/hris"
+	"apexpay/internal/inventory"
 	"apexpay/internal/invoicing"
 	"apexpay/internal/ledger"
+	"apexpay/internal/lending"
 	"apexpay/internal/link"
+	"apexpay/internal/loyalty"
 	"apexpay/internal/notify"
 	"apexpay/internal/onboarding"
 	"apexpay/internal/payment"
@@ -158,6 +162,10 @@ func main() {
 	fixedAssetHandler := fixedasset.NewHandler(fixedasset.NewRepository(pool))
 	analyticsHandler := analytics.NewHandler(analytics.NewRepository(pool))
 	accountingHandler := accounting.NewHandler(accounting.NewRepository(pool))
+	inventoryHandler := inventory.NewHandler(inventory.NewRepository(pool))
+	disputeHandler := dispute.NewHandler(dispute.NewRepository(pool))
+	loyaltyHandler := loyalty.NewHandler(loyalty.NewRepository(pool))
+	lendingHandler := lending.NewHandler(lending.NewRepository(pool))
 	twoFAProvider := twofa.New()
 	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
 		sess, err := authSvc.Validate(ctx, token)
@@ -322,6 +330,30 @@ func main() {
 		r.Route("/accounting", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			accountingHandler.Routes(r)
+		})
+
+		// Inventory & Sales (software POS) — session-authenticated.
+		r.Route("/inventory", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			inventoryHandler.Routes(r)
+		})
+
+		// Disputes & Chargebacks — session-authenticated.
+		r.Route("/disputes", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			disputeHandler.Routes(r)
+		})
+
+		// Loyalty & Cashback — session-authenticated.
+		r.Route("/loyalty", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			loyaltyHandler.Routes(r)
+		})
+
+		// Lending / micro-loans — session-authenticated.
+		r.Route("/lending", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			lendingHandler.Routes(r)
 		})
 
 		// Public checkout token verification (no auth) — outstanding for checkout-web mobile 420px
