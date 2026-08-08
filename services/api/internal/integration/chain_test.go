@@ -64,7 +64,7 @@ func TestOnboardingFaydaPaymentLedgerWebhookChain(t *testing.T) {
 	faydaSvc := fayda.NewService(faydaRepo, faydaVerifier, "salt_test_123456", "APEXPAY_TEST", []byte("0123456789abcdef0123456789abcdef"))
 	routingSvc := routing.NewService(routingRepo, rdb)
 
-	connRegistry := map[string]connector.Connector{"mock": connector.NewMock()}
+	connRegistry := staticResolver{connectors: map[string]connector.Connector{"mock": connector.NewMock()}}
 	paymentSvc := payment.NewService(paymentRepo, ledgerSvc, routingSvc, connRegistry, decimal.NewFromFloat(0.029), true)
 
 	// 1. Create merchant (via direct SQL for test setup)
@@ -292,4 +292,23 @@ func TestOnboardingFaydaPaymentLedgerWebhookChain(t *testing.T) {
 	t.Logf("Duplicate tx_ref correctly rejected: %v", err)
 
 	t.Logf("✅ Full chain integration passed: onboarding NBE + Fayda front/back OTP + bank + docs + submit + approve + operating book + payment init + verify succeeded + ledger M1 balanced + outbox + webhook pending + idempotent no-op + duplicate tx_ref 409")
+}
+
+// staticResolver is a test-only connector.Resolver that always returns the configured map.
+type staticResolver struct {
+	connectors map[string]connector.Connector
+}
+
+func (s staticResolver) Get(_ context.Context, _, connectorID string) connector.Connector {
+	if c, ok := s.connectors[connectorID]; ok {
+		return c
+	}
+	if c, ok := s.connectors["mock"]; ok {
+		return c
+	}
+	return connector.NewMock()
+}
+
+func (s staticResolver) ForMerchant(context.Context, string) (map[string]connector.Connector, error) {
+	return s.connectors, nil
 }

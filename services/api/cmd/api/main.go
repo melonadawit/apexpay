@@ -103,8 +103,12 @@ func main() {
 	faydaSvc := fayda.NewService(faydaRepo, faydaVerifier, hex.EncodeToString(platformcrypto.DeriveKey(cfg.ConnectorEncKey, "fayda-salt")), cfg.FaydaPartnerCode, platformcrypto.DeriveKey(cfg.ConnectorEncKey, "fayda-enc"))
 
 	routingSvc := routing.NewService(routingRepo, rdb)
-	connRegistry := map[string]connector.Connector{"mock": connector.NewMock()}
-	paymentSvc := payment.NewService(paymentRepo, ledgerSvc, routingSvc, connRegistry, decimal.NewFromFloat(0.029), cfg.Env == "local")
+	// Payment gateway: a per-merchant connector registry backed by connector_configs.
+	// Connector secrets are AES-GCM encrypted at rest; we decrypt with a purpose-scoped key.
+	connectorRegistry := connector.NewRegistry(pool, "test", func(cipher []byte) ([]byte, error) {
+		return platformcrypto.Decrypt(platformcrypto.DeriveKey(cfg.ConnectorEncKey, "connector-config"), cipher)
+	})
+	paymentSvc := payment.NewService(paymentRepo, ledgerSvc, routingSvc, connectorRegistry, decimal.NewFromFloat(0.029), cfg.Env == "local")
 	refundSvc := refund.NewService(refundRepo, ledgerSvc)
 	subSvc := subscription.NewService(subRepo)
 	payoutSvc := payout.NewService(payoutRepo, ledgerSvc)

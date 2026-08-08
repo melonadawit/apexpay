@@ -156,7 +156,10 @@ func main() {
 	//    health sample, and warm the Redis health cache for the smart router.
 	// ------------------------------------------------------------------
 	go func() {
-		registry := map[string]connector.Connector{"mock": connector.NewMock()}
+		// Probe global (merchant-agnostic) connector configs via the gateway registry.
+		registry := connector.NewRegistry(pool, "test", func(cipher []byte) ([]byte, error) {
+			return platformcrypto.Decrypt(platformcrypto.DeriveKey(cfg.ConnectorEncKey, "connector-config"), cipher)
+		})
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 		for {
@@ -164,27 +167,15 @@ func main() {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				rows, err := pool.Query(ctx, `SELECT connector_id FROM connector_configs WHERE enabled=true GROUP BY connector_id`)
+				conns, err := registry.ForMerchant(ctx, "")
 				if err != nil {
-					l.Error().Err(err).Msg("health sampler: list connectors failed")
+					l.Error().Err(err).Msg("health sampler: build connectors failed")
 					continue
 				}
-				var ids []string
-				for rows.Next() {
-					var connectorID string
-					if rows.Scan(&connectorID) == nil {
-						ids = append(ids, connectorID)
-					}
+				if len(conns) == 0 {
+					conns = map[string]connector.Connector{"mock": connector.NewMock()}
 				}
-				rows.Close()
-				if len(ids) == 0 {
-					ids = []string{"mock"}
-				}
-				for _, connectorID := range ids {
-					conn, ok := registry[connectorID]
-					if !ok {
-						conn = registry["mock"]
-					}
+				for connectorID, conn := range conns {
 					okFlag, latency, err := conn.Health(ctx)
 					_, insertErr := pool.Exec(ctx,
 						`INSERT INTO connector_health_samples (id, connector_id, environment, latency_ms, success, error_code) VALUES ($1,$2,$3,$4,$5,$6)`,

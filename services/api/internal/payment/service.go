@@ -32,13 +32,13 @@ type Service struct {
 	repo         Repository
 	ledger       *ledger.Service
 	router       *routing.Service
-	registry     map[string]connector.Connector // connector_id -> Connector optimal O(1)
-	mdrRate      decimal.Decimal                // 2.9%
-	allowDemoOTP bool                           // strictly local-only until a real challenge provider is wired
+	connectors   connector.Resolver // per-merchant rail resolution
+	mdrRate      decimal.Decimal    // 2.9%
+	allowDemoOTP bool               // strictly local-only until a real challenge provider is wired
 }
 
-func NewService(repo Repository, ledgerSvc *ledger.Service, router *routing.Service, registry map[string]connector.Connector, mdrRate decimal.Decimal, allowDemoOTP bool) *Service {
-	return &Service{repo: repo, ledger: ledgerSvc, router: router, registry: registry, mdrRate: mdrRate, allowDemoOTP: allowDemoOTP}
+func NewService(repo Repository, ledgerSvc *ledger.Service, router *routing.Service, connectors connector.Resolver, mdrRate decimal.Decimal, allowDemoOTP bool) *Service {
+	return &Service{repo: repo, ledger: ledgerSvc, router: router, connectors: connectors, mdrRate: mdrRate, allowDemoOTP: allowDemoOTP}
 }
 
 func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payment, error) {
@@ -69,10 +69,10 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	}
 
 	connID := string(decision.Chosen)
-	conn, ok := s.registry[connID]
-	if !ok {
-		conn = s.registry["mock"]
-		connID = "mock"
+	conn := s.connectors.Get(ctx, req.MerchantID, connID)
+	if conn.ID() != connID {
+		// Resolver fell back (connector not configured) — record the effective rail.
+		connID = conn.ID()
 	}
 
 	// Fee calc: fee = amount * mdrRate rounded ETB scale 2
@@ -93,7 +93,7 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 		}
 	}
 	// Connector Initialize
-	initResp, err := conn.(connector.Connector).Initialize(ctx, connector.InitializeRequest{
+	initResp, err := conn.Initialize(ctx, connector.InitializeRequest{
 		MerchantID: req.MerchantID, Amount: req.Amount.String(), Currency: req.Currency, TxRef: req.TxRef, ReturnURL: req.ReturnURL,
 	})
 	if err != nil {
@@ -165,11 +165,8 @@ func (s *Service) Verify(ctx context.Context, req VerifyRequest) (*Payment, erro
 	}
 
 	// Call connector Verify
-	conn, ok := s.registry[p.ConnectorID]
-	if !ok {
-		conn = s.registry["mock"]
-	}
-	verifyResp, err := conn.(connector.Connector).Verify(ctx, connector.VerifyRequest{ConnectorRef: p.ConnectorRef, TxRef: p.TxRef})
+	conn := s.connectors.Get(ctx, p.MerchantID, p.ConnectorID)
+	verifyResp, err := conn.Verify(ctx, connector.VerifyRequest{ConnectorRef: p.ConnectorRef, TxRef: p.TxRef})
 	if err != nil {
 		return p, nil // keep pending, worker will retry
 	}
