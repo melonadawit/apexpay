@@ -16,7 +16,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"github.com/shopspring/decimal"
@@ -24,6 +23,7 @@ import (
 	"apexpay/internal/id"
 	"apexpay/internal/platform/config"
 	platformcrypto "apexpay/internal/platform/crypto"
+	"apexpay/internal/platform/dbpool"
 	pkghttp "apexpay/internal/platform/http"
 	"apexpay/internal/platform/logger"
 	mw "apexpay/internal/platform/middleware"
@@ -73,7 +73,7 @@ func main() {
 	l := logger.New(cfg.Env)
 	l.Info().Msgf("ApexPay API v1.1.0-full Gold starting env=%s port=%d fayda_mode=%s", cfg.Env, cfg.Port, cfg.FaydaMode)
 
-	pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+	pool, err := dbpool.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
 		l.Fatal().Err(err).Msg("pg pool failed")
 	}
@@ -161,7 +161,9 @@ func main() {
 	notifyHandler := notify.NewHandler(notify.NewRepository(pool))
 	fixedAssetHandler := fixedasset.NewHandler(fixedasset.NewRepository(pool))
 	analyticsHandler := analytics.NewHandler(analytics.NewRepository(pool))
-	accountingHandler := accounting.NewHandler(accounting.NewRepository(pool))
+	accountingRepo := accounting.NewRepository(pool)
+	accountingRepo.SetCache(accounting.NewCache(rdb))
+	accountingHandler := accounting.NewHandler(accountingRepo)
 	inventoryHandler := inventory.NewHandler(inventory.NewRepository(pool))
 	disputeHandler := dispute.NewHandler(dispute.NewRepository(pool))
 	loyaltyHandler := loyalty.NewHandler(loyalty.NewRepository(pool))

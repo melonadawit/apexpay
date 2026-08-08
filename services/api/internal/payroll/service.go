@@ -53,6 +53,7 @@ type Repository interface {
 	// Loans
 	CreateLoan(ctx context.Context, loan *Loan) error
 	ListActiveLoansByEmployee(ctx context.Context, employeeID string) ([]Loan, error)
+	ListActiveLoansByEmployees(ctx context.Context, employeeIDs []string) (map[string][]Loan, error)
 	CreateLoanRepayment(ctx context.Context, rep *LoanRepayment) error
 	UpdateLoanOutstanding(ctx context.Context, loanID string, totalPaid, outstanding decimal.Decimal, status LoanStatus) error
 
@@ -368,6 +369,16 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 	totalEmployerCost := decimal.Zero
 	var failedCount int
 
+	// Load all active loans for every employee in ONE query (avoids the per-employee N+1).
+	employeeIDs := make([]string, 0, len(employees))
+	for _, emp := range employees {
+		employeeIDs = append(employeeIDs, emp.ID)
+	}
+	loansByEmployee, err := s.repo.ListActiveLoansByEmployees(ctx, employeeIDs)
+	if err != nil {
+		loansByEmployee = map[string][]Loan{}
+	}
+
 	for _, emp := range employees {
 		// Skip if attendance says on_hold
 		att, hasAttendance := attendanceMap[emp.ID]
@@ -520,19 +531,16 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 		// Deductions: tax + pensionEmp + loans EMI + other
 		otherDeductions := decimal.Zero
 
-		// Loan EMI auto deduction O(k) where k = active loans per employee (usually 0-2)
+		// Loan EMI auto deduction O(k) where k = active loans per employee (usually 0-2),
+		// pulled from the pre-batched map (no DB round-trip per employee).
 		var loanDeductions []DeductionsBreakdown
-		loans, err := s.repo.ListActiveLoansByEmployee(ctx, emp.ID)
-		if err == nil {
-			for _, loan := range loans {
-				emi := loan.EMIAmount
-				if emi.GreaterThan(loan.Outstanding) {
-					emi = loan.Outstanding
-				}
-				otherDeductions = otherDeductions.Add(emi)
-				loanDeductions = append(loanDeductions, DeductionsBreakdown{Code: "LOAN_" + loan.ID, Name: "Loan EMI " + string(loan.LoanType), Amount: emi})
-				// Create repayment record later after run approved? For now store as pending
+		for _, loan := range loansByEmployee[emp.ID] {
+			emi := loan.EMIAmount
+			if emi.GreaterThan(loan.Outstanding) {
+				emi = loan.Outstanding
 			}
+			otherDeductions = otherDeductions.Add(emi)
+			loanDeductions = append(loanDeductions, DeductionsBreakdown{Code: "LOAN_" + loan.ID, Name: "Loan EMI " + string(loan.LoanType), Amount: emi})
 		}
 
 		deductions := incomeTax.Add(pensionEmp).Add(otherDeductions)
@@ -858,13 +866,17 @@ func (s *Service) DisburseRun(ctx context.Context, merchantID, runID string) err
 	// Simulate immediate success for demo: mark completed
 	_ = s.repo.UpdateRunStatus(ctx, runID, StatusCompleted, totals)
 
-	// Loan repayments update O(n*m) where n items, m active loans per employee (usually 0-2) so efficient
+	// Loan repayments update — batch-load loans for all employees once (avoids N+1).
+	itemEmployeeIDs := make([]string, 0, len(items))
 	for _, it := range items {
-		loans, err := s.repo.ListActiveLoansByEmployee(ctx, it.EmployeeID)
-		if err != nil {
-			continue
-		}
-		for _, loan := range loans {
+		itemEmployeeIDs = append(itemEmployeeIDs, it.EmployeeID)
+	}
+	disburseLoans, err := s.repo.ListActiveLoansByEmployees(ctx, itemEmployeeIDs)
+	if err != nil {
+		disburseLoans = map[string][]Loan{}
+	}
+	for _, it := range items {
+		for _, loan := range disburseLoans[it.EmployeeID] {
 			// Find deduction amount for this loan from breakdown
 			// Simplify: use EMI
 			emi := loan.EMIAmount

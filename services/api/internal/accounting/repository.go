@@ -8,10 +8,14 @@ import (
 )
 
 type Repository struct {
-	pool *pgxpool.Pool
+	pool  *pgxpool.Pool
+	cache *Cache
 }
 
 func NewRepository(pool *pgxpool.Pool) *Repository { return &Repository{pool: pool} }
+
+// SetCache attaches a Redis read-through cache for report queries.
+func (r *Repository) SetCache(c *Cache) { r.cache = c }
 
 // AccountCategories maps a ledger account code prefix to a statement category.
 func categoryForCode(code string) string {
@@ -130,8 +134,17 @@ func codesOR(codes []string) string {
 	return out
 }
 
-// ProfitLoss builds a P&L for the period. Revenue minus expenses.
+// ProfitLoss builds a P&L for the period. Revenue minus expenses. Cached briefly.
 func (r *Repository) ProfitLoss(ctx context.Context, merchantID, from, to string) (*FinancialStatement, error) {
+	key := "acct:pnl:" + merchantID + ":" + from + ":" + to
+	val, err := r.cacheGet(ctx, key, func() (any, error) { return r.profitLossUncached(ctx, merchantID, from, to) })
+	if err != nil {
+		return nil, err
+	}
+	return val.(*FinancialStatement), nil
+}
+
+func (r *Repository) profitLossUncached(ctx context.Context, merchantID, from, to string) (*FinancialStatement, error) {
 	rev, err := r.balanceOfPeriod(ctx, merchantID, []string{"revenue", "4"}, from, to)
 	if err != nil {
 		return nil, err
@@ -208,4 +221,12 @@ func (r *Repository) balanceOfPeriod(ctx context.Context, merchantID string, cod
 		}
 	}
 	return decimal.NewFromString(s)
+}
+
+// cacheGet runs compute through the optional Redis cache.
+func (r *Repository) cacheGet(ctx context.Context, key string, compute func() (any, error)) (any, error) {
+	if r.cache == nil {
+		return compute()
+	}
+	return r.cache.GetOrCompute(ctx, key, compute)
 }

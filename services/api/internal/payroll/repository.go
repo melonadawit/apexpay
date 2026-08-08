@@ -1024,3 +1024,36 @@ func (r *PgRepository) FinalizeCalculateRunTx(ctx context.Context, runID string,
 
 	return tx.Commit(ctx)
 }
+
+// ListActiveLoansByEmployees loads active loans for many employees in ONE query, avoiding
+// the per-employee N+1 in CalculateRun. Returns map[employeeID][]Loan.
+func (r *PgRepository) ListActiveLoansByEmployees(ctx context.Context, employeeIDs []string) (map[string][]Loan, error) {
+	out := make(map[string][]Loan, len(employeeIDs))
+	if len(employeeIDs) == 0 {
+		return out, nil
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, merchant_id, employee_id, loan_type, principal::text, interest_rate::text, tenure_months,
+			emi_amount::text, total_paid::text, outstanding::text, status, COALESCE(reason,'')
+		FROM payroll_loans
+		WHERE employee_id = ANY($1) AND status IN ('active','approved')
+		ORDER BY created_at ASC`, employeeIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var l Loan
+		var princ, rate, emi, paid, outstanding string
+		if err := rows.Scan(&l.ID, &l.MerchantID, &l.EmployeeID, &l.LoanType, &princ, &rate, &l.TenureMonths, &emi, &paid, &outstanding, &l.Status, &l.Reason); err != nil {
+			return nil, err
+		}
+		l.Principal, _ = decimal.NewFromString(princ)
+		l.InterestRate, _ = decimal.NewFromString(rate)
+		l.EMIAmount, _ = decimal.NewFromString(emi)
+		l.TotalPaid, _ = decimal.NewFromString(paid)
+		l.Outstanding, _ = decimal.NewFromString(outstanding)
+		out[l.EmployeeID] = append(out[l.EmployeeID], l)
+	}
+	return out, rows.Err()
+}

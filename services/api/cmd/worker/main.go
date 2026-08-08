@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
 	"apexpay/internal/connector"
@@ -14,6 +13,7 @@ import (
 	"apexpay/internal/notify"
 	"apexpay/internal/platform/config"
 	platformcrypto "apexpay/internal/platform/crypto"
+	"apexpay/internal/platform/dbpool"
 	"apexpay/internal/platform/logger"
 	"apexpay/internal/webhook"
 	"apexpay/internal/worker/accounting"
@@ -45,7 +45,7 @@ func main() {
 	l := logger.New(cfg.Env)
 	l.Info().Msgf("ApexPay Worker starting env=%s", cfg.Env)
 
-	pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+	pool, err := dbpool.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
 		l.Fatal().Err(err).Msg("pg pool")
 	}
