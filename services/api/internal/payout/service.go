@@ -36,9 +36,13 @@ func NewService(repo Repository, ledgerSvc *ledger.Service) *Service {
 var ApprovalThreshold = decimal.NewFromInt(50000) // ETB
 
 func (s *Service) CreateSingle(ctx context.Context, p *Payout) (*Payout, error) {
-	if p.Amount.LessThanOrEqual(decimal.Zero) { return nil, errors.Validation("amount >0") }
+	if p.Amount.LessThanOrEqual(decimal.Zero) {
+		return nil, errors.Validation("amount >0")
+	}
 	beneficiary, err := s.repo.GetBeneficiary(ctx, p.MerchantID, p.BeneficiaryID)
-	if err != nil || beneficiary == nil || beneficiary.VerificationStatus != "verified" { return nil, errors.Validation("beneficiary bank account must be verified before payout") }
+	if err != nil || beneficiary == nil || beneficiary.VerificationStatus != "verified" {
+		return nil, errors.Validation("beneficiary bank account must be verified before payout")
+	}
 	balance, err := s.repo.GetMerchantBalance(ctx, p.MerchantID)
 	if err != nil {
 		return nil, err
@@ -86,9 +90,13 @@ func (s *Service) CreateBulk(ctx context.Context, req CreateBulkRequest) (*Payou
 	}
 	total := decimal.Zero
 	for _, it := range req.Items {
-		if it.Amount.LessThanOrEqual(decimal.Zero) { return nil, errors.Validation("amount >0 per item") }
+		if it.Amount.LessThanOrEqual(decimal.Zero) {
+			return nil, errors.Validation("amount >0 per item")
+		}
 		beneficiary, err := s.repo.GetBeneficiary(ctx, req.MerchantID, it.BeneficiaryID)
-		if err != nil || beneficiary == nil || beneficiary.VerificationStatus != "verified" { return nil, errors.Validation("all bulk payout beneficiaries must be verified") }
+		if err != nil || beneficiary == nil || beneficiary.VerificationStatus != "verified" {
+			return nil, errors.Validation("all bulk payout beneficiaries must be verified")
+		}
 		total = total.Add(it.Amount)
 	}
 

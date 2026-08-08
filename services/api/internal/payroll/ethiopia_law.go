@@ -2,7 +2,6 @@ package payroll
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -148,16 +147,16 @@ func AnnualLeaveEntitlementET(yearsOfService int) int {
 // Our implementation: first 1 month (30 days) 100% pay, next 2 months (60 days) 50% pay, next 3 months (90 days) unpaid but job protected
 // For payroll LOP handling: sick leave 100% paid => paid_days includes sick, 50% paid => paid 50% count? For simplicity, we treat sick leave as paid_days includes full for first 30 days, half for next 60 days as LOP 50%?
 func SickLeaveEntitlementET() struct {
-	FirstMonth100Pct  int // days 100% pay
-	Next2Months50Pct  int // days 50% pay
+	FirstMonth100Pct     int // days 100% pay
+	Next2Months50Pct     int // days 50% pay
 	Remaining3Months0Pct int // days unpaid
-	Total6Months      int
-}{
+	Total6Months         int
+} {
 	return struct {
-		FirstMonth100Pct  int
-		Next2Months50Pct  int
+		FirstMonth100Pct     int
+		Next2Months50Pct     int
 		Remaining3Months0Pct int
-		Total6Months      int
+		Total6Months         int
 	}{30, 60, 90, 180}
 }
 
@@ -165,10 +164,10 @@ func SickLeaveEntitlementET() struct {
 // For adoptive? Not needed
 // Paternity? Ethiopian law does not provide paternity leave explicit, but some companies give 3 days unpaid? We implement 3 days unpaid paternity as company policy beyond law
 const (
-	MaternityLeaveDaysET      = 120 // 30 prenatal + 90 postnatal
-	MaternityPrenatalDaysET   = 30
-	MaternityPostnatalDaysET  = 90
-	PaternityLeaveDaysET      = 3 // company policy beyond law, unpaid or paid per employer policy
+	MaternityLeaveDaysET     = 120 // 30 prenatal + 90 postnatal
+	MaternityPrenatalDaysET  = 30
+	MaternityPostnatalDaysET = 90
+	PaternityLeaveDaysET     = 3 // company policy beyond law, unpaid or paid per employer policy
 )
 
 // Mourning / Compassionate Leave? Not in payroll but can add

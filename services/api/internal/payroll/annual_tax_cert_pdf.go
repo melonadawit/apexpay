@@ -11,33 +11,33 @@ import (
 
 // AnnualTaxCertData — Ethiopian Annual Income Tax Certificate (Form equivalent to India Form16) for ERCA
 type AnnualTaxCertData struct {
-	MerchantName     string
-	MerchantTIN      string // 10-digit
-	MerchantAddress  string
-	EmployeeCode     string
-	EmployeeName     string
-	EmployeeNameAM   string
-	EmployeeTIN      string // 10-digit
-	PensionNo        string
-	Department       string
-	CostCenter       string
-	Year             int
-	Period           string // 2026
-	RunRef           string // Annual 2026
-	BankMasked       string
-	FaydaLast4       string
-	FaceScore        float64
-	MonthlyItems     []PayrollItem // 12 months items for this employee for year
-	YTDGross         decimal.Decimal
-	YTDPensionEmp    decimal.Decimal
-	YTDTaxable       decimal.Decimal
-	YTDTax           decimal.Decimal
-	YTDNet           decimal.Decimal
-	YTDPensionEmplr  decimal.Decimal
+	MerchantName      string
+	MerchantTIN       string // 10-digit
+	MerchantAddress   string
+	EmployeeCode      string
+	EmployeeName      string
+	EmployeeNameAM    string
+	EmployeeTIN       string // 10-digit
+	PensionNo         string
+	Department        string
+	CostCenter        string
+	Year              int
+	Period            string // 2026
+	RunRef            string // Annual 2026
+	BankMasked        string
+	FaydaLast4        string
+	FaceScore         float64
+	MonthlyItems      []PayrollItem // 12 months items for this employee for year
+	YTDGross          decimal.Decimal
+	YTDPensionEmp     decimal.Decimal
+	YTDTaxable        decimal.Decimal
+	YTDTax            decimal.Decimal
+	YTDNet            decimal.Decimal
+	YTDPensionEmplr   decimal.Decimal
 	TotalEmployerCost decimal.Decimal
 	QRVerificationURL string
-	GeneratedAt      time.Time
-	CertificateNo    string // unique cert number
+	GeneratedAt       time.Time
+	CertificateNo     string // unique cert number
 }
 
 // GenerateAnnualTaxCertPDFGo — outstanding modern template for Ethiopian Annual Tax Certificate

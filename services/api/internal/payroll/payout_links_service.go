@@ -46,7 +46,7 @@ func (s *PayoutLinksService) CreatePayoutLink(ctx context.Context, req CreatePay
 		req.ExpiresInHours = 168 // 7 days per RazorpayX payout links? For Ethiopia, 7 days
 	}
 
-	publicToken := id.New("plink")[len("plink_"): ] // ULID token for QR + public link
+	publicToken := id.New("plink")[len("plink_"):] // ULID token for QR + public link
 	// Generate QR code data for EthSwitch interoperable QR + payout link QR
 	qrData := fmt.Sprintf("APEXPAY:PAYOUT:%s:AMOUNT:%s:CURRENCY:%s:TOKEN:%s:RECIPIENT:%s", req.MerchantID, req.Amount.String(), req.Currency, publicToken, req.RecipientName)
 
@@ -106,12 +106,12 @@ func (s *PayoutLinksService) CreatePayoutLink(ctx context.Context, req CreatePay
 }
 
 type ClaimPayoutLinkRequest struct {
-	PublicToken       string
-	BeneficiaryName   string
-	BankCode          string
-	AccountNumber     string
-	AccountName       string // must match beneficiary name fuzzy Levenshtein <3 per PayAtlas ET PSP
-	OTP               string // 6-digit OTP for claim verification
+	PublicToken     string
+	BeneficiaryName string
+	BankCode        string
+	AccountNumber   string
+	AccountName     string // must match beneficiary name fuzzy Levenshtein <3 per PayAtlas ET PSP
+	OTP             string // 6-digit OTP for claim verification
 }
 
 func (s *PayoutLinksService) ClaimPayoutLink(ctx context.Context, req ClaimPayoutLinkRequest) (*EnhancedPayoutLink, error) {

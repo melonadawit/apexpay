@@ -13,47 +13,47 @@ import (
 // ==================== Current Accounts Real — Partner Bank CBE/Awash/Dashen ====================
 
 type CurrentAccount struct {
-	ID                string
-	MerchantID        string
-	AccountNumber     string // virtual account number e.g., ETB-CBE-1234567890
-	AccountName       string
-	AccountType       string // current, saving, virtual, escrow, reserve
-	Currency          string
-	BankCode          string // CBE, AWASH, DASHEN, ABYSSINIA, etc.
-	PartnerBankName   string // Commercial Bank of Ethiopia, Awash Bank, Dashen Bank — Ethiopia equivalent of ICICI/Axis/RBL/YES in RazorpayX India
-	Status            string // draft, pending_kyc, pending_approval, active, suspended, closed, frozen
-	Balance           decimal.Decimal
-	AvailableBalance  decimal.Decimal
-	OverdraftLimit    decimal.Decimal
-	IsPrimary         bool
-	IsLite            bool // lite interim account until current account active per RazorpayX Lite concept
-	IsVirtual         bool // virtual account for collections smart collect
-	ChequeBookIssued  bool
-	DebitCardIssued   bool
-	DebitCardType     string // virtual, physical, both
-	CreatedBy         *string
-	ApprovedBy        *string
-	ApprovedAt        *time.Time
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID               string
+	MerchantID       string
+	AccountNumber    string // virtual account number e.g., ETB-CBE-1234567890
+	AccountName      string
+	AccountType      string // current, saving, virtual, escrow, reserve
+	Currency         string
+	BankCode         string // CBE, AWASH, DASHEN, ABYSSINIA, etc.
+	PartnerBankName  string // Commercial Bank of Ethiopia, Awash Bank, Dashen Bank — Ethiopia equivalent of ICICI/Axis/RBL/YES in RazorpayX India
+	Status           string // draft, pending_kyc, pending_approval, active, suspended, closed, frozen
+	Balance          decimal.Decimal
+	AvailableBalance decimal.Decimal
+	OverdraftLimit   decimal.Decimal
+	IsPrimary        bool
+	IsLite           bool // lite interim account until current account active per RazorpayX Lite concept
+	IsVirtual        bool // virtual account for collections smart collect
+	ChequeBookIssued bool
+	DebitCardIssued  bool
+	DebitCardType    string // virtual, physical, both
+	CreatedBy        *string
+	ApprovedBy       *string
+	ApprovedAt       *time.Time
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type CurrentAccountOpeningRequest struct {
-	ID                  string
-	MerchantID          string
-	KYCProfileID        *string
-	PartnerBankCode     string // CBE, AWASH, DASHEN etc.
-	AccountType         string // current, saving, virtual
+	ID                   string
+	MerchantID           string
+	KYCProfileID         *string
+	PartnerBankCode      string // CBE, AWASH, DASHEN etc.
+	AccountType          string // current, saving, virtual
 	RequestedAccountName string
-	Status              string // draft, submitted, in_review, kyc_pending, approved, rejected, needs_more_info
-	RiskScore           int
-	RiskTier            string // low, medium, high
-	SubmittedAt         *time.Time
-	ReviewedAt          *time.Time
-	ReviewerID          *string
-	RejectionReason     string
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	Status               string // draft, submitted, in_review, kyc_pending, approved, rejected, needs_more_info
+	RiskScore            int
+	RiskTier             string // low, medium, high
+	SubmittedAt          *time.Time
+	ReviewedAt           *time.Time
+	ReviewerID           *string
+	RejectionReason      string
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
 }
 
 type ChequeBook struct {
@@ -129,8 +129,8 @@ type EscrowAgreement struct {
 	SellerMerchantID      *string
 	Amount                decimal.Decimal
 	Currency              string
-	PlatformFeePercent    decimal.Decimal // 10% platform fee
-	WithholdingTaxPercent decimal.Decimal // 2% withholding tax for services per Ethiopia Income Tax Proclamation
+	PlatformFeePercent    decimal.Decimal   // 10% platform fee
+	WithholdingTaxPercent decimal.Decimal   // 2% withholding tax for services per Ethiopia Income Tax Proclamation
 	Conditions            []EscrowCondition // JSON [{type: delivery_confirmed, days: 7}, {type: inspection_period, days: 3}]
 	AutoRelease           bool
 	AutoReleaseAfterDays  int
@@ -148,49 +148,49 @@ type EscrowCondition struct {
 // ==================== Corporate Cards — Collateral-free Credit Cards ====================
 
 type CorporateCard struct {
-	ID                 string
-	MerchantID         string
-	CurrentAccountID   *string
-	CardNumberMasked   string // ****1234
-	CardNumberHash     string // sha256 hash
-	CardType           string // virtual, physical, both
-	CardNetwork        string // visa, mastercard, verve, ethswitch
-	CardholderName     string
-	CardholderEmail    string
-	Status             string // ordered, active, blocked, expired, cancelled, suspended
-	CreditLimit        decimal.Decimal // up to 2Cr ETB equivalent (20L-2Cr INR in RazorpayX India)
-	AvailableCredit    decimal.Decimal
-	DailyLimit         decimal.Decimal
-	MonthlyLimit       decimal.Decimal
-	CategoryRestrictions []string // ["SaaS", "Cloud", "Marketing"] etc.
-	SpendingControls   map[string]interface{} // {daily_limit: 50000, monthly_limit: 500000, allowed_categories: ["SaaS", "Cloud"], blocked_merchants: []}
-	CashbackPercent    decimal.Decimal // flat 1% cashback per RazorpayX
-	ForexMarkupPercent decimal.Decimal // 2.5% forex markup
-	InterestFreeDays   int // up to 45-50 day interest-free period
-	IsAddon            bool
-	ParentCardID       *string
-	CreatedBy          *string
-	ApprovedBy         *string
-	ApprovedAt         *time.Time
-	ExpiryMonth        *int
-	ExpiryYear         *int
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+	ID                   string
+	MerchantID           string
+	CurrentAccountID     *string
+	CardNumberMasked     string // ****1234
+	CardNumberHash       string // sha256 hash
+	CardType             string // virtual, physical, both
+	CardNetwork          string // visa, mastercard, verve, ethswitch
+	CardholderName       string
+	CardholderEmail      string
+	Status               string          // ordered, active, blocked, expired, cancelled, suspended
+	CreditLimit          decimal.Decimal // up to 2Cr ETB equivalent (20L-2Cr INR in RazorpayX India)
+	AvailableCredit      decimal.Decimal
+	DailyLimit           decimal.Decimal
+	MonthlyLimit         decimal.Decimal
+	CategoryRestrictions []string               // ["SaaS", "Cloud", "Marketing"] etc.
+	SpendingControls     map[string]interface{} // {daily_limit: 50000, monthly_limit: 500000, allowed_categories: ["SaaS", "Cloud"], blocked_merchants: []}
+	CashbackPercent      decimal.Decimal        // flat 1% cashback per RazorpayX
+	ForexMarkupPercent   decimal.Decimal        // 2.5% forex markup
+	InterestFreeDays     int                    // up to 45-50 day interest-free period
+	IsAddon              bool
+	ParentCardID         *string
+	CreatedBy            *string
+	ApprovedBy           *string
+	ApprovedAt           *time.Time
+	ExpiryMonth          *int
+	ExpiryYear           *int
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
 }
 
 type CorporateCardTransaction struct {
-	ID              string
-	CardID          string
-	MerchantID      string
-	Amount          decimal.Decimal
-	Currency        string
-	MerchantName    string // e.g., AWS, Google Cloud, Facebook Ads
+	ID               string
+	CardID           string
+	MerchantID       string
+	Amount           decimal.Decimal
+	Currency         string
+	MerchantName     string // e.g., AWS, Google Cloud, Facebook Ads
 	MerchantCategory string // SaaS, Cloud, Marketing, etc.
-	Status          string // pending, approved, declined, reversed
-	DeclineReason   string
-	CashbackAmount  decimal.Decimal // flat 1% cashback
-	ForexFee        decimal.Decimal // 2.5% forex markup if international
-	CreatedAt       time.Time
+	Status           string // pending, approved, declined, reversed
+	DeclineReason    string
+	CashbackAmount   decimal.Decimal // flat 1% cashback
+	ForexFee         decimal.Decimal // 2.5% forex markup if international
+	CreatedAt        time.Time
 }
 
 // ==================== Payout Links Enhanced — QR + Scan & Pay ====================
@@ -228,12 +228,12 @@ type VendorInvoice struct {
 	DueDate              *time.Time
 	Amount               decimal.Decimal
 	Currency             string
-	TaxAmount            decimal.Decimal // VAT 15% TOT 2%/10%
-	WithholdingTaxAmount decimal.Decimal // 2% for services per Ethiopia Income Tax Proclamation
-	TotalAmount          decimal.Decimal // amount + tax - withholding
-	Status               string // draft, pending_approval, approved, paid, rejected, cancelled
+	TaxAmount            decimal.Decimal        // VAT 15% TOT 2%/10%
+	WithholdingTaxAmount decimal.Decimal        // 2% for services per Ethiopia Income Tax Proclamation
+	TotalAmount          decimal.Decimal        // amount + tax - withholding
+	Status               string                 // draft, pending_approval, approved, paid, rejected, cancelled
 	OCRRaw               map[string]interface{} // {extracted_text, confidence, vendor_name, tin, invoice_number, amount, tax, withholding, etc.}
-	FileKey              *string // MinIO file key for invoice PDF/image
+	FileKey              *string                // MinIO file key for invoice PDF/image
 	FileHash             *string
 	CreatedBy            *string
 	ApprovedBy           *string
@@ -295,7 +295,7 @@ type TaxPayment struct {
 	PeriodMonth      *int
 	PeriodYear       *int
 	DueDate          *time.Time
-	Status           string // draft, pending_approval, pending, paid, failed, cancelled
+	Status           string  // draft, pending_approval, pending, paid, failed, cancelled
 	ChallanFileKey   *string // MinIO file key for challan PDF
 	ChallanFileHash  *string
 	PaymentReference string // bank payment reference / UTR
@@ -318,48 +318,48 @@ type TaxAccountant struct {
 // ==================== Bank Account Verification Penny Testing 1 ETB ====================
 
 type BankAccountVerification struct {
-	ID                        string
-	MerchantID                string
-	BankCode                  string
-	AccountNumberMasked       string
-	AccountNumberHash         string
-	AccountName               string
-	VerificationMethod        string // penny_test, micro_deposit, bank_letter, manual
-	Amount                    decimal.Decimal // 1.00 ETB penny test
-	ConnectorID               string // bank_ips, telebirr, etc.
-	Status                    string // pending, processing, verified, failed, expired
-	VerificationResponse      map[string]interface{} // {beneficiary_name, account_name_match_score, bank_details, etc.}
-	BeneficiaryNameReturned   string
-	MatchScore                decimal.Decimal // fuzzy Levenshtein <3 match score
-	VerifiedAt                *time.Time
-	ExpiresAt                 *time.Time
-	CreatedAt                 time.Time
+	ID                      string
+	MerchantID              string
+	BankCode                string
+	AccountNumberMasked     string
+	AccountNumberHash       string
+	AccountName             string
+	VerificationMethod      string                 // penny_test, micro_deposit, bank_letter, manual
+	Amount                  decimal.Decimal        // 1.00 ETB penny test
+	ConnectorID             string                 // bank_ips, telebirr, etc.
+	Status                  string                 // pending, processing, verified, failed, expired
+	VerificationResponse    map[string]interface{} // {beneficiary_name, account_name_match_score, bank_details, etc.}
+	BeneficiaryNameReturned string
+	MatchScore              decimal.Decimal // fuzzy Levenshtein <3 match score
+	VerifiedAt              *time.Time
+	ExpiresAt               *time.Time
+	CreatedAt               time.Time
 }
 
 // ==================== Collections / Smart Collect / Virtual Accounts ====================
 
 type VirtualAccount struct {
-	ID                    string
-	MerchantID            string
-	VirtualAccountNumber  string // e.g., VA-CBE-1234567890
-	CustomerID            *string
-	Purpose               string // e.g., customer collections, vendor payments, payroll
-	Status                string // active, inactive, closed
-	BankCode              string
-	CreatedAt             time.Time
+	ID                   string
+	MerchantID           string
+	VirtualAccountNumber string // e.g., VA-CBE-1234567890
+	CustomerID           *string
+	Purpose              string // e.g., customer collections, vendor payments, payroll
+	Status               string // active, inactive, closed
+	BankCode             string
+	CreatedAt            time.Time
 }
 
 type VirtualAccountTransaction struct {
-	ID                string
-	VirtualAccountID  string
-	MerchantID        string
-	Amount            decimal.Decimal
-	Currency          string
-	UTR               string // Unique Transaction Reference
-	SenderName        string
-	SenderAccount     string
-	Status            string // pending, matched, unmatched, reconciled, failed
-	MatchedInvoiceID  *string
-	MatchedAt         *time.Time
-	CreatedAt         time.Time
+	ID               string
+	VirtualAccountID string
+	MerchantID       string
+	Amount           decimal.Decimal
+	Currency         string
+	UTR              string // Unique Transaction Reference
+	SenderName       string
+	SenderAccount    string
+	Status           string // pending, matched, unmatched, reconciled, failed
+	MatchedInvoiceID *string
+	MatchedAt        *time.Time
+	CreatedAt        time.Time
 }

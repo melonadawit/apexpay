@@ -81,6 +81,21 @@ func Decrypt(key []byte, ciphertext []byte) ([]byte, error) {
 	return gcm.Open(nil, nonce, ct, nil)
 }
 
+// DeriveKey returns a 32-byte AES-256 key derived from a master secret and a purpose label.
+//
+// Purpose-scoped derivation is a defensive standard: it gives every subsystem (webhooks,
+// connector configs, Fayda records, file refs, ...) its own key so a leak in one place does
+// not compromise another, and it never panics on a short master secret (unlike raw [:16]
+// slicing). SHA-256(prefixed) produces a fixed 32-byte output regardless of master length.
+//
+// The master secret itself must still be strong and stored in a secret manager in production.
+func DeriveKey(master, purpose string) []byte {
+	h := sha256.New()
+	h.Write([]byte("apexpay:v1:" + purpose + ":"))
+	h.Write([]byte(master))
+	return h.Sum(nil)
+}
+
 // Mask helpers for outstanding UI.
 func MaskFINLast4(finLast4 string) string { return "****-****-" + finLast4 }
 func MaskAccount(acct string) string {

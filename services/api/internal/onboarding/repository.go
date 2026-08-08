@@ -192,7 +192,9 @@ func (r *PgRepository) ApproveMerchantTx(ctx context.Context, merchantID, kycPro
 		VALUES ($1,$2,'merchant_operating',$3,'ETB','open')
 		ON CONFLICT (merchant_id, book_type) DO UPDATE SET name=EXCLUDED.name
 		RETURNING id`, bookID, merchantID, fmt.Sprintf("Operating book %s", merchantID)).Scan(&bookID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Seed standard accounts - optimal batch
 	accounts := [][]string{

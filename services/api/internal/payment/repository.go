@@ -16,8 +16,11 @@ type PgRepository struct {
 }
 
 var (
-	ErrIdempotencyConflict = ErrIdempotencyConflict
-	ErrIdempotencyInProgress = ErrIdempotencyInProgress
+	// Sentinel errors for idempotency-state outcomes surfaced to the service layer.
+	// A key reused with identical business inputs returns the existing payment; reused
+	// with different inputs or while the connector call is still in flight is a conflict.
+	ErrIdempotencyConflict   = fmt.Errorf("idempotency key conflict: request differs from original or already resolved")
+	ErrIdempotencyInProgress = fmt.Errorf("idempotency request still in progress")
 )
 
 func NewPgRepository(pool *pgxpool.Pool, ledgerRepo *ledger.PgRepository) *PgRepository {
@@ -47,8 +50,12 @@ func (r *PgRepository) CreatePaymentTx(ctx context.Context, p *Payment, outboxEv
 	if idempotencyKey != "" {
 		command, err := tx.Exec(ctx, `UPDATE idempotency_keys SET state='completed', resource_id=$3, response_code=201,
 			response_body=jsonb_build_object('id',$3) WHERE merchant_id=$1 AND key=$2 AND state='connector_started'`, p.MerchantID, idempotencyKey, p.ID)
-		if err != nil { return err }
-		if command.RowsAffected() != 1 { return fmt.Errorf("idempotency reservation was not available for completion") }
+		if err != nil {
+			return err
+		}
+		if command.RowsAffected() != 1 {
+			return fmt.Errorf("idempotency reservation was not available for completion")
+		}
 	}
 	return tx.Commit(ctx)
 }
@@ -85,18 +92,25 @@ func (r *PgRepository) UpdateStatusTx(ctx context.Context, paymentID string, sta
 		JOIN payments p ON p.merchant_id=lb.merchant_id
 		WHERE p.id=$1 AND lb.book_type='merchant_operating' AND lb.status='open'
 		GROUP BY lb.id ORDER BY lb.id LIMIT 1`, paymentID, entries[0].AccountID).Scan(&bookID, &clearingID, &payableID, &feeID)
-	if err != nil || clearingID == "" || payableID == "" || feeID == "" { return fmt.Errorf("payment ledger accounts unavailable: %w", err) }
+	if err != nil || clearingID == "" || payableID == "" || feeID == "" {
+		return fmt.Errorf("payment ledger accounts unavailable: %w", err)
+	}
 	journal.BookID = bookID
 	for i := range entries {
 		entries[i].BookID = bookID
 		switch entries[i].AccountID {
-		case "liability:merchant_payable": entries[i].AccountID = payableID
-		case "liability:platform_fee_due": entries[i].AccountID = feeID
-		default: entries[i].AccountID = clearingID
+		case "liability:merchant_payable":
+			entries[i].AccountID = payableID
+		case "liability:platform_fee_due":
+			entries[i].AccountID = feeID
+		default:
+			entries[i].AccountID = clearingID
 		}
 	}
 	_, err = tx.Exec(ctx, `UPDATE payments SET status=$1, succeeded_at=$2, updated_at=now() WHERE id=$3 AND status IN ('created','pending','processing')`, status, succeededAt, paymentID)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// Ledger post in same Tx per DATABASE transaction boundary
 	_, err = tx.Exec(ctx, `INSERT INTO ledger_journals (id, book_id, posting_key, memo, reference_type, reference_id, transfer_group) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (book_id, posting_key) DO NOTHING`,
@@ -131,28 +145,46 @@ func (r *PgRepository) UpdateStatusTx(ctx context.Context, paymentID string, sta
 func (r *PgRepository) ReserveIdempotency(ctx context.Context, merchantID, key, requestHash string) (*Payment, error) {
 	command, err := r.pool.Exec(ctx, `INSERT INTO idempotency_keys (merchant_id, key, request_hash, response_code, response_body, resource_type, state)
 		VALUES ($1,$2,$3,0,'{}'::jsonb,'payment','in_progress') ON CONFLICT (merchant_id, key) DO NOTHING`, merchantID, key, requestHash)
-	if err != nil { return nil, err }
-	if command.RowsAffected() == 1 { return nil, nil }
+	if err != nil {
+		return nil, err
+	}
+	if command.RowsAffected() == 1 {
+		return nil, nil
+	}
 
 	var storedHash, state, paymentID string
 	err = r.pool.QueryRow(ctx, `SELECT request_hash, state, COALESCE(resource_id,'') FROM idempotency_keys WHERE merchant_id=$1 AND key=$2 AND resource_type='payment'`, merchantID, key).Scan(&storedHash, &state, &paymentID)
-	if err != nil { return nil, err }
-	if storedHash != requestHash { return nil, ErrIdempotencyConflict }
-	if state == "completed" && paymentID != "" { return r.getByID(ctx, merchantID, paymentID) }
+	if err != nil {
+		return nil, err
+	}
+	if storedHash != requestHash {
+		return nil, ErrIdempotencyConflict
+	}
+	if state == "completed" && paymentID != "" {
+		return r.getByID(ctx, merchantID, paymentID)
+	}
 	if state == "retry_authorized" {
 		command, err := r.pool.Exec(ctx, `UPDATE idempotency_keys SET state='in_progress',response_code=0,response_body='{}'::jsonb WHERE merchant_id=$1 AND key=$2 AND state='retry_authorized'`, merchantID, key)
-		if err != nil { return nil, err }; if command.RowsAffected() == 1 { return nil, nil }
+		if err != nil {
+			return nil, err
+		}
+		if command.RowsAffected() == 1 {
+			return nil, nil
+		}
 	}
 	return nil, ErrIdempotencyInProgress
 }
-
 
 func (r *PgRepository) MarkConnectorStarted(ctx context.Context, merchantID, key, txRef string) error {
 	command, err := r.pool.Exec(ctx, `UPDATE idempotency_keys
 		SET state='connector_started', response_body=jsonb_build_object('tx_ref',$3)
 		WHERE merchant_id=$1 AND key=$2 AND state='in_progress'`, merchantID, key, txRef)
-	if err != nil { return err }
-	if command.RowsAffected() != 1 { return fmt.Errorf("idempotency reservation was not available before connector call") }
+	if err != nil {
+		return err
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("idempotency reservation was not available before connector call")
+	}
 	return nil
 }
 
@@ -166,8 +198,12 @@ func (r *PgRepository) getByID(ctx context.Context, merchantID, paymentID string
 	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, tx_ref, amount::text, currency, status, connector_id, connector_ref, fee_amount::text, net_amount::text, requires_2fa, two_fa_verified, checkout_url FROM payments WHERE merchant_id=$1 AND id=$2`, merchantID, paymentID)
 	var p Payment
 	var amount, fee, net string
-	if err := row.Scan(&p.ID, &p.MerchantID, &p.TxRef, &amount, &p.Currency, &p.Status, &p.ConnectorID, &p.ConnectorRef, &fee, &net, &p.Requires2FA, &p.TwoFAVerified, &p.CheckoutURL); err != nil { return nil, err }
-	p.Amount, _ = decimal.NewFromString(amount); p.FeeAmount, _ = decimal.NewFromString(fee); p.NetAmount, _ = decimal.NewFromString(net)
+	if err := row.Scan(&p.ID, &p.MerchantID, &p.TxRef, &amount, &p.Currency, &p.Status, &p.ConnectorID, &p.ConnectorRef, &fee, &net, &p.Requires2FA, &p.TwoFAVerified, &p.CheckoutURL); err != nil {
+		return nil, err
+	}
+	p.Amount, _ = decimal.NewFromString(amount)
+	p.FeeAmount, _ = decimal.NewFromString(fee)
+	p.NetAmount, _ = decimal.NewFromString(net)
 	return &p, nil
 }
 
@@ -175,7 +211,11 @@ func (r *PgRepository) Mark2FAVerified(ctx context.Context, merchantID, paymentI
 	command, err := r.pool.Exec(ctx, `UPDATE payments
 		SET two_fa_verified=true, updated_at=now()
 		WHERE id=$1 AND merchant_id=$2 AND requires_2fa=true AND status IN ('created','pending','processing')`, paymentID, merchantID)
-	if err != nil { return err }
-	if command.RowsAffected() != 1 { return fmt.Errorf("payment not found or not awaiting 2FA") }
+	if err != nil {
+		return err
+	}
+	if command.RowsAffected() != 1 {
+		return fmt.Errorf("payment not found or not awaiting 2FA")
+	}
 	return nil
 }

@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"apexpay/internal/id"
-	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
+	mw "apexpay/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
 )
@@ -24,11 +24,11 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		Email string `json:"email"`
 		Phone string `json:"phone"`
-		Name string `json:"name"`
+		Name  string `json:"name"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&req)
 	cust := &Customer{ID: id.NewCustomer(), MerchantID: merchantID, Email: req.Email, Phone: req.Phone, Name: req.Name}
@@ -40,7 +40,7 @@ func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreatePlan(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		Name          string `json:"name"`
 		Description   string `json:"description"`
@@ -65,7 +65,7 @@ func (h *Handler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		CustomerID string `json:"customer_id"`
 		PlanID     string `json:"plan_id"`
@@ -83,7 +83,7 @@ func (h *Handler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	list, err := h.svc.repo.ListSubscriptions(r.Context(), merchantID, nil)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)

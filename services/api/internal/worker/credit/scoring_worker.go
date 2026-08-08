@@ -2,7 +2,6 @@ package credit
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -199,6 +198,3 @@ func (w *ScoringWorker) RunTicker(ctx context.Context) {
 		}
 	}
 }
-
-var _ = fmt.Sprintf
-var _ = time.Now

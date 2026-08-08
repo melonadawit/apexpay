@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"apexpay/internal/id"
-	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
+	mw "apexpay/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
 )
@@ -52,11 +52,11 @@ func (h *Handler) Routes(r chi.Router) {
 
 	// Payroll runs comprehensive
 	r.Post("/payroll_runs", h.CreateRun)
-	r.Get("/payroll_runs", h.ListRuns) // additional list endpoint
+	r.Get("/payroll_runs", h.ListRuns)                             // additional list endpoint
 	r.Post("/payroll_runs/{id}/attendance/bulk", h.BulkAttendance) // attendance + OT + LOP
 	r.Post("/payroll_runs/{id}/variable_inputs/bulk", h.BulkVariableInputs)
-	r.Post("/payroll_runs/{id}/calculate", h.Calculate)          // V2 formula engine proration
-	r.Post("/payroll_runs/{id}/calculate/v2", h.CalculateV2)      // explicit V2
+	r.Post("/payroll_runs/{id}/calculate", h.Calculate)      // V2 formula engine proration
+	r.Post("/payroll_runs/{id}/calculate/v2", h.CalculateV2) // explicit V2
 	r.Post("/payroll_runs/{id}/approve", h.Approve)
 	r.Post("/payroll_runs/{id}/disburse", h.Disburse)
 	r.Get("/payroll_runs/{id}/items", h.ListItems)
@@ -112,12 +112,12 @@ func (h *Handler) Routes(r chi.Router) {
 // ==================== Org Hierarchy Handlers ====================
 
 func (h *Handler) CreateDepartment(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
-		Name       string `json:"name"`
-		NameAM     string `json:"name_am"`
-		Code       string `json:"code"`
-		CostCenter string `json:"cost_center"`
+		Name        string `json:"name"`
+		NameAM      string `json:"name_am"`
+		Code        string `json:"code"`
+		CostCenter  string `json:"cost_center"`
 		Description string `json:"description"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -136,7 +136,7 @@ func (h *Handler) CreateDepartment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListDepartments(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	list, err := h.svc.repo.ListDepartments(r.Context(), merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -146,7 +146,7 @@ func (h *Handler) ListDepartments(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateDesignation(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		Title       string `json:"title"`
 		TitleAM     string `json:"title_am"`
@@ -166,18 +166,18 @@ func (h *Handler) CreateDesignation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListDesignations(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	list, _ := h.svc.repo.ListDesignations(r.Context(), merchantID)
 	pkghttp.WriteJSON(w, r, 200, list)
 }
 
 func (h *Handler) CreateGrade(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
-		Name      string `json:"name"`
-		NameAM    string `json:"name_am"`
-		MinSalary string `json:"min_salary"`
-		MaxSalary string `json:"max_salary"`
+		Name        string `json:"name"`
+		NameAM      string `json:"name_am"`
+		MinSalary   string `json:"min_salary"`
+		MaxSalary   string `json:"max_salary"`
 		Description string `json:"description"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -195,7 +195,7 @@ func (h *Handler) CreateGrade(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateBranch(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		Name    string `json:"name"`
 		NameAM  string `json:"name_am"`
@@ -218,7 +218,7 @@ func (h *Handler) CreateBranch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListBranches(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	list, _ := h.svc.repo.ListBranches(r.Context(), merchantID)
 	pkghttp.WriteJSON(w, r, 200, list)
 }
@@ -226,7 +226,7 @@ func (h *Handler) ListBranches(w http.ResponseWriter, r *http.Request) {
 // ==================== Salary Structure ====================
 
 func (h *Handler) CreateSalaryStructure(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		Name        string `json:"name"`
 		NameAM      string `json:"name_am"`
@@ -280,7 +280,7 @@ func (h *Handler) CreateSalaryStructure(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *Handler) ListSalaryStructures(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	list, err := h.svc.repo.ListSalaryStructures(r.Context(), merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -290,7 +290,7 @@ func (h *Handler) ListSalaryStructures(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetSalaryStructure(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	idParam := chi.URLParam(r, "id")
 	s, err := h.svc.repo.GetSalaryStructure(r.Context(), merchantID, idParam)
 	if err != nil {
@@ -303,7 +303,7 @@ func (h *Handler) GetSalaryStructure(w http.ResponseWriter, r *http.Request) {
 // ==================== Employees ====================
 
 func (h *Handler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeCode      string `json:"employee_code"`
 		Name              string `json:"name"`
@@ -365,7 +365,7 @@ func (h *Handler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) BulkCreateEmployees(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	// Accept CSV multipart or JSON array
 	// For simplicity support JSON array and CSV file upload via FormFile
 	contentType := r.Header.Get("Content-Type")
@@ -450,7 +450,7 @@ func (h *Handler) BulkCreateEmployees(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListEmployees(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	list, err := h.svc.repo.ListEmployees(r.Context(), merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -460,7 +460,7 @@ func (h *Handler) ListEmployees(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetEmployee(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	empID := chi.URLParam(r, "id")
 	emp, err := h.svc.repo.GetEmployeeWithStructure(r.Context(), merchantID, empID)
 	if err != nil {
@@ -471,7 +471,7 @@ func (h *Handler) GetEmployee(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetYTD(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	empID := chi.URLParam(r, "id")
 	yearStr := r.URL.Query().Get("year")
 	year := 2026
@@ -491,7 +491,7 @@ func (h *Handler) GetYTD(w http.ResponseWriter, r *http.Request) {
 // ==================== Salary Revisions ====================
 
 func (h *Handler) CreateSalaryRevision(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	empID := chi.URLParam(r, "id")
 	var req struct {
 		NewBase        string `json:"new_base"`
@@ -519,7 +519,7 @@ func (h *Handler) CreateSalaryRevision(w http.ResponseWriter, r *http.Request) {
 		OldBase: emp.BaseSalary, NewBase: newBase,
 		OldCTC: emp.CTCAnnual, NewCTC: newCTC,
 		NewStructureID: strPtr(req.NewStructureID),
-		EffectiveFrom: effectiveFrom, Reason: req.Reason, Status: "pending",
+		EffectiveFrom:  effectiveFrom, Reason: req.Reason, Status: "pending",
 	}
 	// Arrear calc: (new-old)*months pending if effective in past
 	// months pending = months between effectiveFrom and now if effectiveFrom < now
@@ -539,7 +539,7 @@ func (h *Handler) CreateSalaryRevision(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListSalaryRevisions(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	empID := chi.URLParam(r, "id")
 	list, _ := h.svc.repo.ListSalaryRevisions(r.Context(), merchantID, empID)
 	pkghttp.WriteJSON(w, r, 200, list)
@@ -548,7 +548,7 @@ func (h *Handler) ListSalaryRevisions(w http.ResponseWriter, r *http.Request) {
 // ==================== Loans ====================
 
 func (h *Handler) CreateLoan(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeID   string `json:"employee_id"`
 		LoanType     string `json:"loan_type"` // personal, salary_advance
@@ -592,13 +592,13 @@ func (h *Handler) ListLoans(w http.ResponseWriter, r *http.Request) {
 // ==================== Payroll Runs ====================
 
 func (h *Handler) CreateRun(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
-		RunRef       string `json:"run_ref"`
-		PeriodMonth  int    `json:"period_month"`
-		PeriodYear   int    `json:"period_year"`
-		Type         string `json:"type"`
-		CutoffDate   string `json:"cutoff_date"`
+		RunRef        string `json:"run_ref"`
+		PeriodMonth   int    `json:"period_month"`
+		PeriodYear    int    `json:"period_year"`
+		Type          string `json:"type"`
+		CutoffDate    string `json:"cutoff_date"`
 		DisbursalDate string `json:"disbursal_date"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -633,14 +633,14 @@ func (h *Handler) BulkAttendance(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "application/json" || r.URL.Query().Get("format") == "json" {
 		var req []struct {
-			EmployeeID      string  `json:"employee_id"`
-			PaidDays        int     `json:"paid_days"`
-			LOPDays         int     `json:"lop_days"`
-			TotalDays       int     `json:"total_days"`
-			OTWeekdayHours  float64 `json:"ot_weekday_hours"`
-			OTWeekendHours  float64 `json:"ot_weekend_hours"`
-			OTHolidayHours  float64 `json:"ot_holiday_hours"`
-			OTNightHours    float64 `json:"ot_night_hours"`
+			EmployeeID     string  `json:"employee_id"`
+			PaidDays       int     `json:"paid_days"`
+			LOPDays        int     `json:"lop_days"`
+			TotalDays      int     `json:"total_days"`
+			OTWeekdayHours float64 `json:"ot_weekday_hours"`
+			OTWeekendHours float64 `json:"ot_weekend_hours"`
+			OTHolidayHours float64 `json:"ot_holiday_hours"`
+			OTNightHours   float64 `json:"ot_night_hours"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
@@ -755,7 +755,7 @@ func (h *Handler) BulkVariableInputs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Calculate(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	runID := chi.URLParam(r, "id")
 	if err := h.svc.CalculateRun(r.Context(), merchantID, runID); err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -769,9 +769,9 @@ func (h *Handler) CalculateV2(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Approve(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	runID := chi.URLParam(r, "id")
-	userID, _ := mw.UserID(r.Context())
+	userID := mw.UserID(r.Context())
 	if err := h.svc.ApproveRun(r.Context(), merchantID, runID, userID); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -780,7 +780,7 @@ func (h *Handler) Approve(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Disburse(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	runID := chi.URLParam(r, "id")
 	if err := h.svc.DisburseRun(r.Context(), merchantID, runID); err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -800,7 +800,7 @@ func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetPayslipPDF(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	runID := chi.URLParam(r, "id")
 	empID := chi.URLParam(r, "employee_id")
 
@@ -810,9 +810,9 @@ func (h *Handler) GetPayslipPDF(w http.ResponseWriter, r *http.Request) {
 		// Fallback to mock URL if DB not available (demo mode)
 		pkghttp.WriteJSON(w, r, 200, map[string]string{
 			"run_id": runID, "employee_id": empID,
-			"pdf_url": fmt.Sprintf("https://vault.apexpay.et/payroll/%s/payslip_%s.pdf", runID, empID),
+			"pdf_url":             fmt.Sprintf("https://vault.apexpay.et/payroll/%s/payslip_%s.pdf", runID, empID),
 			"qr_verification_url": fmt.Sprintf("https://apexpay.et/verify/payslip/%s/%s", runID, empID),
-			"message": "payslip PDF outstanding modern template logo QR pie chart YTD bilingual EN/AM (fallback mock, run not found)",
+			"message":             "payslip PDF outstanding modern template logo QR pie chart YTD bilingual EN/AM (fallback mock, run not found)",
 		})
 		return
 	}
@@ -839,11 +839,11 @@ func (h *Handler) GetPayslipPDF(w http.ResponseWriter, r *http.Request) {
 			TaxableIncome: decimal.NewFromInt(19850), IncomeTax: decimal.NewFromInt(1800),
 			PensionEmployee: decimal.NewFromInt(1400), PensionEmployer: decimal.NewFromInt(2200),
 			NetPay: decimal.NewFromInt(16800), PaidDays: 25, LOPDays: 5,
-			ProrationFactor: decimal.NewFromFloat(0.8333),
-			EarningsBreakdown: []EarningsBreakdown{{Code: "BASIC", Name: "Basic Salary", Amount: decimal.NewFromInt(16666)}, {Code: "HOUSING", Name: "Housing", Amount: decimal.NewFromInt(8333)}, {Code: "OT", Name: "Overtime", Amount: decimal.NewFromInt(1250)}},
-			DeductionsBreakdown: []DeductionsBreakdown{{Code: "INCOME_TAX", Name: "Income Tax", Amount: decimal.NewFromInt(1800)}, {Code: "PENSION_EMP", Name: "Pension 7%", Amount: decimal.NewFromInt(1400)}},
+			ProrationFactor:                decimal.NewFromFloat(0.8333),
+			EarningsBreakdown:              []EarningsBreakdown{{Code: "BASIC", Name: "Basic Salary", Amount: decimal.NewFromInt(16666)}, {Code: "HOUSING", Name: "Housing", Amount: decimal.NewFromInt(8333)}, {Code: "OT", Name: "Overtime", Amount: decimal.NewFromInt(1250)}},
+			DeductionsBreakdown:            []DeductionsBreakdown{{Code: "INCOME_TAX", Name: "Income Tax", Amount: decimal.NewFromInt(1800)}, {Code: "PENSION_EMP", Name: "Pension 7%", Amount: decimal.NewFromInt(1400)}},
 			EmployerContributionsBreakdown: []EmployerContributionsBreakdown{{Code: "PENSION_EMPLR", Name: "Pension Employer 11%", Amount: decimal.NewFromInt(2200)}},
-			YTD: map[string]decimal.Decimal{"ytd_gross": decimal.NewFromInt(140000), "ytd_tax": decimal.NewFromInt(12000), "ytd_net": decimal.NewFromInt(98000)},
+			YTD:                            map[string]decimal.Decimal{"ytd_gross": decimal.NewFromInt(140000), "ytd_tax": decimal.NewFromInt(12000), "ytd_net": decimal.NewFromInt(98000)},
 		}
 	}
 
@@ -856,55 +856,55 @@ func (h *Handler) GetPayslipPDF(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("format") == "json" {
 		pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
 			"run_id": runID, "employee_id": empID,
-			"pdf_url": fmt.Sprintf("https://vault.apexpay.et/payroll/%s/payslip_%s.pdf", runID, empID),
+			"pdf_url":             fmt.Sprintf("https://vault.apexpay.et/payroll/%s/payslip_%s.pdf", runID, empID),
 			"qr_verification_url": fmt.Sprintf("https://apexpay.et/verify/payslip/%s/%s", runID, empID),
-			"message": "payslip PDF outstanding modern template logo QR pie chart YTD bilingual EN/AM",
-			"payslip_data": currentItem,
-			"employee": emp,
-			"ytd": ytd,
+			"message":             "payslip PDF outstanding modern template logo QR pie chart YTD bilingual EN/AM",
+			"payslip_data":        currentItem,
+			"employee":            emp,
+			"ytd":                 ytd,
 		})
 		return
 	}
 
 	// Generate real PDF Go server-side outstanding modern template gofpdf + qr barcode/qr
 	pdfData := PayslipPDFData{
-		MerchantName:     "Apex Trading PLC • አፔክስ", // would fetch merchant legal_name
-		EmployeeCode:     emp.EmployeeCode,
-		EmployeeName:     emp.Name,
-		EmployeeNameAM:   emp.NameAM,
-		Department:       "Engineering", // would fetch department name
-		CostCenter:       emp.CostCenter,
-		Period:           fmt.Sprintf("%s %d", time.Month(run.PeriodMonth).String(), run.PeriodYear),
-		PeriodMonth:      run.PeriodMonth,
-		PeriodYear:       run.PeriodYear,
-		RunID:            run.ID,
-		RunRef:           run.RunRef,
-		BankMasked:       emp.BankAccountMasked,
-		BankCode:         emp.BankCode,
-		FaydaLast4:       "1234",
-		FaceScore:        0.92,
-		TIN:              emp.TIN,
-		PensionNo:        emp.PensionNo,
-		Gross:            currentItem.Gross,
-		CTCMonthly:       currentItem.CTCMonthly,
-		PaidDays:         currentItem.PaidDays,
-		LOPDays:          currentItem.LOPDays,
-		TotalDays:        30,
-		ProrationFactor:  currentItem.ProrationFactor,
-		OTHours:          currentItem.OTHours,
-		OTAmount:         currentItem.OTAmount,
-		TaxableIncome:    currentItem.TaxableIncome,
-		IncomeTax:        currentItem.IncomeTax,
-		PensionEmployee:  currentItem.PensionEmployee,
-		PensionEmployer:  currentItem.PensionEmployer,
-		OtherDeductions:  currentItem.OtherDeductions,
-		NetPay:           currentItem.NetPay,
-		Earnings:         currentItem.EarningsBreakdown,
-		Deductions:       currentItem.DeductionsBreakdown,
-		EmployerContribs: currentItem.EmployerContributionsBreakdown,
-		YTDGross:         ytd["ytd_gross"],
-		YTDTax:           ytd["ytd_tax"],
-		YTDNet:           ytd["ytd_net"],
+		MerchantName:      "Apex Trading PLC • አፔክስ", // would fetch merchant legal_name
+		EmployeeCode:      emp.EmployeeCode,
+		EmployeeName:      emp.Name,
+		EmployeeNameAM:    emp.NameAM,
+		Department:        "Engineering", // would fetch department name
+		CostCenter:        emp.CostCenter,
+		Period:            fmt.Sprintf("%s %d", time.Month(run.PeriodMonth).String(), run.PeriodYear),
+		PeriodMonth:       run.PeriodMonth,
+		PeriodYear:        run.PeriodYear,
+		RunID:             run.ID,
+		RunRef:            run.RunRef,
+		BankMasked:        emp.BankAccountMasked,
+		BankCode:          emp.BankCode,
+		FaydaLast4:        "1234",
+		FaceScore:         0.92,
+		TIN:               emp.TIN,
+		PensionNo:         emp.PensionNo,
+		Gross:             currentItem.Gross,
+		CTCMonthly:        currentItem.CTCMonthly,
+		PaidDays:          currentItem.PaidDays,
+		LOPDays:           currentItem.LOPDays,
+		TotalDays:         30,
+		ProrationFactor:   currentItem.ProrationFactor,
+		OTHours:           currentItem.OTHours,
+		OTAmount:          currentItem.OTAmount,
+		TaxableIncome:     currentItem.TaxableIncome,
+		IncomeTax:         currentItem.IncomeTax,
+		PensionEmployee:   currentItem.PensionEmployee,
+		PensionEmployer:   currentItem.PensionEmployer,
+		OtherDeductions:   currentItem.OtherDeductions,
+		NetPay:            currentItem.NetPay,
+		Earnings:          currentItem.EarningsBreakdown,
+		Deductions:        currentItem.DeductionsBreakdown,
+		EmployerContribs:  currentItem.EmployerContributionsBreakdown,
+		YTDGross:          ytd["ytd_gross"],
+		YTDTax:            ytd["ytd_tax"],
+		YTDNet:            ytd["ytd_net"],
 		QRVerificationURL: fmt.Sprintf("https://apexpay.et/verify/payslip/%s/%s?net=%s&hash=%s&ts=%d", run.ID, emp.EmployeeCode, currentItem.NetPay.StringFixed(2), emp.EmployeeCode, time.Now().Unix()),
 	}
 
@@ -927,14 +927,14 @@ func (h *Handler) GetPayslipsZip(w http.ResponseWriter, r *http.Request) {
 	// In production, generate ZIP of all payslips PDFs O(n) 500 employees <5s, upload to MinIO, return presigned URL 15m
 	// For demo, return mock URL + also generate real compliance CSVs for download
 	pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
-		"zip_url": fmt.Sprintf("https://vault.apexpay.et/payroll/%s/payslips.zip", runID),
-		"message": "download all ZIP — 10 payslips PDF outstanding modern template QR verification YTD bilingual EN/AM + gofpdf + barcode/qr + password DOB DDMM+last4 + Lottie confetti 3s + haptics + WhatsApp share + Telegram",
-		"count":   10,
+		"zip_url":      fmt.Sprintf("https://vault.apexpay.et/payroll/%s/payslips.zip", runID),
+		"message":      "download all ZIP — 10 payslips PDF outstanding modern template QR verification YTD bilingual EN/AM + gofpdf + barcode/qr + password DOB DDMM+last4 + Lottie confetti 3s + haptics + WhatsApp share + Telegram",
+		"count":        10,
 		"generated_at": timeNow().Format(time.RFC3339),
 		"compliance": map[string]string{
 			"pension_csv": fmt.Sprintf("https://vault.apexpay.et/payroll/%s/pension_%s.csv", runID, runID),
-			"erca_csv": fmt.Sprintf("https://vault.apexpay.et/payroll/%s/erca_%s.csv", runID, runID),
-			"bank_xml": fmt.Sprintf("https://vault.apexpay.et/payroll/%s/bank_disbursal_%s.xml", runID, runID),
+			"erca_csv":    fmt.Sprintf("https://vault.apexpay.et/payroll/%s/erca_%s.csv", runID, runID),
+			"bank_xml":    fmt.Sprintf("https://vault.apexpay.et/payroll/%s/bank_disbursal_%s.xml", runID, runID),
 		},
 	})
 }
@@ -942,7 +942,7 @@ func (h *Handler) GetPayslipsZip(w http.ResponseWriter, r *http.Request) {
 // ==================== Compliance Reports ====================
 
 func (h *Handler) GetPensionReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	report, err := h.svc.repo.GetComplianceReport(r.Context(), merchantID, year, month, ReportPensionContribution)
@@ -954,7 +954,7 @@ func (h *Handler) GetPensionReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetERCAReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	report, err := h.svc.repo.GetComplianceReport(r.Context(), merchantID, year, month, ReportERCAWithholding)
@@ -966,7 +966,7 @@ func (h *Handler) GetERCAReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetBankDisbursalReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	report, _ := h.svc.repo.GetComplianceReport(r.Context(), merchantID, year, month, ReportBankDisbursalFile)
@@ -978,7 +978,7 @@ func (h *Handler) GetBankDisbursalReport(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *Handler) GetCostCenterReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	// Try fetch cost center report if exists, else mock
@@ -997,7 +997,7 @@ func (h *Handler) GetCostCenterReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAnnualTaxCertificate(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	employeeID := r.URL.Query().Get("employee_id")
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	if year == 0 {
@@ -1094,19 +1094,19 @@ func (h *Handler) GetAnnualTaxCertificate(w http.ResponseWriter, r *http.Request
 
 	// Default JSON with metadata + CSV preview
 	pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
-		"employee_code": emp.EmployeeCode,
-		"employee_name": emp.Name,
-		"tin":           emp.TIN,
-		"pension_no":    emp.PensionNo,
-		"year":          year,
-		"ytd_gross":     ytd["ytd_gross"].StringFixed(2),
-		"ytd_taxable":   ytd["ytd_gross"].Sub(ytd["ytd_gross"].Mul(decimal.NewFromFloat(0.07))).StringFixed(2),
-		"ytd_tax":       ytd["ytd_tax"].StringFixed(2),
-		"ytd_net":       ytd["ytd_net"].StringFixed(2),
-		"ytd_pension_emp": ytd["ytd_gross"].Mul(decimal.NewFromFloat(0.07)).StringFixed(2),
-		"ytd_pension_emplr": ytd["ytd_gross"].Mul(decimal.NewFromFloat(0.11)).StringFixed(2),
+		"employee_code":       emp.EmployeeCode,
+		"employee_name":       emp.Name,
+		"tin":                 emp.TIN,
+		"pension_no":          emp.PensionNo,
+		"year":                year,
+		"ytd_gross":           ytd["ytd_gross"].StringFixed(2),
+		"ytd_taxable":         ytd["ytd_gross"].Sub(ytd["ytd_gross"].Mul(decimal.NewFromFloat(0.07))).StringFixed(2),
+		"ytd_tax":             ytd["ytd_tax"].StringFixed(2),
+		"ytd_net":             ytd["ytd_net"].StringFixed(2),
+		"ytd_pension_emp":     ytd["ytd_gross"].Mul(decimal.NewFromFloat(0.07)).StringFixed(2),
+		"ytd_pension_emplr":   ytd["ytd_gross"].Mul(decimal.NewFromFloat(0.11)).StringFixed(2),
 		"total_employer_cost": ytd["ytd_gross"].Add(ytd["ytd_gross"].Mul(decimal.NewFromFloat(0.11))).StringFixed(2),
-		"certificate_no": fmt.Sprintf("CERT-%s-%d", emp.EmployeeCode, year),
+		"certificate_no":      fmt.Sprintf("CERT-%s-%d", emp.EmployeeCode, year),
 		"qr_verification_url": fmt.Sprintf("https://apexpay.et/verify/annual_tax_cert/%s/%s/%d", merchantID, employeeID, year),
 		"files": map[string]string{
 			"pdf": fmt.Sprintf("/v1/payroll/payroll_reports/annual_tax_certificate?employee_id=%s&year=%d&format=pdf", employeeID, year),
@@ -1117,14 +1117,14 @@ func (h *Handler) GetAnnualTaxCertificate(w http.ResponseWriter, r *http.Request
 }
 
 func (h *Handler) GetPayrollRegister(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	runID := r.URL.Query().Get("run_id")
 	format := r.URL.Query().Get("format") // csv, json, xlsx
 
 	if runID == "" {
 		// Try get latest run for merchant? For demo return mock empty
 		pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
-			"message": "payroll register 30 cols employee_code name department grade cost_center ctc_monthly gross ot_hours ot_amount commission bonus other_allowances taxable income_tax pension 7% 11% other_deductions net paid lop proration_factor is_on_hold hold_reason earnings_breakdown_json deductions_breakdown_json employer_contributions_json ytd_gross tax net period run_ref status • 10 employees • 500 <2s p99 • Specify ?run_id=prun_xxx&format=csv to download",
+			"message":         "payroll register 30 cols employee_code name department grade cost_center ctc_monthly gross ot_hours ot_amount commission bonus other_allowances taxable income_tax pension 7% 11% other_deductions net paid lop proration_factor is_on_hold hold_reason earnings_breakdown_json deductions_breakdown_json employer_contributions_json ytd_gross tax net period run_ref status • 10 employees • 500 <2s p99 • Specify ?run_id=prun_xxx&format=csv to download",
 			"run_id_required": true,
 		})
 		return
@@ -1171,13 +1171,13 @@ func (h *Handler) GetPayrollRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
-		"run_id": run.ID,
-		"run_ref": run.RunRef,
-		"period": fmt.Sprintf("%d-%02d", run.PeriodYear, run.PeriodMonth),
+		"run_id":      run.ID,
+		"run_ref":     run.RunRef,
+		"period":      fmt.Sprintf("%d-%02d", run.PeriodYear, run.PeriodMonth),
 		"total_gross": run.TotalGross.StringFixed(2),
-		"total_net": run.TotalNet.StringFixed(2),
-		"count": len(items),
-		"items": items,
+		"total_net":   run.TotalNet.StringFixed(2),
+		"count":       len(items),
+		"items":       items,
 		"files": map[string]string{
 			"csv": fmt.Sprintf("/v1/payroll/payroll_reports/payroll_register?run_id=%s&format=csv", runID),
 		},
@@ -1186,7 +1186,7 @@ func (h *Handler) GetPayrollRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetVarianceReport(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	format := r.URL.Query().Get("format")
@@ -1210,13 +1210,13 @@ func (h *Handler) GetVarianceReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
-		"current_period": fmt.Sprintf("%d-%02d", year, month),
-		"last_period": fmt.Sprintf("%d-%02d", year, month-1),
-		"current_gross": currentRun.TotalGross.StringFixed(2),
-		"last_gross": lastRun.TotalGross.StringFixed(2),
-		"variance_gross": currentRun.TotalGross.Sub(lastRun.TotalGross).StringFixed(2),
+		"current_period":   fmt.Sprintf("%d-%02d", year, month),
+		"last_period":      fmt.Sprintf("%d-%02d", year, month-1),
+		"current_gross":    currentRun.TotalGross.StringFixed(2),
+		"last_gross":       lastRun.TotalGross.StringFixed(2),
+		"variance_gross":   currentRun.TotalGross.Sub(lastRun.TotalGross).StringFixed(2),
 		"variance_percent": "5.2%",
-		"change_reason": "OT increase + bonus Sales Q2 + new hires 2",
+		"change_reason":    "OT increase + bonus Sales Q2 + new hires 2",
 		"metrics": []map[string]string{
 			{"metric": "total_gross", "current": "200000", "last": "190000", "variance_amount": "10000", "variance_percent": "5.2%", "change_reason": "OT increase + bonus Sales Q2"},
 			{"metric": "total_net", "current": "150000", "last": "142500", "variance_amount": "7500", "variance_percent": "5.2%", "change_reason": "OT + bonus - loans"},
@@ -1232,15 +1232,15 @@ func (h *Handler) GetVarianceReport(w http.ResponseWriter, r *http.Request) {
 // ==================== Final Settlement ====================
 
 func (h *Handler) CreateFinalSettlement(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
-		EmployeeID        string  `json:"employee_id"`
-		ResignationDate   string  `json:"resignation_date"`
-		LastWorkingDate   string  `json:"last_working_date"`
-		NoticePeriodDays  int     `json:"notice_period_days"`
-		NoticeServedDays  int     `json:"notice_served_days"`
+		EmployeeID          string  `json:"employee_id"`
+		ResignationDate     string  `json:"resignation_date"`
+		LastWorkingDate     string  `json:"last_working_date"`
+		NoticePeriodDays    int     `json:"notice_period_days"`
+		NoticeServedDays    int     `json:"notice_served_days"`
 		LeaveEncashmentDays float64 `json:"leave_encashment_days"`
-		SeveranceAmount   string  `json:"severance_amount"`
+		SeveranceAmount     string  `json:"severance_amount"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
@@ -1255,7 +1255,7 @@ func (h *Handler) CreateFinalSettlement(w http.ResponseWriter, r *http.Request) 
 		NoticePeriodDays: req.NoticePeriodDays, NoticeServedDays: req.NoticeServedDays,
 		NoticeShortfallDays: req.NoticePeriodDays - req.NoticeServedDays,
 		LeaveEncashmentDays: decimal.NewFromFloat(req.LeaveEncashmentDays),
-		SeveranceAmount: sev, Status: "draft",
+		SeveranceAmount:     sev, Status: "draft",
 	}
 	if err := h.svc.CreateFinalSettlement(r.Context(), fs); err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -1332,17 +1332,17 @@ func ptrDec(d decimal.Decimal) *decimal.Decimal { return &d }
 // ==================== Payroll Calendar CRUD — Ethiopia Business Practice Cutoff 25th Disbursal 30th Pay Last Day Lock After Disbursal ====================
 
 func (h *Handler) CreateCalendar(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		Name          string `json:"name"`
 		Description   string `json:"description"`
 		PayFrequency  string `json:"pay_frequency"` // monthly/semimonthly/weekly/biweekly
 		Year          int    `json:"year"`
 		Month         *int   `json:"month"`
-		CutoffDay     int    `json:"cutoff_day"`    // Ethiopia business practice cutoff 25th
-		DisbursalDay  int    `json:"disbursal_day"` // disbursal 30th
-		PayDay        int    `json:"pay_day"`       // pay date last day
-		CutoffDate    string `json:"cutoff_date"`   // 2026-07-25
+		CutoffDay     int    `json:"cutoff_day"`     // Ethiopia business practice cutoff 25th
+		DisbursalDay  int    `json:"disbursal_day"`  // disbursal 30th
+		PayDay        int    `json:"pay_day"`        // pay date last day
+		CutoffDate    string `json:"cutoff_date"`    // 2026-07-25
 		DisbursalDate string `json:"disbursal_date"` // 2026-07-30
 		PayDate       string `json:"pay_date"`       // 2026-07-31
 	}
@@ -1411,7 +1411,7 @@ func (h *Handler) CreateCalendar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListCalendars(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	if year == 0 {
 		year = 2026
@@ -1425,7 +1425,7 @@ func (h *Handler) ListCalendars(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetCalendar(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	calID := chi.URLParam(r, "id")
 	cal, err := h.svc.repo.GetCalendar(r.Context(), merchantID, calID)
 	if err != nil {
@@ -1436,9 +1436,9 @@ func (h *Handler) GetCalendar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) LockCalendar(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	calID := chi.URLParam(r, "id")
-	userID, _ := mw.UserID(r.Context())
+	userID := mw.UserID(r.Context())
 	if err := h.svc.repo.LockCalendar(r.Context(), merchantID, calID, userID); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -1447,7 +1447,7 @@ func (h *Handler) LockCalendar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UnlockCalendar(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	calID := chi.URLParam(r, "id")
 	if err := h.svc.repo.UnlockCalendar(r.Context(), merchantID, calID); err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -1459,7 +1459,7 @@ func (h *Handler) UnlockCalendar(w http.ResponseWriter, r *http.Request) {
 // ==================== Leave Management — Art 77 Annual 14+1 up to 35, Art 82 Sick 6 months, Art 86 Maternity 120 days ====================
 
 func (h *Handler) CreateLeaveBalance(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeID       string `json:"employee_id"`
 		LeaveType        string `json:"leave_type"` // annual/sick/maternity/paternity/marriage/mourning/unpaid/comp_off/study
@@ -1493,7 +1493,7 @@ func (h *Handler) CreateLeaveBalance(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListLeaveBalances(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	employeeID := r.URL.Query().Get("employee_id")
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	if year == 0 {
@@ -1515,12 +1515,12 @@ func (h *Handler) ListLeaveBalances(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateLeaveRequest(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeID         string  `json:"employee_id"`
 		LeaveType          string  `json:"leave_type"`
-		StartDate          string  `json:"start_date"` // 2026-07-10
-		EndDate            string  `json:"end_date"`   // 2026-07-12
+		StartDate          string  `json:"start_date"`     // 2026-07-10
+		EndDate            string  `json:"end_date"`       // 2026-07-12
 		DaysRequested      float64 `json:"days_requested"` // 2 days, 0.5 half day
 		Reason             string  `json:"reason"`
 		MedicalCertificate string  `json:"medical_certificate_file_key"` // MinIO for sick >3 days per Art 82
@@ -1551,7 +1551,7 @@ func (h *Handler) CreateLeaveRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListLeaveRequests(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	employeeID := r.URL.Query().Get("employee_id")
 	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
 	if year == 0 {
@@ -1573,7 +1573,7 @@ func (h *Handler) ListLeaveRequests(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ApproveLeaveRequest(w http.ResponseWriter, r *http.Request) {
 	reqID := chi.URLParam(r, "id")
-	userID, _ := mw.UserID(r.Context())
+	userID := mw.UserID(r.Context())
 	if err := h.svc.repo.UpdateLeaveRequestStatus(r.Context(), reqID, LeaveApproved, &userID, ""); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -1585,7 +1585,9 @@ func (h *Handler) ApproveLeaveRequest(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) RejectLeaveRequest(w http.ResponseWriter, r *http.Request) {
 	reqID := chi.URLParam(r, "id")
-	var req struct{ RejectionReason string `json:"rejection_reason"` }
+	var req struct {
+		RejectionReason string `json:"rejection_reason"`
+	}
 	_ = json.NewDecoder(r.Body).Decode(&req)
 	if err := h.svc.repo.UpdateLeaveRequestStatus(r.Context(), reqID, LeaveRejected, nil, req.RejectionReason); err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -1597,7 +1599,7 @@ func (h *Handler) RejectLeaveRequest(w http.ResponseWriter, r *http.Request) {
 // ==================== Claims Enhanced — Receipt Upload MinIO Approval Manager->Finance ====================
 
 func (h *Handler) CreateClaim(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		EmployeeID     string `json:"employee_id"`
 		ClaimType      string `json:"claim_type"` // expense/medical/travel/other
@@ -1632,7 +1634,7 @@ func (h *Handler) CreateClaim(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListClaims(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	employeeID := r.URL.Query().Get("employee_id")
 	status := r.URL.Query().Get("status")
 	var statusPtr *string
@@ -1649,7 +1651,7 @@ func (h *Handler) ListClaims(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ApproveClaimManager(w http.ResponseWriter, r *http.Request) {
 	claimID := chi.URLParam(r, "id")
-	userID, _ := mw.UserID(r.Context())
+	userID := mw.UserID(r.Context())
 	if err := h.svc.repo.ApproveClaimManager(r.Context(), claimID, userID); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -1659,7 +1661,7 @@ func (h *Handler) ApproveClaimManager(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ApproveClaimFinance(w http.ResponseWriter, r *http.Request) {
 	claimID := chi.URLParam(r, "id")
-	userID, _ := mw.UserID(r.Context())
+	userID := mw.UserID(r.Context())
 	if err := h.svc.repo.ApproveClaimFinance(r.Context(), claimID, userID); err != nil {
 		pkghttp.WriteError(w, r, err)
 		return
@@ -1693,8 +1695,6 @@ func (h *Handler) GetLoanRepayments(w http.ResponseWriter, r *http.Request) {
 		"message": "EMI schedule repayment tracking UI • O(n) per loan n=tenure months • Repayment history per loan per employee • Chart Recharts bar principal vs interest • Pie deductions loan 40% tax 30% pension 20% • Outstanding modern template QR verification • Audit logs immutable",
 	})
 }
-
-func ptrDec(d decimal.Decimal) *decimal.Decimal { return &d }
 
 var _ = io.EOF
 var _ = csv.NewReader

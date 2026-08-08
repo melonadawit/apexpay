@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
+	mw "apexpay/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
 )
@@ -91,8 +91,16 @@ func (h *Handler) Verify(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Verify2FA(w http.ResponseWriter, r *http.Request) {
 	merchantID := mw.MerchantID(r.Context())
 	paymentID := chi.URLParam(r, "id")
-	var req struct { OTP string `json:"otp"` }
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json"); return }
-	if err := h.svc.Verify2FA(r.Context(), merchantID, paymentID, req.OTP); err != nil { pkghttp.WriteError(w, r, err); return }
+	var req struct {
+		OTP string `json:"otp"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
+		return
+	}
+	if err := h.svc.Verify2FA(r.Context(), merchantID, paymentID, req.OTP); err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
 	pkghttp.WriteJSON(w, r, 200, map[string]bool{"two_fa_verified": true, "can_verify_now": true})
 }

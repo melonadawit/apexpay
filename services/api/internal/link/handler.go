@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
+	mw "apexpay/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
 )
@@ -21,7 +21,7 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
 		Amount      string `json:"amount"`
 		Currency    string `json:"currency"`
@@ -58,7 +58,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	list, err := h.svc.List(r.Context(), merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)

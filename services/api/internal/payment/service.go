@@ -27,12 +27,12 @@ type Repository interface {
 }
 
 type Service struct {
-	repo     Repository
-	ledger   *ledger.Service
-	router   *routing.Service
-	registry map[string]connector.Connector // connector_id -> Connector optimal O(1)
-	mdrRate  decimal.Decimal                // 2.9%
-	allowDemoOTP bool // strictly local-only until a real challenge provider is wired
+	repo         Repository
+	ledger       *ledger.Service
+	router       *routing.Service
+	registry     map[string]connector.Connector // connector_id -> Connector optimal O(1)
+	mdrRate      decimal.Decimal                // 2.9%
+	allowDemoOTP bool                           // strictly local-only until a real challenge provider is wired
 }
 
 func NewService(repo Repository, ledgerSvc *ledger.Service, router *routing.Service, registry map[string]connector.Connector, mdrRate decimal.Decimal, allowDemoOTP bool) *Service {
@@ -49,10 +49,14 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	if req.IdempotencyKey != "" {
 		existing, err := s.repo.ReserveIdempotency(ctx, req.MerchantID, req.IdempotencyKey, requestHash)
 		if err != nil {
-			if err == ErrIdempotencyConflict || err == ErrIdempotencyInProgress { return nil, errors.Conflict(errors.CodeConflict, err.Error()) }
+			if err == ErrIdempotencyConflict || err == ErrIdempotencyInProgress {
+				return nil, errors.Conflict(errors.CodeConflict, err.Error())
+			}
 			return nil, err
 		}
-		if existing != nil { return existing, nil }
+		if existing != nil {
+			return existing, nil
+		}
 	}
 
 	// Duplicate tx_ref check handled by DB unique (merchant_id, tx_ref)
@@ -82,7 +86,9 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	// Persist this boundary before the external call. A crash after this point is
 	// operationally ambiguous and must be reconciled, never blindly retried.
 	if req.IdempotencyKey != "" {
-		if err := s.repo.MarkConnectorStarted(ctx, req.MerchantID, req.IdempotencyKey, req.TxRef); err != nil { return nil, err }
+		if err := s.repo.MarkConnectorStarted(ctx, req.MerchantID, req.IdempotencyKey, req.TxRef); err != nil {
+			return nil, err
+		}
 	}
 	// Connector Initialize
 	initResp, err := conn.(connector.Connector).Initialize(ctx, connector.InitializeRequest{
@@ -91,7 +97,9 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 	if err != nil {
 		// circuit breaker record failure
 		s.router.RecordFailure(routing.ConnectorID(connID))
-		if req.IdempotencyKey != "" { _ = s.repo.FailIdempotency(ctx, req.MerchantID, req.IdempotencyKey) }
+		if req.IdempotencyKey != "" {
+			_ = s.repo.FailIdempotency(ctx, req.MerchantID, req.IdempotencyKey)
+		}
 		return nil, errors.New(errors.CodeConnectorDown, fmt.Sprintf("connector %s failed: %v", connID, err), 502)
 	}
 	s.router.RecordSuccess(routing.ConnectorID(connID))
@@ -114,14 +122,14 @@ func (s *Service) Initialize(ctx context.Context, req InitializeRequest) (*Payme
 		if isDuplicate(err) {
 			return nil, errors.Conflict(errors.CodeDuplicateTxRef, "duplicate tx_ref")
 		}
-		if req.IdempotencyKey != "" { _ = s.repo.FailIdempotency(ctx, req.MerchantID, req.IdempotencyKey) }
+		if req.IdempotencyKey != "" {
+			_ = s.repo.FailIdempotency(ctx, req.MerchantID, req.IdempotencyKey)
+		}
 		return nil, err
 	}
 
-
 	return p, nil
 }
-
 
 func canonicalRequestHash(req InitializeRequest) string {
 	// Delimit and normalize all fields that change the business operation.

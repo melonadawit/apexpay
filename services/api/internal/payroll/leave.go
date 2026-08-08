@@ -19,56 +19,25 @@ import (
 type LeaveType string
 
 const (
-	LeaveAnnual      LeaveType = "annual"      // Art 77
-	LeaveSick        LeaveType = "sick"        // Art 82
-	LeaveMaternity   LeaveType = "maternity"   // Art 86 — 120 days 30 pre +90 post
-	LeavePaternity   LeaveType = "paternity"   // Company policy beyond law — 3 days
-	LeaveMarriage    LeaveType = "marriage"    // Company policy — 3 days
-	LeaveMourning    LeaveType = "mourning"    // Mourning — 3 days per Art? Actually Art provides?
-	LeaveUnpaid      LeaveType = "unpaid"      // Unpaid leave
-	LeaveCompOff     LeaveType = "comp_off"    // Compensatory off for OT on rest day
-	LeaveStudy       LeaveType = "study"       // Study leave per company policy
+	LeaveAnnual    LeaveType = "annual"    // Art 77
+	LeaveSick      LeaveType = "sick"      // Art 82
+	LeaveMaternity LeaveType = "maternity" // Art 86 — 120 days 30 pre +90 post
+	LeavePaternity LeaveType = "paternity" // Company policy beyond law — 3 days
+	LeaveMarriage  LeaveType = "marriage"  // Company policy — 3 days
+	LeaveMourning  LeaveType = "mourning"  // Mourning — 3 days per Art? Actually Art provides?
+	LeaveUnpaid    LeaveType = "unpaid"    // Unpaid leave
+	LeaveCompOff   LeaveType = "comp_off"  // Compensatory off for OT on rest day
+	LeaveStudy     LeaveType = "study"     // Study leave per company policy
 )
 
 type LeaveStatus string
 
 const (
-	LeavePending  LeaveStatus = "pending"
-	LeaveApproved LeaveStatus = "approved"
-	LeaveRejected LeaveStatus = "rejected"
+	LeavePending   LeaveStatus = "pending"
+	LeaveApproved  LeaveStatus = "approved"
+	LeaveRejected  LeaveStatus = "rejected"
 	LeaveCancelled LeaveStatus = "cancelled"
 )
-
-type LeaveBalance struct {
-	ID               string
-	MerchantID       string
-	EmployeeID       string
-	LeaveType        LeaveType
-	EntitledDays     decimal.Decimal // e.g., annual 14 + years-1 up to 35
-	UsedDays         decimal.Decimal
-	RemainingDays    decimal.Decimal
-	CarryForwardDays decimal.Decimal // from previous year
-	Year             int
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-}
-
-type LeaveRequest struct {
-	ID             string
-	MerchantID     string
-	EmployeeID     string
-	LeaveType      LeaveType
-	StartDate      time.Time
-	EndDate        time.Time
-	DaysRequested  decimal.Decimal // e.g., 2 days, 0.5 half day
-	Reason         string
-	Status         LeaveStatus
-	ApprovedBy     *string
-	ApprovedAt     *time.Time
-	RejectionReason string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-}
 
 // Leave Entitlement Calculation per Ethiopia Law
 
@@ -229,7 +198,6 @@ func (s *LeaveService) ApproveLeave(ctx context.Context, merchantID, requestID, 
 		return err
 	}
 
-	now := time.Now()
 	return s.repo.UpdateLeaveRequestStatus(ctx, requestID, LeaveApproved, &approverID, "")
 }
 

@@ -134,15 +134,15 @@ func GeneratePayrollRegisterCSV(items []PayrollItem, employees map[string]Employ
 func GenerateCostCenterReportCSV(items []PayrollItem, employees map[string]Employee, run PayrollRun) ([]byte, error) {
 	// Group by cost_center O(n) map aggregation optimal data structure
 	type agg struct {
-		Gross           decimal.Decimal
-		Net             decimal.Decimal
-		Tax             decimal.Decimal
-		PensionEmp      decimal.Decimal
-		PensionEmplr    decimal.Decimal
-		EmployerCost    decimal.Decimal
-		Headcount       int
-		PaidDays        int
-		LOPDays         int
+		Gross        decimal.Decimal
+		Net          decimal.Decimal
+		Tax          decimal.Decimal
+		PensionEmp   decimal.Decimal
+		PensionEmplr decimal.Decimal
+		EmployerCost decimal.Decimal
+		Headcount    int
+		PaidDays     int
+		LOPDays      int
 	}
 	costMap := make(map[string]*agg)
 	for _, it := range items {

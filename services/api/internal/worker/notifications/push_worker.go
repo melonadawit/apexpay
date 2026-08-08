@@ -116,6 +116,3 @@ func (w *PushWorker) RunTicker(ctx context.Context) {
 		}
 	}
 }
-
-var _ = fmt.Sprintf
-var _ = time.Now

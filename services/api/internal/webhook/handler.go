@@ -8,14 +8,19 @@ import (
 
 	"apexpay/internal/id"
 	platformcrypto "apexpay/internal/platform/crypto"
-	mw "apexpay/internal/platform/middleware"
 	pkghttp "apexpay/internal/platform/http"
+	mw "apexpay/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
-type Handler struct{ repo *PgRepository; encryptionKey []byte }
+type Handler struct {
+	repo          *PgRepository
+	encryptionKey []byte
+}
 
-func NewHandler(repo *PgRepository, encryptionKey []byte) *Handler { return &Handler{repo: repo, encryptionKey: encryptionKey} }
+func NewHandler(repo *PgRepository, encryptionKey []byte) *Handler {
+	return &Handler{repo: repo, encryptionKey: encryptionKey}
+}
 
 func (h *Handler) Routes(r chi.Router) {
 	r.Post("/endpoints", h.CreateEndpoint)
@@ -25,11 +30,11 @@ func (h *Handler) Routes(r chi.Router) {
 }
 
 func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	var req struct {
-		URL string `json:"url"`
-		Secret string `json:"secret"`
-		Events      []string `json:"events"`
+		URL    string   `json:"url"`
+		Secret string   `json:"secret"`
+		Events []string `json:"events"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
@@ -40,14 +45,14 @@ func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "url required")
 		return
 	}
-	
+
 	// Basic SSRF protection (simplified for demonstration)
 	importURL, err := url.Parse(req.URL)
 	if err != nil || importURL.Scheme != "https" {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "must be valid https url")
 		return
 	}
-	
+
 	ips, err := net.LookupIP(importURL.Hostname())
 	if err == nil {
 		for _, ip := range ips {
@@ -57,10 +62,16 @@ func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	if len(req.Secret) < 16 { pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "webhook secret must be at least 16 characters"); return }
+	if len(req.Secret) < 16 {
+		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "webhook secret must be at least 16 characters")
+		return
+	}
 	endpointID := id.New("we")
 	encryptedSecret, err := platformcrypto.Encrypt(h.encryptionKey, []byte(req.Secret))
-	if err != nil { pkghttp.WriteError(w, r, err); return }
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
 	_, err = h.repo.pool.Exec(r.Context(), `INSERT INTO webhook_endpoints (id, merchant_id, url, secret_hash, secret_prefix, secret_encrypted, status, events) VALUES ($1,$2,$3,$4,$5,$6,'active',$7)`,
 		endpointID, merchantID, req.URL, "hash_"+req.Secret, req.Secret[:8], encryptedSecret, req.Events)
 	if err != nil {
@@ -71,7 +82,7 @@ func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListEndpoints(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	rows, err := h.repo.pool.Query(r.Context(), `SELECT id, url, status FROM webhook_endpoints WHERE merchant_id=$1`, merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)
@@ -88,7 +99,7 @@ func (h *Handler) ListEndpoints(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListDeliveries(w http.ResponseWriter, r *http.Request) {
-	merchantID, _ := mw.MerchantID(r.Context())
+	merchantID := mw.MerchantID(r.Context())
 	rows, err := h.repo.pool.Query(r.Context(), `SELECT id, event_type, status, attempt_count, last_status_code FROM webhook_deliveries WHERE merchant_id=$1 ORDER BY created_at DESC LIMIT 50`, merchantID)
 	if err != nil {
 		pkghttp.WriteError(w, r, err)

@@ -34,13 +34,13 @@ type MagicLinkRequest struct {
 
 // MagicLinkResponse — returns URL + expiry + QR
 type MagicLinkResponse struct {
-	MagicLinkURL    string
-	TokenLast4      string
-	ExpiresAt       time.Time
-	ExpiresIn       string // 24h
-	QRCodeData      string // QR contains magic link
-	Channel         string
-	Message         string // outstanding: magic link 24h + WhatsApp integration + Fayda verified
+	MagicLinkURL string
+	TokenLast4   string
+	ExpiresAt    time.Time
+	ExpiresIn    string // 24h
+	QRCodeData   string // QR contains magic link
+	Channel      string
+	Message      string // outstanding: magic link 24h + WhatsApp integration + Fayda verified
 }
 
 // GenerateMagicLink — creates JWT 24h HMAC SHA256 signed, stores hash in payroll_employee_portal_access

@@ -108,7 +108,7 @@ func TestCalculateTax_BracketsKnownExamples(t *testing.T) {
 		{decimal.NewFromInt(3201), decimal.NewFromFloat(337.7).Round(2), "3201: 3201*20% -302.5 =337.7"},
 		{decimal.NewFromInt(5000), decimal.NewFromFloat(697.5).Round(2), "5000: 5000*20% -302.5 =697.5"},
 		{decimal.NewFromInt(6000), decimal.NewFromFloat(935).Round(2), "6000: 6000*25% -565 =935 per 5251-7800"},
-		{decimal.NewFromInt(8000), decimal.NewFromFloat(1435).Round(2), "8000: 8000*25% -565 =1435"},
+		{decimal.NewFromInt(8000), decimal.NewFromFloat(1445).Round(2), "8000: 8000*30% -955 =1445 per 7801-10900 bracket (8000 > 7800 so not the 25% bracket)"},
 		{decimal.NewFromInt(10000), decimal.NewFromFloat(2045).Round(2), "10000: 10000*30% -955 =2045 per 7801-10900"},
 		{decimal.NewFromInt(15000), decimal.NewFromFloat(3750).Round(2), "15000: 15000*35% -1500 =3750 per >10900"},
 		{decimal.NewFromInt(20000), decimal.NewFromInt(5500), "20000: 20000*35% -1500 =5500"},
@@ -162,7 +162,7 @@ func TestPayrollBalancedInvariant(t *testing.T) {
 	pensionEmp := decimal.NewFromInt(14000)
 	pensionEmplr := decimal.NewFromInt(22000)
 	net := decimal.NewFromInt(150000)
-	totalPensionBoth := pensionEmp.Add(pensionEmplr)
+	_ = pensionEmp.Add(pensionEmplr) // totalPensionBoth kept as a doc anchor; actual invariant uses balanced figures below
 
 	// M4 entries: Dr expense:salary Gross + Dr expense:pension_employer EmployerTotal Cr payroll_payable Net Cr et_income_tax Tax Cr pension_payable totalBoth
 	// Validate balanced: debit = gross + employerPension = credit = net + tax + totalBoth?

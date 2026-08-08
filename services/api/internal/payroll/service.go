@@ -196,7 +196,11 @@ func CalculateTax(taxable decimal.Decimal, brackets []TaxBracket) decimal.Decima
 		if b.Max == nil {
 			return true // last bracket catches all
 		}
-		return taxable.LessThan(*b.Max)
+		// Inclusive upper bound: a taxable amount exactly on a bracket's max must
+		// stay in the lower bracket (e.g. 1650 belongs to the 601-1650 bracket,
+		// not the 1651-3200 bracket). A strict '<' pushes boundary amounts into
+		// the next bracket where they are below Min and wrongly tax as 0.
+		return taxable.LessThanOrEqual(*b.Max)
 	})
 	if idx >= len(brackets) {
 		idx = len(brackets) - 1
@@ -542,7 +546,7 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 			PensionEmployee: pensionEmp, PensionEmployer: pensionEmplr,
 			OtherDeductions: otherDeductions, NetPay: net, Status: "calculated",
 			EarningsBreakdown: earnings, DeductionsBreakdown: dedBreakdown, EmployerContributionsBreakdown: employerBreakdown,
-			YTD: map[string]decimal.Decimal{"ytd_gross": ytdGross, "ytd_tax": ytdTax, "ytd_net": ytdNet},
+			YTD:      map[string]decimal.Decimal{"ytd_gross": ytdGross, "ytd_tax": ytdTax, "ytd_net": ytdNet},
 			PaidDays: paidDays, LOPDays: 0,
 			ProrationFactor: prorationFactor,
 		}
@@ -576,14 +580,14 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 
 	// Update run totals
 	totals := map[string]decimal.Decimal{
-		"total_gross":          totalGross,
-		"total_deductions":     totalDeductions,
-		"total_net":            totalNet,
-		"total_tax":            totalTax,
-		"total_pension":        totalPensionEmp,
+		"total_gross":            totalGross,
+		"total_deductions":       totalDeductions,
+		"total_net":              totalNet,
+		"total_tax":              totalTax,
+		"total_pension":          totalPensionEmp,
 		"employer_total_pension": totalPensionEmplr,
-		"total_employer_cost":  totalEmployerCost,
-		"total_employees_paid": decimal.NewFromInt(int64(len(items) - failedCount)),
+		"total_employer_cost":    totalEmployerCost,
+		"total_employees_paid":   decimal.NewFromInt(int64(len(items) - failedCount)),
 	}
 	_ = s.repo.UpdateRunStatus(ctx, runID, StatusPendingApproval, totals)
 

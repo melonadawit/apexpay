@@ -13,38 +13,38 @@ import (
 // Outstanding: password protected PDF DOB DDMM + last4, bilingual EN/AM, Lottie confetti 3s + haptics via mobile push, WhatsApp share
 
 type EmailService struct {
-	SMTPHost     string
-	SMTPPort     string
-	SMTPUser     string
-	SMTPPass     string
-	FromEmail    string
-	FromName     string
-	Enabled      bool // false in dev logs only
+	SMTPHost  string
+	SMTPPort  string
+	SMTPUser  string
+	SMTPPass  string
+	FromEmail string
+	FromName  string
+	Enabled   bool // false in dev logs only
 }
 
 type PayslipEmailRequest struct {
-	ToEmail       string
-	ToName        string
-	EmployeeCode  string
-	Period        string // July 2026
-	RunRef        string
-	NetPay        decimal.Decimal
-	Gross         decimal.Decimal
-	PDFBytes      []byte
-	QRVerifyURL   string
-	PasswordHint  string // DOB DDMM + last4
-	Language      string // en, am
+	ToEmail      string
+	ToName       string
+	EmployeeCode string
+	Period       string // July 2026
+	RunRef       string
+	NetPay       decimal.Decimal
+	Gross        decimal.Decimal
+	PDFBytes     []byte
+	QRVerifyURL  string
+	PasswordHint string // DOB DDMM + last4
+	Language     string // en, am
 }
 
 type ComplianceEmailRequest struct {
-	ToEmail      string
-	ToName       string
-	ReportType   ReportType
-	PeriodMonth  int
-	PeriodYear   int
-	FileKey      string
-	FileBytes    []byte
-	Metadata     map[string]interface{}
+	ToEmail     string
+	ToName      string
+	ReportType  ReportType
+	PeriodMonth int
+	PeriodYear  int
+	FileKey     string
+	FileBytes   []byte
+	Metadata    map[string]interface{}
 }
 
 type MagicLinkEmailRequest struct {

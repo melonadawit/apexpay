@@ -13,29 +13,62 @@ type PgRepository struct{ pool *pgxpool.Pool }
 func NewPgRepository(pool *pgxpool.Pool) *PgRepository { return &PgRepository{pool: pool} }
 
 type DeliveryRow struct {
-	ID         string
-	MerchantID string
-	EndpointID string
-	EventType  string
-	Payload    []byte
-	URL        string
-	Secret     string
+	ID              string
+	MerchantID      string
+	EndpointID      string
+	EventType       string
+	Payload         []byte
+	URL             string
+	Secret          string
 	EncryptedSecret []byte
-	Attempt    int
+	Attempt         int
 }
-
 
 // PublishOutbox creates delivery rows and marks each event published in one transaction.
 func (r *PgRepository) PublishOutbox(ctx context.Context, limit int) (int, error) {
-	tx, err := r.pool.Begin(ctx); if err != nil { return 0, err }; defer func(){ _ = tx.Rollback(ctx) }()
-	rows, err := tx.Query(ctx, `SELECT id,merchant_id,event_type,payload FROM outbox_events WHERE published_at IS NULL ORDER BY created_at LIMIT $1 FOR UPDATE SKIP LOCKED`, limit)
-	if err != nil{return 0,err}; defer rows.Close(); count:=0
-	for rows.Next(){ var eventID,merchantID,eventType string; var payload []byte; if err:=rows.Scan(&eventID,&merchantID,&eventType,&payload);err!=nil{return 0,err}
-		eps,err:=tx.Query(ctx,`SELECT id FROM webhook_endpoints WHERE merchant_id=$1 AND status='active' AND (events ? $2 OR events ? '*')`,merchantID,eventType);if err!=nil{return 0,err}
-		for eps.Next(){var endpointID string;if err:=eps.Scan(&endpointID);err!=nil{eps.Close();return 0,err};_,err=tx.Exec(ctx,`INSERT INTO webhook_deliveries (id,merchant_id,endpoint_id,outbox_event_id,event_type,payload,status,next_attempt_at) VALUES ($1,$2,$3,$4,$5,$6,'pending',now())`,id.New("wd"),merchantID,endpointID,eventID,eventType,payload);if err!=nil{eps.Close();return 0,err}}
-		eps.Close(); if _,err=tx.Exec(ctx,`UPDATE outbox_events SET published_at=now() WHERE id=$1`,eventID);err!=nil{return 0,err};count++
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return 0, err
 	}
-	if err:=rows.Err();err!=nil{return 0,err};return count,tx.Commit(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
+	rows, err := tx.Query(ctx, `SELECT id,merchant_id,event_type,payload FROM outbox_events WHERE published_at IS NULL ORDER BY created_at LIMIT $1 FOR UPDATE SKIP LOCKED`, limit)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	count := 0
+	for rows.Next() {
+		var eventID, merchantID, eventType string
+		var payload []byte
+		if err := rows.Scan(&eventID, &merchantID, &eventType, &payload); err != nil {
+			return 0, err
+		}
+		eps, err := tx.Query(ctx, `SELECT id FROM webhook_endpoints WHERE merchant_id=$1 AND status='active' AND (events ? $2 OR events ? '*')`, merchantID, eventType)
+		if err != nil {
+			return 0, err
+		}
+		for eps.Next() {
+			var endpointID string
+			if err := eps.Scan(&endpointID); err != nil {
+				eps.Close()
+				return 0, err
+			}
+			_, err = tx.Exec(ctx, `INSERT INTO webhook_deliveries (id,merchant_id,endpoint_id,outbox_event_id,event_type,payload,status,next_attempt_at) VALUES ($1,$2,$3,$4,$5,$6,'pending',now())`, id.New("wd"), merchantID, endpointID, eventID, eventType, payload)
+			if err != nil {
+				eps.Close()
+				return 0, err
+			}
+		}
+		eps.Close()
+		if _, err = tx.Exec(ctx, `UPDATE outbox_events SET published_at=now() WHERE id=$1`, eventID); err != nil {
+			return 0, err
+		}
+		count++
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	return count, tx.Commit(ctx)
 }
 
 func (r *PgRepository) ListPendingDeliveries(ctx context.Context, limit int) ([]Delivery, error) {

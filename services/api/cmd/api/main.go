@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,13 +19,14 @@ import (
 	"github.com/shopspring/decimal"
 
 	"apexpay/internal/platform/config"
+	platformcrypto "apexpay/internal/platform/crypto"
 	pkghttp "apexpay/internal/platform/http"
 	"apexpay/internal/platform/logger"
 	mw "apexpay/internal/platform/middleware"
 	"apexpay/internal/platform/storage"
 
-	"apexpay/internal/connector"
 	"apexpay/internal/bankverification"
+	"apexpay/internal/connector"
 	"apexpay/internal/fayda"
 	"apexpay/internal/ledger"
 	"apexpay/internal/link"
@@ -32,8 +34,8 @@ import (
 	"apexpay/internal/payment"
 	"apexpay/internal/payout"
 	"apexpay/internal/payroll"
-	"apexpay/internal/refund"
 	"apexpay/internal/reconciliation"
+	"apexpay/internal/refund"
 	"apexpay/internal/routing"
 	"apexpay/internal/subscription"
 	"apexpay/internal/swarm"
@@ -82,7 +84,7 @@ func main() {
 
 	// --- Services ---
 	ledgerSvc := ledger.NewService(ledgerRepo)
-	onboardingSvc := onboarding.NewService(onboardingRepo, cfg.ConnectorEncKey[:16])
+	onboardingSvc := onboarding.NewService(onboardingRepo, hex.EncodeToString(platformcrypto.DeriveKey(cfg.ConnectorEncKey, "fin-salt")))
 
 	var faydaVerifier fayda.Verifier
 	if cfg.FaydaMode == "live" {
@@ -90,7 +92,7 @@ func main() {
 	} else {
 		faydaVerifier = fayda.NewMockVerifier()
 	}
-	faydaSvc := fayda.NewService(faydaRepo, faydaVerifier, cfg.ConnectorEncKey[:16], cfg.FaydaPartnerCode, []byte(cfg.ConnectorEncKey))
+	faydaSvc := fayda.NewService(faydaRepo, faydaVerifier, hex.EncodeToString(platformcrypto.DeriveKey(cfg.ConnectorEncKey, "fayda-salt")), cfg.FaydaPartnerCode, platformcrypto.DeriveKey(cfg.ConnectorEncKey, "fayda-enc"))
 
 	routingSvc := routing.NewService(routingRepo, rdb)
 	connRegistry := map[string]connector.Connector{"mock": connector.NewMock()}
@@ -102,7 +104,7 @@ func main() {
 	swarmExecutor := swarm.NewToolExecutor()
 	swarmSvc := swarm.NewService(swarmRepo, swarmExecutor, &swarm.RulesPlanner{}, swarm.DefaultRegistry())
 	linkSvc := link.NewService(linkRepo)
-	webhookSvc := webhook.NewService(webhookRepo) // for future use in worker, handler uses repo directly for simplicity
+	webhookSvc := webhook.NewService(webhookRepo, platformcrypto.DeriveKey(cfg.ConnectorEncKey, "webhook-secret")) // for future use in worker, handler uses repo directly for simplicity
 	reconciliationSvc := reconciliation.NewService(pool)
 	_ = webhookSvc
 
@@ -117,7 +119,7 @@ func main() {
 	routingHandler := routing.NewHandler(routingSvc)
 	swarmHandler := swarm.NewHandler(swarmSvc)
 	linkHandler := link.NewHandler(linkSvc)
-	webhookHandler := webhook.NewHandler(webhookRepo, []byte(cfg.ConnectorEncKey))
+	webhookHandler := webhook.NewHandler(webhookRepo, platformcrypto.DeriveKey(cfg.ConnectorEncKey, "webhook-secret"))
 	reconciliationHandler := reconciliation.NewHandler(reconciliationSvc)
 	bankVerificationHandler := bankverification.NewHandler(pool)
 
@@ -184,7 +186,7 @@ func main() {
 		r.Route("/onboarding", func(r chi.Router) {
 			r.Use(authMw.APIKeyAuth)
 			onboardingHandler.Routes(r)
-				r.Route("/fayda", func(r chi.Router) {
+			r.Route("/fayda", func(r chi.Router) {
 				r.Use(rateLimiter.FaydaOTP5PerHour)
 				faydaHandler.Routes(r)
 			})
@@ -202,31 +204,18 @@ func main() {
 				linkHandler.Routes(r)
 			})
 
-				bankVerificationHandler.Routes(r)
+			bankVerificationHandler.Routes(r)
 
-		r.Route("/refunds", func(r chi.Router) {
+			r.Route("/refunds", func(r chi.Router) {
 				refundHandler.Routes(r)
 			})
 
 			r.Route("/customers", func(r chi.Router) {
-				// Actually mount customer endpoint directly
-				r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-					// delegate to subHandler CreateCustomer
-					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						// trick: call subHandler Routes then handle? For gold, we call CreateCustomer via subHandler method
-						// Simplified: use subHandler's internal repo
-						pkghttp.WriteJSON(w, r, 201, map[string]string{"id": "cust_01H", "message": "customer created"})
-					}).ServeHTTP(w, r)
-				})
+				r.Post("/", subHandler.CreateCustomer)
 			})
 
 			r.Route("/subscription_plans", func(r chi.Router) {
-				r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-					// delegate to sub handler
-					r2 := chi.NewRouter()
-					subHandler.Routes(r2)
-					r2.ServeHTTP(w, r)
-				})
+				r.Post("/", subHandler.CreatePlan)
 				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 					pkghttp.WriteJSON(w, r, 200, []interface{}{})
 				})
@@ -349,8 +338,8 @@ func main() {
 				}
 				pkghttp.WriteJSON(w, r, 200, health)
 			})
-				reconciliationHandler.Routes(r)
-		r.Get("/recon/breaks", func(w http.ResponseWriter, r *http.Request) {
+			reconciliationHandler.Routes(r)
+			r.Get("/recon/breaks", func(w http.ResponseWriter, r *http.Request) {
 				pkghttp.WriteJSON(w, r, 200, []interface{}{})
 			})
 			r.Get("/evidence", func(w http.ResponseWriter, r *http.Request) {
