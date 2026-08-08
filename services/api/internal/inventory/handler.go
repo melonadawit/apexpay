@@ -11,9 +11,10 @@ import (
 
 type Handler struct {
 	repo *Repository
+	svc  *Service
 }
 
-func NewHandler(repo *Repository) *Handler { return &Handler{repo: repo} }
+func NewHandler(repo *Repository, svc *Service) *Handler { return &Handler{repo: repo, svc: svc} }
 
 func (h *Handler) Routes(r chi.Router) {
 	// Products
@@ -77,7 +78,7 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "order requires items")
 		return
 	}
-	if err := h.repo.CreateOrder(r.Context(), middleware.MerchantID(r.Context()), &o); err != nil {
+	if err := h.svc.CreateOrder(r.Context(), middleware.MerchantID(r.Context()), &o); err != nil {
 		if err == ErrInsufficientStock {
 			pkghttp.WriteErrorWithBody(w, r, 409, "insufficient_stock", err.Error())
 			return

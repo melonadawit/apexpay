@@ -267,4 +267,14 @@ test "$(curl -s -o /tmp/fa_tb.json -w '%{http_code}' -H "Authorization: Bearer $
 grep -q 'expense:depreciation' /tmp/fa_tb.json
 grep -q 'accumulated_depreciation' /tmp/fa_tb.json
 
+# ---- 23. Inventory costing -> COGS posts to the GL. ----
+# Sell 10 units of prod_smoke (cost 1200 each => 12000 COGS).
+test "$(curl -s -o /tmp/inv_order.json -w '%{http_code}' -X POST "$API/v1/inventory/orders" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"customer_name":"COGS Buyer","items":[{"product_id":"prod_smoke","description":"Smoke Widget x10","quantity":"10","unit_price":"2000"}]}')" = "201"
+grep -q '"order_number"' /tmp/inv_order.json
+# The GL trial balance now contains cost_of_sales with a non-zero debit (COGS posted).
+test "$(curl -s -o /tmp/inv_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
+grep -q 'expense:cost_of_sales' /tmp/inv_tb.json
+
 echo 'Docker API smoke suite passed'

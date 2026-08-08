@@ -69,6 +69,16 @@ func (r *Repository) ListProducts(ctx context.Context, merchantID string) ([]Pro
 	return list, rows.Err()
 }
 
+// CostPrice returns a product's unit cost_price for a merchant (weighted-average cost basis).
+func (r *Repository) CostPrice(ctx context.Context, merchantID, productID string) (decimal.Decimal, error) {
+	var s string
+	err := r.pool.QueryRow(ctx, `SELECT cost_price::text FROM products WHERE merchant_id=$1 AND id=$2`, merchantID, productID).Scan(&s)
+	if err != nil {
+		return decimal.Zero, err
+	}
+	return decimal.NewFromString(s)
+}
+
 // AddStock increases product stock and records a movement (purchase-in).
 func (r *Repository) AddStock(ctx context.Context, merchantID, productID, qty, note string) (*StockMovement, error) {
 	_, err := r.pool.Exec(ctx, `UPDATE products SET stock_qty = stock_qty + $2::numeric, updated_at=now() WHERE merchant_id=$1 AND id=$3`,

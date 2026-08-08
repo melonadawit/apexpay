@@ -65,8 +65,15 @@ VALUES
   ('la_docker_exp', 'book_docker_smoke', 'expense:operating', 'Operating Expenses', 'debit'),
   ('la_docker_equity', 'book_docker_smoke', 'equity:owner', 'Owner''s Equity', 'credit'),
   ('la_docker_dep_exp', 'book_docker_smoke', 'expense:depreciation', 'Depreciation', 'debit'),
-  ('la_docker_accum_dep', 'book_docker_smoke', 'asset:accumulated_depreciation', 'Accumulated Depreciation', 'credit')
+  ('la_docker_accum_dep', 'book_docker_smoke', 'asset:accumulated_depreciation', 'Accumulated Depreciation', 'credit'),
+  ('la_docker_cogs', 'book_docker_smoke', 'expense:cost_of_sales', 'Cost of Sales', 'debit'),
+  ('la_docker_inv', 'book_docker_smoke', 'asset:inventory', 'Inventory', 'debit')
 ON CONFLICT (book_id, code) DO NOTHING;
+
+-- Product with a known cost price so order COGS posts to the GL in the smoke suite.
+INSERT INTO products (id, merchant_id, name, sku, price, cost_price, currency, vat_category, stock_qty, low_stock_threshold, status)
+VALUES ('prod_smoke', 'mer_docker_smoke', 'Smoke Widget', 'SKU-SMOKE', 2000, 1200, 'ETB', 'standard', 50, 5, 'active')
+ON CONFLICT (id) DO NOTHING;
 
 -- API key with explicit ops scope (RBAC admin routes).
 INSERT INTO api_keys (id, merchant_id, name, key_type, key_prefix, secret_hash, environment, status, scopes)
