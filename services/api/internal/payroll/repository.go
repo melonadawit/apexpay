@@ -467,22 +467,23 @@ func (r *PgRepository) UpdateLoanOutstanding(ctx context.Context, loanID string,
 // ==================== Payroll Runs Enhanced ====================
 
 func (r *PgRepository) CreateRun(ctx context.Context, run *PayrollRun) error {
-	_, err := r.pool.Exec(ctx, `INSERT INTO payroll_runs (id, merchant_id, book_id, run_ref, period_month, period_year, type, status, total_gross, total_net, total_tax, total_pension, employer_total_pension, total_employer_cost, total_count, payroll_data, variance_report) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+	_, err := r.pool.Exec(ctx, `INSERT INTO payroll_runs (id, merchant_id, book_id, run_ref, period_month, period_year, type, status, total_gross, total_net, total_tax, total_pension, employer_total_pension, total_employer_cost, total_count, payroll_data, variance_report, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
 		run.ID, run.MerchantID, run.BookID, run.RunRef, run.PeriodMonth, run.PeriodYear, run.Type, run.Status,
 		run.TotalGross.String(), run.TotalNet.String(), run.TotalTax.String(), run.TotalPension.String(),
 		run.EmployerTotalPension.String(), run.TotalEmployerCost.String(), run.TotalCount,
-		toJSON(run.PayrollData), toJSON(run.VarianceReport))
+		toJSON(run.PayrollData), toJSON(run.VarianceReport), run.CreatedBy)
 	return err
 }
 
 func (r *PgRepository) GetRun(ctx context.Context, merchantID, runID string) (*PayrollRun, error) {
-	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, run_ref, period_month, period_year, type, status, total_gross::text, total_deductions::text, total_net::text, total_tax::text, total_pension::text, COALESCE(employer_total_pension::text,'0'), COALESCE(total_employer_cost::text,'0'), total_count, COALESCE(total_employees_paid,0), COALESCE(total_employees_failed,0), book_id, payroll_data, variance_report FROM payroll_runs WHERE merchant_id=$1 AND id=$2`, merchantID, runID)
+	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, run_ref, period_month, period_year, type, status, total_gross::text, total_deductions::text, total_net::text, total_tax::text, total_pension::text, COALESCE(employer_total_pension::text,'0'), COALESCE(total_employer_cost::text,'0'), total_count, COALESCE(total_employees_paid,0), COALESCE(total_employees_failed,0), book_id, payroll_data, variance_report, COALESCE(created_by,'') FROM payroll_runs WHERE merchant_id=$1 AND id=$2`, merchantID, runID)
 	var pr PayrollRun
 	var gross, ded, net, tax, pension, employerPension, employerCost string
 	var payrollDataStr, varianceStr string
 	var totalCount, paid, failed int
+	var createdBy string
 	err := row.Scan(&pr.ID, &pr.MerchantID, &pr.RunRef, &pr.PeriodMonth, &pr.PeriodYear, &pr.Type, &pr.Status,
-		&gross, &ded, &net, &tax, &pension, &employerPension, &employerCost, &totalCount, &paid, &failed, &pr.BookID, &payrollDataStr, &varianceStr)
+		&gross, &ded, &net, &tax, &pension, &employerPension, &employerCost, &totalCount, &paid, &failed, &pr.BookID, &payrollDataStr, &varianceStr, &createdBy)
 	if err != nil {
 		return nil, err
 	}
@@ -496,6 +497,9 @@ func (r *PgRepository) GetRun(ctx context.Context, merchantID, runID string) (*P
 	pr.TotalCount = totalCount
 	pr.TotalEmployeesPaid = paid
 	pr.TotalEmployeesFailed = failed
+	if createdBy != "" {
+		pr.CreatedBy = &createdBy
+	}
 	_ = json.Unmarshal([]byte(payrollDataStr), &pr.PayrollData)
 	_ = json.Unmarshal([]byte(varianceStr), &pr.VarianceReport)
 	return &pr, nil
@@ -890,3 +894,73 @@ func scanDecimal(s string) decimal.Decimal {
 // Ensure interface for service
 var _ = fmt.Sprintf
 var _ pgx.Tx
+
+// PayrollApproval records one approve action on a payroll run (maker-checker trail).
+type PayrollApproval struct {
+	ID           string
+	RunID        string
+	MerchantID   string
+	ApproverID   string
+	ApproverType string
+	FromStatus   string
+	ToStatus     string
+	Comments     string
+}
+
+// CreatePayrollApproval inserts an approval record.
+func (r *PgRepository) CreatePayrollApproval(ctx context.Context, a *PayrollApproval) error {
+	_, err := r.pool.Exec(ctx, `INSERT INTO payroll_approvals (id, run_id, merchant_id, approver_id, approver_type, from_status, to_status, comments)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+		a.ID, a.RunID, a.MerchantID, a.ApproverID, a.ApproverType, a.FromStatus, a.ToStatus, a.Comments)
+	return err
+}
+
+// CountPayrollApprovals returns the number of approve records for a run (distinct approvers).
+func (r *PgRepository) CountPayrollApprovals(ctx context.Context, runID string) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM payroll_approvals WHERE run_id=$1 AND to_status='approved'`, runID).Scan(&n)
+	return n, err
+}
+
+// PayrollApproverIDs returns the set of distinct approver IDs already recorded for a run.
+func (r *PgRepository) PayrollApproverIDs(ctx context.Context, runID string) ([]string, error) {
+	rows, err := r.pool.Query(ctx, `SELECT DISTINCT approver_id FROM payroll_approvals WHERE run_id=$1 AND approver_id IS NOT NULL`, runID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// GetPreviousRunGross returns the total gross of the most recent completed run for the
+// merchant before (periodMonth, periodYear), or zero if none. Used to compute a real
+// month-over-month variance instead of a fabricated one.
+func (r *PgRepository) GetPreviousRunGross(ctx context.Context, merchantID string, periodMonth, periodYear int) (decimal.Decimal, error) {
+	var s string
+	err := r.pool.QueryRow(ctx, `
+		SELECT COALESCE(total_gross,0)::text FROM payroll_runs
+		WHERE merchant_id=$1 AND status='completed'
+		  AND (period_year < $3 OR (period_year = $3 AND period_month < $2))
+		ORDER BY period_year DESC, period_month DESC LIMIT 1`, merchantID, periodMonth, periodYear).Scan(&s)
+	if err == pgx.ErrNoRows {
+		return decimal.Zero, nil
+	}
+	if err != nil {
+		return decimal.Zero, err
+	}
+	return decimal.NewFromString(s)
+}
+
+// SetVarianceReport persists the run's computed variance_report JSONB.
+func (r *PgRepository) SetVarianceReport(ctx context.Context, runID string, variance map[string]interface{}) error {
+	_, err := r.pool.Exec(ctx, `UPDATE payroll_runs SET variance_report=$1::jsonb WHERE id=$2`, toJSON(variance), runID)
+	return err
+}

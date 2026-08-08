@@ -87,6 +87,15 @@ type Repository interface {
 	// Final Settlement
 	CreateFinalSettlement(ctx context.Context, fs *FinalSettlement) error
 
+	// Maker-checker approvals
+	CreatePayrollApproval(ctx context.Context, a *PayrollApproval) error
+	CountPayrollApprovals(ctx context.Context, runID string) (int, error)
+	PayrollApproverIDs(ctx context.Context, runID string) ([]string, error)
+
+	// Variance
+	GetPreviousRunGross(ctx context.Context, merchantID string, periodMonth, periodYear int) (decimal.Decimal, error)
+	SetVarianceReport(ctx context.Context, runID string, variance map[string]interface{}) error
+
 	// Audit
 	CreateAuditLog(ctx context.Context, log *AuditLog) error
 
@@ -464,10 +473,14 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 			}
 		}
 
-		// Pension calculations — configurable pensionable gross = gross - non-pensionable (OT maybe? For ET, pensionable is basic + other? Simplify gross for now but make configurable)
-		// In ET, pensionable salary = basic salary? Actually per law it's basic + hardship? For simplicity use baseSalary prorated + allowances that are pensionable
-		pensionableGross := gross
-		// If structure components have is_pensionable false, subtract? Already handled if gross includes only pensionable? Simplify
+		// Pensionable gross excludes overtime and non-pensionable bonuses by default.
+		// OT and ad-hoc bonus are non-pensionable per common ET practice; using full gross
+		// here would over-credit pension and mis-state employer cost. This remains a single
+		// line so it can be made fully component-aware (is_pensionable flag) later.
+		pensionableGross := gross.Sub(otAmount).Sub(bonus)
+		if pensionableGross.LessThan(decimal.Zero) {
+			pensionableGross = decimal.Zero
+		}
 
 		pensionEmp := pensionableGross.Mul(decimal.NewFromFloat(0.07)).Round(2)   // 7%
 		pensionEmplr := pensionableGross.Mul(decimal.NewFromFloat(0.11)).Round(2) // 11%
@@ -564,14 +577,25 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 		totalEmployerCost = totalEmployerCost.Add(gross).Add(pensionEmplr)
 	}
 
-	// Variance report vs last month O(1) lookup last run for same merchant
-	// For simplicity, mock variance 5.2% increase — real would query last month totals
-	variance := map[string]interface{}{
-		"vs_last_month_percent": 5.2,
-		"last_month_gross":      totalGross.Mul(decimal.NewFromFloat(0.95)).String(),
-		"change_reason":         "OT increase + bonus for Sales",
+	// Real month-over-month variance vs the previous completed run for the same merchant.
+	prevGross, _ := s.repo.GetPreviousRunGross(ctx, merchantID, r.PeriodMonth, r.PeriodYear)
+	var variance map[string]interface{}
+	if !prevGross.IsZero() && totalGross.GreaterThan(decimal.Zero) {
+		change := totalGross.Sub(prevGross).Div(prevGross).Mul(decimal.NewFromInt(100)).Round(2)
+		variance = map[string]interface{}{
+			"vs_last_month_percent": change.String(),
+			"last_month_gross":      prevGross.String(),
+			"current_month_gross":   totalGross.String(),
+			"computed":              true,
+		}
+	} else {
+		variance = map[string]interface{}{
+			"vs_last_month_percent": "0",
+			"last_month_gross":      "0",
+			"current_month_gross":   totalGross.String(),
+			"computed":              false,
+		}
 	}
-	_ = variance // used for future variance report storage in payroll_runs variance_report JSON
 
 	// Bulk create items Tx
 	if err := s.repo.BulkCreateItems(ctx, items); err != nil {
@@ -590,6 +614,7 @@ func (s *Service) CalculateRun(ctx context.Context, merchantID, runID string) er
 		"total_employees_paid":   decimal.NewFromInt(int64(len(items) - failedCount)),
 	}
 	_ = s.repo.UpdateRunStatus(ctx, runID, StatusPendingApproval, totals)
+	_ = s.repo.SetVarianceReport(ctx, runID, variance)
 
 	// Audit log
 	_ = s.repo.CreateAuditLog(ctx, &AuditLog{
@@ -621,25 +646,71 @@ func (s *Service) ApproveRun(ctx context.Context, merchantID, runID, userID stri
 	if r.Status != StatusPendingApproval {
 		return errors.Validation("run must be pending_approval to approve")
 	}
-	// Dual approval if >100k net per NBE controls
-	if r.TotalNet.GreaterThan(decimal.NewFromInt(100000)) {
-		// In real, check approved_by != submitter and count approvals
-		// For simplicity, allow approve but log dual requirement
+	if userID == "" {
+		return errors.Validation("approver identity required")
 	}
 
-	// Maker-checker: approver != creator? Need creator id from audit logs — skip for MVP
+	// Maker-checker: the approver cannot approve a run they created.
+	if r.CreatedBy != nil && *r.CreatedBy == userID {
+		return errors.Validation("approver cannot approve a run they submitted (maker-checker)")
+	}
+
+	// Count prior distinct approvals already recorded.
+	priorCount, err := s.repo.CountPayrollApprovals(ctx, runID)
+	if err != nil {
+		return err
+	}
+	priorApprovers, err := s.repo.PayrollApproverIDs(ctx, runID)
+	if err != nil {
+		return err
+	}
+	for _, id := range priorApprovers {
+		if id == userID {
+			return errors.Validation("approver already approved this run")
+		}
+	}
+
+	// Dual approval required when net > 100k ETB per NBE maker-checker controls.
+	needsDual := r.TotalNet.GreaterThan(decimal.NewFromInt(100000))
+	// Record this approval first; the audit trail always reflects the action.
+	approval := &PayrollApproval{
+		ID: id.New("papr"), RunID: runID, MerchantID: merchantID,
+		ApproverID: userID, ApproverType: "finance",
+		FromStatus: string(StatusPendingApproval),
+		ToStatus:   string(StatusApproved),
+		Comments:   "",
+	}
+	if err := s.repo.CreatePayrollApproval(ctx, approval); err != nil {
+		return err
+	}
 
 	totals := map[string]decimal.Decimal{
 		"total_gross": r.TotalGross, "total_net": r.TotalNet, "total_tax": r.TotalTax,
 		"total_pension": r.TotalPension, "employer_total_pension": r.EmployerTotalPension,
 		"total_employer_cost": r.TotalEmployerCost,
 	}
+
+	// If a second approval is required and this is only the first, park the run in a
+	// dual-approval-awaiting state; only the second distinct approver finalizes it.
+	if needsDual && priorCount == 0 {
+		// First of two approvals: keep the run pending_approval so the second approver
+		// can finalize. Update approved_by for visibility.
+		if err := s.repo.UpdateRunStatus(ctx, runID, StatusPendingApproval, totals); err != nil {
+			return err
+		}
+		_ = s.repo.CreateAuditLog(ctx, &AuditLog{
+			ID: id.New("paudit"), MerchantID: merchantID, RunID: &runID, ActorID: &userID, ActorType: "finance",
+			Action: "approve_run_partial", Details: map[string]interface{}{"approved_by": userID, "dual_required": true, "approval": 1},
+		})
+		return nil
+	}
+
 	if err := s.repo.UpdateRunStatus(ctx, runID, StatusApproved, totals); err != nil {
 		return err
 	}
 	_ = s.repo.CreateAuditLog(ctx, &AuditLog{
 		ID: id.New("paudit"), MerchantID: merchantID, RunID: &runID, ActorID: &userID, ActorType: "finance",
-		Action: "approve_run", Details: map[string]interface{}{"approved_by": userID},
+		Action: "approve_run", Details: map[string]interface{}{"approved_by": userID, "dual_approval_complete": needsDual && priorCount > 0},
 	})
 	return nil
 }
@@ -741,11 +812,21 @@ func (s *Service) DisburseRun(ctx context.Context, merchantID, runID string) err
 		})
 	}
 
-	// In real, CreateDisburseBookTx does second journal + payout batch insertion atomic
-	_ = disburseJournal
-	_ = disburseEntries
-	// For now reuse CreateRunBookTx for first journal, second journal via same Tx method alternative — we will call UpdateRunStatus to processing
-	// TODO: implement CreateDisburseBookTx with batchID payouts atomic
+	// Persist the disbursement journal + payout batch atomically. This closes the
+	// payroll_payable liability (credit on accrual, debit here) and records the batch
+	// that actually moves funds out of the merchant's clearing account.
+	filteredDisburse := disburseEntries[:0]
+	for _, e := range disburseEntries {
+		if e.Amount.GreaterThan(decimal.Zero) {
+			filteredDisburse = append(filteredDisburse, e)
+		}
+	}
+	if !ledger.ValidateBalanced(filteredDisburse) {
+		return errors.New("ledger_unbalanced", "disbursal journal unbalanced debit != credit", 500)
+	}
+	if err := s.repo.CreateDisburseBookTx(ctx, runID, disburseJournal, filteredDisburse, batchID, payouts); err != nil {
+		return err
+	}
 
 	// Generate bank file + compliance reports async? For now synchronous generation
 	_ = s.GenerateBankDisbursalFile(ctx, r, items)

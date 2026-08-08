@@ -439,6 +439,7 @@ type PayrollRun struct {
 	BankFileHash         *string
 	LockedAt             *time.Time
 	ApprovedBy           *string
+	CreatedBy            *string
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }

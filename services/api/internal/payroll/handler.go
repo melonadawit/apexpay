@@ -330,12 +330,24 @@ func (h *Handler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
 		return
 	}
-	base, _ := decimal.NewFromString(req.BaseSalary)
-	ctcAnnual, _ := decimal.NewFromString(req.CTCAnnual)
+	base, err := decimal.NewFromString(req.BaseSalary)
+	if err != nil {
+		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "base_salary must be numeric")
+		return
+	}
+	ctcAnnual, err := decimal.NewFromString(req.CTCAnnual)
+	if err != nil {
+		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "ctc_annual must be numeric")
+		return
+	}
 	ctcMonthly := ctcAnnual.Div(decimal.NewFromInt(12)).Round(2)
 	if ctcAnnual.IsZero() {
 		ctcAnnual = base.Mul(decimal.NewFromInt(12))
 		ctcMonthly = base
+	}
+	if base.LessThanOrEqual(decimal.Zero) {
+		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "base_salary must be > 0")
+		return
 	}
 	emp := &Employee{
 		ID: id.NewEmployee(), MerchantID: merchantID,
@@ -605,11 +617,13 @@ func (h *Handler) CreateRun(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
 		return
 	}
+	createdBy := mw.UserID(r.Context())
 	run := &PayrollRun{
 		ID: id.NewPayrollRun(), MerchantID: merchantID,
 		RunRef: req.RunRef, PeriodMonth: req.PeriodMonth, PeriodYear: req.PeriodYear,
 		Type: RunType(req.Type), Status: StatusDraft,
 		PayrollData: map[string]interface{}{"cutoff_date": req.CutoffDate, "disbursal_date": req.DisbursalDate},
+		CreatedBy:   createdByPtr(createdBy),
 	}
 	if run.Type == "" {
 		run.Type = RunRegular
@@ -1328,6 +1342,14 @@ func monthsBetween(from, to time.Time) int {
 }
 
 func ptrDec(d decimal.Decimal) *decimal.Decimal { return &d }
+
+// createdByPtr returns a pointer to s, or nil when s is empty (no authenticated user).
+func createdByPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
 
 // ==================== Payroll Calendar CRUD — Ethiopia Business Practice Cutoff 25th Disbursal 30th Pay Last Day Lock After Disbursal ====================
 
