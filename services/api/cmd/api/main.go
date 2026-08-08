@@ -36,6 +36,7 @@ import (
 	"apexpay/internal/checkout"
 	"apexpay/internal/connector"
 	"apexpay/internal/fayda"
+	"apexpay/internal/hris"
 	"apexpay/internal/ledger"
 	"apexpay/internal/link"
 	"apexpay/internal/onboarding"
@@ -44,6 +45,7 @@ import (
 	"apexpay/internal/payroll"
 	"apexpay/internal/reconciliation"
 	"apexpay/internal/refund"
+	"apexpay/internal/risk"
 	"apexpay/internal/routing"
 	"apexpay/internal/subscription"
 	"apexpay/internal/swarm"
@@ -137,6 +139,8 @@ func main() {
 	authSvc := auth.NewService(auth.NewRepository(pool))
 	authHandler := auth.NewHandler(authSvc)
 	bankingHandler := banking.NewHandler(banking.NewRepository(pool))
+	hrisHandler := hris.NewHandler(hris.NewRepository(pool))
+	riskHandler := risk.NewHandler(risk.NewService(risk.NewRepository(pool), risk.NewEngine()))
 	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
 		sess, err := authSvc.Validate(ctx, token)
 		if err != nil {
@@ -214,6 +218,18 @@ func main() {
 		r.Route("/banking", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			bankingHandler.Routes(r)
+		})
+
+		// Workforce OS (HRIS) — session-authenticated dashboard module.
+		r.Route("/hris", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			hrisHandler.Routes(r)
+		})
+
+		// Risk & Fraud Engine — session-authenticated.
+		r.Route("/risk", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			riskHandler.Routes(r)
 		})
 
 		// Public checkout token verification (no auth) — outstanding for checkout-web mobile 420px

@@ -103,7 +103,6 @@ grep -q 'Current Account Opened' /tmp/bank_notif.json
 # Banking without a session must be rejected.
 test "$(curl -s -o /dev/null -w '%{http_code}' "$API/v1/banking/current_accounts")" = "401"
 
-echo 'Docker API smoke suite passed'
 
 # ---- 13. Banking action endpoints: create + list. ----
 test "$(curl -s -o /tmp/bank_tax.json -w '%{http_code}' -X POST "$API/v1/banking/tax_payments" \
@@ -117,5 +116,16 @@ test "$(curl -s -o /tmp/bank_inv.json -w '%{http_code}' -X POST "$API/v1/banking
   -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
   -d '{"invoice_number":"SMOKE-INV-1","invoice_date":"2026-08-08","vendor_name":"Smoke Vendor","amount":"10000.00","currency":"ETB","tax_amount":"1500.00","withholding_tax_amount":"200.00","total_amount":"11300.00","status":"pending_approval","ocr_confidence":0.9}')" = "201"
 test "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/banking/vendor_invoices")" = "200"
+
+
+# ---- 14. HRIS (Workforce OS): teams, risk engine. ----
+test "$(curl -s -o /tmp/hris_teams.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/hris/teams")" = "200"
+grep -q 'Engineering' /tmp/hris_teams.json
+test "$(curl -s -o /tmp/risk_rules.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/risk/rules")" = "200"
+grep -q 'High-ticket' /tmp/risk_rules.json
+test "$(curl -s -o /tmp/risk_eval.json -w '%{http_code}' -X POST "$API/v1/risk/evaluate" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"entity_type":"payment","entity_id":"pay_smoke","amount":"600000.00"}')" = "200"
+grep -q 'findings' /tmp/risk_eval.json
 
 echo 'Docker API smoke suite passed'

@@ -108,3 +108,12 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO current_accounts (id, merchant_id, account_number, account_name, account_type, currency, bank_code, partner_bank_name, status, balance, available_balance)
 VALUES ('ca_smoke', 'mer_docker_smoke', 'ETB-CBE-7778889990', 'Docker Smoke PLC', 'current', 'ETB', 'CBE', 'Commercial Bank of Ethiopia', 'active', 125000.00, 125000.00)
 ON CONFLICT (id) DO NOTHING;
+
+-- HRIS + Risk smoke seed.
+INSERT INTO hris_teams (id, merchant_id, name) VALUES ('team_smoke', 'mer_docker_smoke', 'Engineering')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO risk_rules (id, merchant_id, name, rule_type, parameters, action, severity, enabled)
+VALUES ('rule_smoke', 'mer_docker_smoke', 'High-ticket', 'threshold_amount',
+        '{"amount_limit":"500000","window_minutes":60}', 'flag', 'high', true)
+ON CONFLICT (id) DO NOTHING;
