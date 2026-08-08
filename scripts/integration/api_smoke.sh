@@ -3,6 +3,10 @@ set -eu
 API="http://api:8080"
 KEY="sk_test_demo_6c0b88c984e74070b870"
 
+# On any failing command, report the line number + the failing expression so CI failures
+# are diagnosable (the `test` builtin exits non-zero silently under `set -e`).
+trap 'rc=$?; echo "SMOKE FAILED at line $LINENO (exit $rc)"; exit $rc' ERR
+
 wait_ready() {
   # Allow ample time for cold-start: image pulls, migrations, and the API binding to :8080.
   # Each attempt is bounded by curl --max-time so a hanging connect can't stall the loop.
