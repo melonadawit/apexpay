@@ -1,6 +1,11 @@
-# Dockerfile.api — Go API production multi-stage build Gold
-# Best practice: non-root, layer caching, distroless minimal, no secrets in image
+# Dockerfile.api — Go API multi-stage build.
+# Best practice: non-root, layer caching, distroless minimal, no secrets in image.
+#
+# IMPORTANT: the LAST stage is the default build target. The production distroless
+# stage must be last; the CI-only `test` stage is declared BEFORE it so that
+# `docker build` (and compose) default to the production image, not the test stage.
 
+# ---- Builder ----
 FROM golang:1.25-alpine AS builder
 
 # Security hardening: non-root builder
@@ -21,7 +26,11 @@ WORKDIR /app/services/api
 # Build with trimming + static
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.version=1.1.0-full" -o /app/bin/api ./cmd/api
 
-# Final stage — distroless minimal
+# ---- CI-only test target (NOT the default). Invoke explicitly with --target test. ----
+FROM builder AS test
+RUN go test ./... -count=1
+
+# ---- Production (default target) — must be the LAST stage. ----
 FROM gcr.io/distroless/static-debian12:nonroot
 
 # Copy binary + certs + timezone Africa/Addis_Ababa
@@ -33,10 +42,4 @@ EXPOSE 8080
 
 USER nonroot:nonroot
 
-# Healthcheck per SAD quality
 ENTRYPOINT ["/api"]
-
-# Explicit CI-only target. It runs entirely inside Docker and is never part of
-# the production image. Invoke: docker build --target test -f deploy/docker/Dockerfile.api .
-FROM builder AS test
-RUN go test ./... -count=1
