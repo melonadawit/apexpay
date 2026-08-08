@@ -3,6 +3,7 @@ package payment
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	pkghttp "apexpay/internal/platform/http"
 	mw "apexpay/internal/platform/middleware"
@@ -20,6 +21,37 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Post("/transactions/initialize", h.Initialize)
 	r.Get("/transactions/verify/{tx_ref}", h.Verify)
 	r.Post("/transactions/{id}/2fa/verify", h.Verify2FA)
+	r.Get("/transactions", h.List)
+	r.Get("/dashboard", h.Dashboard)
+}
+
+// List returns the merchant's recent payments for the dashboard / payments screen.
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	limit := 25
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 && n <= 200 {
+			limit = n
+		}
+	}
+	list, err := h.svc.List(r.Context(), mw.MerchantID(r.Context()), limit)
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	if list == nil {
+		list = []*Payment{}
+	}
+	pkghttp.WriteJSON(w, r, 200, list)
+}
+
+// Dashboard returns lightweight aggregates for the merchant dashboard.
+func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
+	s, err := h.svc.Summary(r.Context(), mw.MerchantID(r.Context()))
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, s)
 }
 
 func (h *Handler) Initialize(w http.ResponseWriter, r *http.Request) {

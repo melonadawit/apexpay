@@ -74,6 +74,76 @@ func (r *PgRepository) GetByTxRef(ctx context.Context, merchantID, txRef string)
 	return &p, nil
 }
 
+// ListByMerchant returns the merchant's most recent payments, newest first.
+func (r *PgRepository) ListByMerchant(ctx context.Context, merchantID string, limit int) ([]*Payment, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 25
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, merchant_id, tx_ref, amount::text, currency, status, COALESCE(method,''), COALESCE(description,''),
+		       COALESCE(customer_email,''), connector_id, COALESCE(fee_amount,0)::text, COALESCE(net_amount,0)::text,
+		       requires_2fa, two_fa_verified, succeeded_at, created_at
+		FROM payments WHERE merchant_id=$1 ORDER BY created_at DESC LIMIT $2`, merchantID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*Payment
+	for rows.Next() {
+		var p Payment
+		var amtStr, feeStr, netStr string
+		var succeededAt *time.Time
+		if err := rows.Scan(&p.ID, &p.MerchantID, &p.TxRef, &amtStr, &p.Currency, &p.Status,
+			&p.Method, &p.Description, &p.CustomerEmail, &p.ConnectorID, &feeStr, &netStr,
+			&p.Requires2FA, &p.TwoFAVerified, &succeededAt, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		p.Amount, _ = decimal.NewFromString(amtStr)
+		p.FeeAmount, _ = decimal.NewFromString(feeStr)
+		p.NetAmount, _ = decimal.NewFromString(netStr)
+		p.SucceededAt = succeededAt
+		list = append(list, &p)
+	}
+	return list, rows.Err()
+}
+
+// Summary returns dashboard aggregates for a merchant over the trailing window.
+type Summary struct {
+	TPVToday      decimal.Decimal `json:"tpv_today"`
+	TPV7Days      decimal.Decimal `json:"tpv_7_days"`
+	SuccessCount  int64           `json:"success_count_7_days"`
+	TotalCount    int64           `json:"total_count_7_days"`
+	SuccessRate   float64         `json:"success_rate_7_days"`
+	ActiveLinks   int64           `json:"active_links"`
+	RefundedCount int64           `json:"refunded_count_7_days"`
+}
+
+// DashboardSummary computes lightweight aggregates for the merchant dashboard. All money is
+// summed as numeric in Postgres and returned as decimal strings (no float money).
+func (r *PgRepository) DashboardSummary(ctx context.Context, merchantID string) (*Summary, error) {
+	var s Summary
+	var tpvToday, tpv7 string
+	err := r.pool.QueryRow(ctx, `
+		SELECT
+		  COALESCE(SUM(amount) FILTER (WHERE status IN ('succeeded') AND created_at >= date_trunc('day', now())), 0)::text,
+		  COALESCE(SUM(amount) FILTER (WHERE status IN ('succeeded') AND created_at >= now() - interval '7 days'), 0)::text,
+		  COUNT(*) FILTER (WHERE status='succeeded' AND created_at >= now() - interval '7 days'),
+		  COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days'),
+		  COALESCE(COUNT(*) FILTER (WHERE status='succeeded' AND created_at >= now() - interval '7 days'))::float
+		   / NULLIF(COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days'),0),
+		  (SELECT COUNT(*) FROM payment_links WHERE merchant_id=$1 AND status IN ('active')),
+		  COUNT(*) FILTER (WHERE status IN ('refunded','partially_refunded') AND created_at >= now() - interval '7 days')
+		FROM payments WHERE merchant_id=$1`, merchantID).
+		Scan(&tpvToday, &tpv7, &s.SuccessCount, &s.TotalCount, &s.SuccessRate, &s.ActiveLinks, &s.RefundedCount)
+	if err != nil {
+		return nil, err
+	}
+	s.TPVToday, _ = decimal.NewFromString(tpvToday)
+	s.TPV7Days, _ = decimal.NewFromString(tpv7)
+	return &s, nil
+}
+
 func (r *PgRepository) UpdateStatusTx(ctx context.Context, paymentID string, status Status, journal *ledger.Journal, entries []ledger.Entry, succeededAt *time.Time) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {

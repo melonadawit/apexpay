@@ -24,6 +24,8 @@ type Repository interface {
 	MarkConnectorStarted(ctx context.Context, merchantID, key, txRef string) error
 	FailIdempotency(ctx context.Context, merchantID, key string) error
 	Mark2FAVerified(ctx context.Context, merchantID, paymentID string) error
+	ListByMerchant(ctx context.Context, merchantID string, limit int) ([]*Payment, error)
+	DashboardSummary(ctx context.Context, merchantID string) (*Summary, error)
 }
 
 type Service struct {
@@ -217,4 +219,14 @@ func contains(s, substr string) bool {
 		}
 		return false
 	})()
+}
+
+// List returns the merchant's recent payments, newest first.
+func (s *Service) List(ctx context.Context, merchantID string, limit int) ([]*Payment, error) {
+	return s.repo.ListByMerchant(ctx, merchantID, limit)
+}
+
+// Summary returns dashboard aggregates for the merchant.
+func (s *Service) Summary(ctx context.Context, merchantID string) (*Summary, error) {
+	return s.repo.DashboardSummary(ctx, merchantID)
 }

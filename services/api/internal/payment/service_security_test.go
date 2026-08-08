@@ -35,6 +35,14 @@ func (r *securityTestRepo) Mark2FAVerified(_ context.Context, merchantID, paymen
 	return nil
 }
 
+func (r *securityTestRepo) ListByMerchant(context.Context, string, int) ([]*Payment, error) {
+	return []*Payment{}, nil
+}
+
+func (r *securityTestRepo) DashboardSummary(context.Context, string) (*Summary, error) {
+	return &Summary{}, nil
+}
+
 func TestCanonicalRequestHashNormalizesOnlyIntendedInputs(t *testing.T) {
 	a := InitializeRequest{TxRef: "tx-1", Amount: decimal.RequireFromString("100.00"), Currency: "etb", Method: "CARD", CustomerEmail: "a@example.et", ReturnURL: "https://m.et/return", CallbackURL: "https://m.et/callback"}
 	b := a

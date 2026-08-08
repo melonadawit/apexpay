@@ -82,6 +82,10 @@ services:
     build: {context: ../../apps/merchant-web, dockerfile: Dockerfile}
     ports: ["3000:3000"]
     environment:
+      # Server-side proxy target + merchant API key (see apps/merchant-web/app/api/proxy).
+      # APEXPAY_API_KEY is injected server-side only and never sent to the browser.
+      APEXPAY_API_URL: http://api:8080
+      APEXPAY_API_KEY: ${APEXPAY_MERCHANT_API_KEY:-}
       NEXT_PUBLIC_API_URL: /v1
       NEXT_PUBLIC_CHECKOUT_URL: /c
     depends_on: [api]
