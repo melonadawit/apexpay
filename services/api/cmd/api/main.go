@@ -31,6 +31,7 @@ import (
 
 	"apexpay/internal/admin"
 	"apexpay/internal/bankverification"
+	"apexpay/internal/checkout"
 	"apexpay/internal/connector"
 	"apexpay/internal/fayda"
 	"apexpay/internal/ledger"
@@ -127,6 +128,7 @@ func main() {
 	webhookHandler := webhook.NewHandler(webhookRepo, platformcrypto.DeriveKey(cfg.ConnectorEncKey, "webhook-secret"))
 	reconciliationHandler := reconciliation.NewHandler(reconciliationSvc)
 	adminHandler := admin.NewHandler(admin.NewRepository(pool))
+	checkoutHandler := checkout.NewHandler(linkRepo, paymentSvc)
 	bankVerificationHandler := bankverification.NewHandler(pool)
 
 	authMw := mw.NewAuth(pool)
@@ -175,6 +177,11 @@ func main() {
 				banks = []map[string]string{{"code": "CBE", "name": "Commercial Bank of Ethiopia"}, {"code": "AWASH", "name": "Awash Bank"}, {"code": "DASHEN", "name": "Dashen Bank"}}
 			}
 			pkghttp.WriteJSON(w, r, 200, banks)
+		})
+
+		// Public hosted-checkout API — the payment link token is the capability.
+		r.Route("/checkout", func(r chi.Router) {
+			checkoutHandler.Routes(r)
 		})
 
 		// Public checkout token verification (no auth) — outstanding for checkout-web mobile 420px
