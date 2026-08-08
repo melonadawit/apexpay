@@ -1,7 +1,7 @@
 # Dockerfile.worker — Go Worker multi-stage Gold
 # Jobs: outbox drain 1s, webhook retry 2s exponential backoff + SSRF block + HMAC, health sampler 30s, dunning 1d/3d/5d, recon 02:00 EAT, swarm executor, payroll calc
 
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates tzdata
 

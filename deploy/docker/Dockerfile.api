@@ -1,7 +1,7 @@
 # Dockerfile.api — Go API production multi-stage build Gold
 # Best practice: non-root, layer caching, distroless minimal, no secrets in image
 
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 # Security hardening: non-root builder
 RUN apk add --no-cache git ca-certificates tzdata

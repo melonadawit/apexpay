@@ -5,7 +5,7 @@ create table hris_teams (
   id            text primary key,
   merchant_id   text not null references merchants(id) on delete cascade,
   name          text not null,
-  department_id text references departments(id) on delete set null,
+  department_id text references payroll_departments(id) on delete set null,
   manager_id    text references employees(id) on delete set null,
   description   text,
   created_at    timestamptz not null default now()
