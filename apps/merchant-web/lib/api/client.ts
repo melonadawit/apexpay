@@ -322,6 +322,13 @@ export type Cohort = { cohort_month: string; customers: number; month1_retention
 // ---- 2FA ----
 export type TwoFAEnroll = { secret: string; otpauth_url: string; issuer: string }
 
+// ---- Accounting & Bookkeeping ----
+export type Account = { code: string; name: string; category: string; normal_side: string; is_active: boolean }
+export type TrialBalanceRow = { code: string; name: string; debit: string; credit: string }
+export type StatementLine = { label: string; amount: string; kind: string }
+export type FinancialStatement = { title: string; period: string; lines: StatementLine[] }
+export type CashFlowLine = { label: string; amount: string; kind: string }
+
 export const api = {
   // Dashboard
   summary: () => get<DashboardSummary>("dashboard"),
@@ -444,5 +451,14 @@ export const api = {
   twofa: {
     enroll: (account: string) => post<TwoFAEnroll>("2fa/enroll", { account }),
     verify: (secret: string, code: string) => post<{ verified: boolean }>("2fa/verify", { secret, code }),
+  },
+
+  // Accounting & Bookkeeping
+  accounting: {
+    accounts: () => get<Account[]>("accounting/accounts"),
+    trialBalance: () => get<TrialBalanceRow[]>("accounting/trial-balance"),
+    profitLoss: (from = "", to = "") => get<FinancialStatement>(`accounting/profit-loss${from ? `?from=${from}&to=${to}` : ""}`),
+    balanceSheet: () => get<FinancialStatement>("accounting/balance-sheet"),
+    cashFlow: (from = "", to = "") => get<CashFlowLine[]>(`accounting/cash-flow${from ? `?from=${from}&to=${to}` : ""}`),
   },
 }

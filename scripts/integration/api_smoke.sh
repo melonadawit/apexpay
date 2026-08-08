@@ -151,3 +151,13 @@ test "$(curl -s -o /tmp/2fa.json -w '%{http_code}' -X POST "$API/v1/2fa/enroll" 
 grep -q 'secret' /tmp/2fa.json
 
 echo 'Docker API smoke suite passed'
+
+# ---- 17. Accounting & Bookkeeping. ----
+test "$(curl -s -o /tmp/acc_coa.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/accounts")" = "200"
+test "$(curl -s -o /tmp/acc_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
+test "$(curl -s -o /tmp/acc_pnl.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/profit-loss")" = "200"
+grep -q 'Profit' /tmp/acc_pnl.json
+test "$(curl -s -o /tmp/acc_bs.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/balance-sheet")" = "200"
+grep -q 'Assets' /tmp/acc_bs.json
+
+echo 'Docker API smoke suite passed'

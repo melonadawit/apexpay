@@ -29,6 +29,7 @@ import (
 	mw "apexpay/internal/platform/middleware"
 	"apexpay/internal/platform/storage"
 
+	"apexpay/internal/accounting"
 	"apexpay/internal/admin"
 	"apexpay/internal/analytics"
 	"apexpay/internal/auth"
@@ -156,6 +157,7 @@ func main() {
 	notifyHandler := notify.NewHandler(notify.NewRepository(pool))
 	fixedAssetHandler := fixedasset.NewHandler(fixedasset.NewRepository(pool))
 	analyticsHandler := analytics.NewHandler(analytics.NewRepository(pool))
+	accountingHandler := accounting.NewHandler(accounting.NewRepository(pool))
 	twoFAProvider := twofa.New()
 	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
 		sess, err := authSvc.Validate(ctx, token)
@@ -314,6 +316,12 @@ func main() {
 		r.Route("/analytics", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			analyticsHandler.Routes(r)
+		})
+
+		// Accounting & Bookkeeping (session-authenticated).
+		r.Route("/accounting", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			accountingHandler.Routes(r)
 		})
 
 		// Public checkout token verification (no auth) — outstanding for checkout-web mobile 420px

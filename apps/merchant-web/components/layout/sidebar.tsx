@@ -6,7 +6,7 @@ import { motion } from "framer-motion"
 import {
   LayoutDashboard, Receipt, RefreshCcw, Landmark,
   Users, HandCoins, KeySquare, ShieldCheck, LogOut,
-  Building2, ShieldAlert, Wallet, FileText, UserCog, TrendingUp, Bell, Settings
+  Building2, ShieldAlert, Wallet, FileText, UserCog, TrendingUp, Bell, Settings, BookOpenCheck
 } from "lucide-react"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
@@ -28,6 +28,7 @@ export function Sidebar({ isCollapsed }: { isCollapsed?: boolean }) {
     { href: "/invoices",     icon: FileText,          label: t("Invoices",      "ኢንቮይስ") },
     { href: "/risk",         icon: ShieldAlert,       label: t("Risk & Fraud",  "አደጋ") },
     { href: "/analytics",    icon: TrendingUp,        label: t("Analytics",     "ትንታኔ") },
+    { href: "/accounting",   icon: BookOpenCheck,     label: t("Accounting",    "ሂሳብ") },
     { href: "/fixed-assets", icon: Building2,         label: t("Fixed Assets",  "ቋሚ ንብረት") },
     { href: "/compliance-console", icon: ShieldCheck, label: t("Compliance",   "ተገዢነት") },
     { href: "/team",         icon: UserCog,           label: t("Team",          "ቡድን") },
