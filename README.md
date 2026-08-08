@@ -1,5 +1,7 @@
 # ApexPay — Full Platform v1.1.0 (NBE Onboarding + Fayda + Outstanding UI)
 
+> **🚀 Full setup, login, and troubleshooting instructions: see [`docs/RUNBOOK.md`](docs/RUNBOOK.md).**
+
 This repository implements the **full platform** per `docs/ROADMAP_M5_M9.md` and updated `DATABASE.md` + `MVP.md` v1.1.0-full.
 
 ## What Changed vs MVP 1.0.0
