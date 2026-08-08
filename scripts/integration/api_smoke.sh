@@ -277,4 +277,20 @@ grep -q '"order_number"' /tmp/inv_order.json
 test "$(curl -s -o /tmp/inv_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
 grep -q 'expense:cost_of_sales' /tmp/inv_tb.json
 
+# ---- 24. Tax schedule: invoice VAT recorded, schedule + GL tax liability. ----
+# Create an invoice with 15% VAT and 2% withholding via the API (records into tax register).
+test "$(curl -s -o /tmp/tx_inv.json -w '%{http_code}' -X POST "$API/v1/invoices/" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"invoice_number":"INV-SMOKE-TAX","customer_name":"Tax Buyer","issue_date":"2026-08-10","due_date":"2026-09-10","currency":"ETB","tax_percent":"15","withholding_percent":"2","line_items":[{"description":"Consulting","quantity":"1","unit_price":"1000"}]}')" = "201"
+grep -q '"id"' /tmp/tx_inv.json
+# Tax schedule now lists the VAT collected for the current period.
+test "$(curl -s -o /tmp/tx_schedule.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/tax/schedule")" = "200"
+grep -q '"tax_type":"vat"' /tmp/tx_schedule.json
+# Post the tax liability to the GL (200) -> trial balance shows liability:tax.
+test "$(curl -s -o /tmp/tx_post.json -w '%{http_code}' -X POST "$API/v1/tax/schedule/post" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{}')" = "200"
+test "$(curl -s -o /tmp/tx_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
+grep -q 'liability:tax' /tmp/tx_tb.json
+
 echo 'Docker API smoke suite passed'

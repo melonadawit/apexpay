@@ -67,7 +67,9 @@ VALUES
   ('la_docker_dep_exp', 'book_docker_smoke', 'expense:depreciation', 'Depreciation', 'debit'),
   ('la_docker_accum_dep', 'book_docker_smoke', 'asset:accumulated_depreciation', 'Accumulated Depreciation', 'credit'),
   ('la_docker_cogs', 'book_docker_smoke', 'expense:cost_of_sales', 'Cost of Sales', 'debit'),
-  ('la_docker_inv', 'book_docker_smoke', 'asset:inventory', 'Inventory', 'debit')
+  ('la_docker_inv', 'book_docker_smoke', 'asset:inventory', 'Inventory', 'debit'),
+  ('la_docker_tax', 'book_docker_smoke', 'liability:tax', 'Tax Payable', 'credit'),
+  ('la_docker_ar', 'book_docker_smoke', 'asset:receivable', 'Accounts Receivable', 'debit')
 ON CONFLICT (book_id, code) DO NOTHING;
 
 -- Product with a known cost price so order COGS posts to the GL in the smoke suite.

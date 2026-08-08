@@ -62,6 +62,7 @@ import (
 	"apexpay/internal/routing"
 	"apexpay/internal/subscription"
 	"apexpay/internal/swarm"
+	"apexpay/internal/tax"
 	"apexpay/internal/team"
 	"apexpay/internal/treasury"
 	"apexpay/internal/webhook"
@@ -157,7 +158,6 @@ func main() {
 	hrisHandler := hris.NewHandler(hris.NewRepository(pool))
 	riskHandler := risk.NewHandler(risk.NewService(risk.NewRepository(pool), risk.NewEngine()))
 	treasuryHandler := treasury.NewHandler(treasury.NewService(treasury.NewRepository(pool)))
-	invoicingHandler := invoicing.NewHandler(invoicing.NewService(invoicing.NewRepository(pool)))
 	teamHandler := team.NewHandler(team.NewRepository(pool))
 	complianceHandler := compliance.NewHandler(compliance.NewRepository(pool))
 	notifyHandler := notify.NewHandler(notify.NewRepository(pool))
@@ -166,6 +166,11 @@ func main() {
 	accountingRepo.SetCache(accounting.NewCache(rdb))
 	accountingSvc := accounting.NewService(accountingRepo, ledgerRepo)
 	accountingHandler := accounting.NewHandler(accountingRepo, accountingSvc)
+	taxSvc := tax.NewService(tax.NewRepository(pool), accountingRepo, ledgerRepo)
+	taxHandler := tax.NewHandler(taxSvc)
+	invoicingSvc := invoicing.NewService(invoicing.NewRepository(pool))
+	invoicingSvc.SetTaxRecorder(taxSvc)
+	invoicingHandler := invoicing.NewHandler(invoicingSvc)
 	fixedAssetSvc := fixedasset.NewService(fixedasset.NewRepository(pool), accountingRepo, ledgerRepo)
 	fixedAssetHandler := fixedasset.NewHandler(fixedasset.NewRepository(pool), fixedAssetSvc)
 	inventorySvc := inventory.NewService(inventory.NewRepository(pool), accountingRepo, ledgerRepo)
@@ -296,6 +301,12 @@ func main() {
 		r.Route("/risk", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			riskHandler.Routes(r)
+		})
+
+		// Tax schedules & GL tax liability (session-authenticated).
+		r.Route("/tax", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			taxHandler.Routes(r)
 		})
 
 		// Treasury & Cash Management — session-authenticated.

@@ -6,12 +6,22 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// taxRecorder is an optional hook to record collected VAT/TOT into the tax register.
+// Implemented by the tax module; nil means no tax recording.
+type taxRecorder interface {
+	RecordCollected(ctx context.Context, merchantID, period, taxType, source, sourceID, amount string) error
+}
+
 // Service applies invoice math (subtotal, VAT/TOT, withholding) and business rules.
 type Service struct {
-	repo *Repository
+	repo   *Repository
+	taxRec taxRecorder
 }
 
 func NewService(repo *Repository) *Service { return &Service{repo: repo} }
+
+// SetTaxRecorder attaches the tax-register hook (called once at wiring time).
+func (s *Service) SetTaxRecorder(r taxRecorder) { s.taxRec = r }
 
 // ComputeInvoiceTotals is a pure function that derives line totals, subtotal, tax,
 // withholding, and final total from line items + percentages. Unit-testable without a DB.
@@ -53,7 +63,24 @@ func (s *Service) BuildInvoice(ctx context.Context, merchantID, userID string, r
 	if err := s.repo.CreateInvoice(ctx, merchantID, userID, inv); err != nil {
 		return nil, err
 	}
+	// Record collected VAT (and withholding) into the tax register for the tax schedule.
+	if s.taxRec != nil && tax.GreaterThan(decimal.Zero) {
+		period := periodOf(inv.IssueDate)
+		_ = s.taxRec.RecordCollected(ctx, merchantID, period, "vat", "invoice", inv.ID, tax.String())
+	}
+	if s.taxRec != nil && withholding.GreaterThan(decimal.Zero) {
+		period := periodOf(inv.IssueDate)
+		_ = s.taxRec.RecordCollected(ctx, merchantID, period, "withholding", "invoice", inv.ID, withholding.String())
+	}
 	return inv, nil
+}
+
+// periodOf returns the YYYY-MM fiscal month of an ISO date ("" if unparseable).
+func periodOf(date string) string {
+	if len(date) >= 7 {
+		return date[:7]
+	}
+	return ""
 }
 
 // Issue attaches a hosted payment token to a draft invoice, moving it to 'sent'.
