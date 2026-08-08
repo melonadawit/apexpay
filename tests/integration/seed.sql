@@ -117,3 +117,8 @@ INSERT INTO risk_rules (id, merchant_id, name, rule_type, parameters, action, se
 VALUES ('rule_smoke', 'mer_docker_smoke', 'High-ticket', 'threshold_amount',
         '{"amount_limit":"500000","window_minutes":60}', 'flag', 'high', true)
 ON CONFLICT (id) DO NOTHING;
+
+-- Treasury + Invoicing smoke seed.
+INSERT INTO invoices (id, merchant_id, invoice_number, customer_name, customer_email, issue_date, due_date, currency, subtotal, tax_amount, withholding_amount, total_amount, status)
+VALUES ('inv_smoke', 'mer_docker_smoke', 'INV-SMOKE-001', 'Smoke Customer', 'customer@example.et', current_date, current_date + interval '30 days', 'ETB', 1000.00, 150.00, 20.00, 1130.00, 'sent')
+ON CONFLICT (id) DO NOTHING;

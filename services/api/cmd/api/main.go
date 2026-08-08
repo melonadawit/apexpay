@@ -37,6 +37,7 @@ import (
 	"apexpay/internal/connector"
 	"apexpay/internal/fayda"
 	"apexpay/internal/hris"
+	"apexpay/internal/invoicing"
 	"apexpay/internal/ledger"
 	"apexpay/internal/link"
 	"apexpay/internal/onboarding"
@@ -49,6 +50,7 @@ import (
 	"apexpay/internal/routing"
 	"apexpay/internal/subscription"
 	"apexpay/internal/swarm"
+	"apexpay/internal/treasury"
 	"apexpay/internal/webhook"
 )
 
@@ -141,6 +143,8 @@ func main() {
 	bankingHandler := banking.NewHandler(banking.NewRepository(pool))
 	hrisHandler := hris.NewHandler(hris.NewRepository(pool))
 	riskHandler := risk.NewHandler(risk.NewService(risk.NewRepository(pool), risk.NewEngine()))
+	treasuryHandler := treasury.NewHandler(treasury.NewService(treasury.NewRepository(pool)))
+	invoicingHandler := invoicing.NewHandler(invoicing.NewService(invoicing.NewRepository(pool)))
 	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
 		sess, err := authSvc.Validate(ctx, token)
 		if err != nil {
@@ -230,6 +234,18 @@ func main() {
 		r.Route("/risk", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			riskHandler.Routes(r)
+		})
+
+		// Treasury & Cash Management — session-authenticated.
+		r.Route("/treasury", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			treasuryHandler.Routes(r)
+		})
+
+		// Invoicing & Receivables — session-authenticated.
+		r.Route("/invoices", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			invoicingHandler.Routes(r)
 		})
 
 		// Public checkout token verification (no auth) — outstanding for checkout-web mobile 420px

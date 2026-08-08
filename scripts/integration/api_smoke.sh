@@ -129,3 +129,13 @@ test "$(curl -s -o /tmp/risk_eval.json -w '%{http_code}' -X POST "$API/v1/risk/e
 grep -q 'findings' /tmp/risk_eval.json
 
 echo 'Docker API smoke suite passed'
+
+# ---- 15. Treasury + Invoicing. ----
+test "$(curl -s -o /tmp/treasury_pos.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/treasury/position")" = "200"
+grep -q 'accounts' /tmp/treasury_pos.json
+test "$(curl -s -o /tmp/invoices.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/invoices")" = "200"
+grep -q 'INV-SMOKE-001' /tmp/invoices.json
+test "$(curl -s -o /tmp/inv_aging.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/invoices/aging")" = "200"
+grep -q 'bucket' /tmp/inv_aging.json
+
+echo 'Docker API smoke suite passed'
