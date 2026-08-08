@@ -2,7 +2,9 @@ package link
 
 import (
 	"context"
+
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/shopspring/decimal"
 )
 
 type PgRepository struct{ pool *pgxpool.Pool }
@@ -20,7 +22,11 @@ func (r *PgRepository) GetByToken(ctx context.Context, token string) (*PaymentLi
 	var pl PaymentLink
 	var amt string
 	err := row.Scan(&pl.ID, &pl.MerchantID, &amt, &pl.Currency, &pl.Description, &pl.Status, &pl.PublicToken)
-	return &pl, err
+	if err != nil {
+		return nil, err
+	}
+	pl.Amount, _ = decimal.NewFromString(amt)
+	return &pl, nil
 }
 
 func (r *PgRepository) ListByMerchant(ctx context.Context, merchantID string) ([]PaymentLink, error) {

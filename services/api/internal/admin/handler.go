@@ -48,12 +48,10 @@ func (h *Handler) Review(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
 		return
 	}
+	// Only a real dashboard user can be recorded as the reviewer. API-key actors (no
+	// session user) map to a NULL reviewer_id (the key is captured via api_keys and the
+	// audit trail); the onboarding_reviews.reviewer_id FK requires a users row.
 	reviewerID := middleware.UserID(r.Context())
-	if reviewerID == "" {
-		if kID, ok := middleware.APIKeyIDFromContext(r.Context()); ok {
-			reviewerID = kID
-		}
-	}
 	res, err := h.repo.Review(r.Context(), merchantID, middleware.Role(r.Context()), reviewerID, req.Action, req.Comment)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {

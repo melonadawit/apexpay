@@ -383,9 +383,9 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(authMw.APIKeyAuth)
 
-			r.Route("/transactions", func(r chi.Router) {
-				paymentHandler.Routes(r)
-			})
+			// paymentHandler.Routes defines the full paths (/transactions/*, /dashboard),
+			// so mount it at the group root (not under an extra /transactions).
+			paymentHandler.Routes(r)
 
 			r.Route("/payment_links", func(r chi.Router) {
 				linkHandler.Routes(r)

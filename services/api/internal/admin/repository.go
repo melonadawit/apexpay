@@ -134,7 +134,7 @@ func (r *Repository) Review(ctx context.Context, merchantID, reviewerType, revie
 	if _, err := tx.Exec(ctx, `INSERT INTO onboarding_reviews
 		(id, merchant_id, kyc_profile_id, reviewer_id, reviewer_type, from_status, to_status, action, comments, internal_notes)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NULL)`,
-		reviewID, merchantID, kycID, reviewerID, reviewerTypeVal, currentKYCStatus, toStatus, action, comment); err != nil {
+		reviewID, merchantID, kycID, nilStr(reviewerID), reviewerTypeVal, currentKYCStatus, toStatus, action, comment); err != nil {
 		return ReviewResult{}, err
 	}
 
@@ -485,4 +485,11 @@ func maskAccount(acct string) string {
 		return "****"
 	}
 	return "****" + acct[len(acct)-4:]
+}
+
+func nilStr(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
 }
