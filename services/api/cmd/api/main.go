@@ -32,6 +32,7 @@ import (
 	"apexpay/internal/accounting"
 	"apexpay/internal/admin"
 	"apexpay/internal/analytics"
+	"apexpay/internal/assistant"
 	"apexpay/internal/auth"
 	"apexpay/internal/banking"
 	"apexpay/internal/bankverification"
@@ -168,6 +169,12 @@ func main() {
 	disputeHandler := dispute.NewHandler(dispute.NewRepository(pool))
 	loyaltyHandler := loyalty.NewHandler(loyalty.NewRepository(pool))
 	lendingHandler := lending.NewHandler(lending.NewRepository(pool))
+
+	// Apex Assistant — role-scoped read-only conversational agent (merchant + employee actors).
+	assistantRepo := assistant.NewRepository(pool)
+	assistantSvc := assistant.NewService(assistantRepo, assistant.BuildTools(buildAssistantReaders(pool)))
+	assistantHandler := assistant.NewHandler(assistantSvc, assistantRepo)
+
 	twoFAProvider := twofa.New()
 	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
 		sess, err := authSvc.Validate(ctx, token)
@@ -332,6 +339,12 @@ func main() {
 		r.Route("/accounting", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			accountingHandler.Routes(r)
+		})
+
+		// Apex Assistant (session-authenticated) — chat + thread history, read-only, role-scoped.
+		r.Route("/assistant", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			assistantHandler.Routes(r)
 		})
 
 		// Inventory & Sales (software POS) — session-authenticated.

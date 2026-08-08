@@ -183,4 +183,18 @@ test "$(curl -s -o /tmp/disputes.json -w '%{http_code}' -H "Authorization: Beare
 test "$(curl -s -o /tmp/loyalty.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/loyalty/accounts")" = "200"
 test "$(curl -s -o /tmp/lending.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/lending")" = "200"
 
+# ---- 19. Apex Assistant (session-authenticated, read-only, role-scoped). ----
+test "$(curl -s -o /tmp/assistant.json -w '%{http_code}' -X POST "$API/v1/assistant/chat" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"message":"what is my cash position and tpv today?"}')" = "200"
+grep -q '"thread_id"' /tmp/assistant.json
+grep -q '"answer"' /tmp/assistant.json
+grep -q '"actor":"merchant"' /tmp/assistant.json
+ASSISTANT_THREAD=$(sed -n 's/.*"thread_id":"\([^"]*\)".*/\1/p' /tmp/assistant.json | head -1)
+test -n "$ASSISTANT_THREAD"
+test "$(curl -s -o /tmp/assistant_thread.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/assistant/threads/$ASSISTANT_THREAD")" = "200"
+grep -q '"messages"' /tmp/assistant_thread.json
+# Assistant must be rejected without a session.
+test "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/v1/assistant/chat" -H 'Content-Type: application/json' -d '{"message":"hi"}' )" = "401"
+
 echo 'Docker API smoke suite passed'
