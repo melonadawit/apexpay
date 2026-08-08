@@ -50,6 +50,7 @@ import (
 	"apexpay/internal/routing"
 	"apexpay/internal/subscription"
 	"apexpay/internal/swarm"
+	"apexpay/internal/team"
 	"apexpay/internal/treasury"
 	"apexpay/internal/webhook"
 )
@@ -145,6 +146,7 @@ func main() {
 	riskHandler := risk.NewHandler(risk.NewService(risk.NewRepository(pool), risk.NewEngine()))
 	treasuryHandler := treasury.NewHandler(treasury.NewService(treasury.NewRepository(pool)))
 	invoicingHandler := invoicing.NewHandler(invoicing.NewService(invoicing.NewRepository(pool)))
+	teamHandler := team.NewHandler(team.NewRepository(pool))
 	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
 		sess, err := authSvc.Validate(ctx, token)
 		if err != nil {
@@ -246,6 +248,12 @@ func main() {
 		r.Route("/invoices", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			invoicingHandler.Routes(r)
+		})
+
+		// Team (multi-user roles) + approvals inbox — session-authenticated.
+		r.Route("/team", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			teamHandler.Routes(r)
 		})
 
 		// Public checkout token verification (no auth) — outstanding for checkout-web mobile 420px

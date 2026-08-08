@@ -80,6 +80,18 @@ function post<T>(path: string, body?: unknown): Promise<T> {
   })
 }
 
+function put<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>(path, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+}
+
+function del<T>(path: string): Promise<T> {
+  return request<T>(path, { method: "DELETE" })
+}
+
 export type CurrentAccount = {
   id: string
   account_number: string
@@ -266,6 +278,32 @@ export type PayoutLink = {
   created_at: string
 }
 
+// ---- HRIS ----
+export type Team = { id: string; name: string; department_id?: string; manager_id?: string; description?: string; created_at: string }
+export type Contract = { id: string; employee_id: string; contract_type: string; start_date: string; end_date?: string; salary_amount: string; salary_currency: string; probation_months: number; notice_days: number; status: string; doc_key?: string; signed_at?: string }
+export type Shift = { id: string; name: string; start_time: string; end_time: string; break_min: number }
+export type AttendanceClock = { id: string; employee_id: string; shift_id?: string; clock_date: string; punch_in?: string; punch_out?: string; hours: string; status: string; source: string; note?: string }
+export type OnboardingTask = { id: string; employee_id: string; task: string; category: string; due_in_days: number; status: string; assigned_to?: string }
+export type PerformanceReview = { id: string; employee_id: string; reviewer_id?: string; period: string; rating?: number; goals?: string; comments?: string; status: string }
+
+// ---- Risk ----
+export type RiskRule = { id: string; name: string; rule_type: string; parameters?: Record<string, unknown>; action: string; severity: string; enabled: boolean }
+export type RiskFlag = { id: string; entity_type: string; entity_id: string; rule_name: string; severity: string; action: string; reason: string; status: string; details?: Record<string, unknown> }
+export type RiskEval = { findings: Array<{ rule_name: string; severity: string; action: string; reason: string }>; block: boolean; approved: boolean }
+
+// ---- Treasury ----
+export type TreasuryPosition = { accounts: Array<{ account_id: string; account_number: string; account_name: string; account_type: string; bank_code: string; balance: string; available_balance: string; currency: string }>; total_balance: string; total_available: string; currency: string; generated_at: string }
+export type Transfer = { id: string; from_account_id: string; to_account_id: string; amount: string; currency: string; purpose?: string; status: string; created_at: string }
+export type Forecast = { id: string; forecast_date: string; horizon_days: number; inflow_today: string; inflow_30d: string; inflow_60d: string; inflow_90d: string; outflow_today: string; outflow_30d: string; outflow_60d: string; outflow_90d: string; net_90d: string; generated_at: string }
+
+// ---- Invoicing ----
+export type Invoice = { id: string; invoice_number: string; customer_name: string; customer_email?: string; issue_date: string; due_date: string; currency: string; subtotal: string; tax_amount: string; withholding_amount: string; total_amount: string; amount_paid: string; status: string; hosted_token?: string; dunning_stage: number; line_items: Array<{ description: string; quantity: string; unit_price: string; line_total: string }>; created_at: string }
+export type AgingBucket = { bucket: string; count: number; amount: string }
+
+// ---- Team & approvals ----
+export type Member = { user_id: string; email: string; name: string; role: string; permissions: string[]; created_at: string }
+export type Approval = { id: string; resource_type: string; resource_id: string; action: string; summary: string; amount: string; currency: string; status: string; required_approvals: number; approvals: Array<{ user_id: string; name: string; role: string; decision: string; decided_at: string }>; created_at: string }
+
 export const api = {
   // Dashboard
   summary: () => get<DashboardSummary>("dashboard"),
@@ -304,5 +342,55 @@ export const api = {
     createPayoutLink: (payload: unknown) => post<PayoutLink>("banking/payout_links", payload),
     relationshipManagers: () => get<Array<{ id: string; rm_user_id: string; status: string; assigned_at: string }>>("banking/relationship_managers"),
     accountingIntegrations: () => get<Array<{ id: string; provider: string; status: string; last_sync_status: string; last_sync_error: string; created_at: string }>>("banking/accounting_integrations"),
+  },
+
+  // Workforce OS (HRIS)
+  hris: {
+    teams: () => get<Team[]>("hris/teams"),
+    createTeam: (p: unknown) => post<Team>("hris/teams", p),
+    contracts: () => get<Contract[]>("hris/contracts"),
+    createContract: (p: unknown) => post<Contract>("hris/contracts", p),
+    shifts: () => get<Shift[]>("hris/shifts"),
+    attendance: (from = "", to = "") => get<AttendanceClock[]>(`hris/attendance${from ? `?from=${from}&to=${to}` : ""}`),
+    clockIn: (p: unknown) => post<AttendanceClock>("hris/attendance/clock-in", p),
+    clockOut: (p: unknown) => post<AttendanceClock>("hris/attendance/clock-out", p),
+    onboardingTasks: () => get<OnboardingTask[]>("hris/onboarding-tasks"),
+    reviews: () => get<PerformanceReview[]>("hris/performance-reviews"),
+  },
+
+  // Risk & Fraud
+  risk: {
+    rules: () => get<RiskRule[]>("risk/rules"),
+    createRule: (p: unknown) => post<RiskRule>("risk/rules", p),
+    flags: (status = "") => get<RiskFlag[]>(`risk/flags${status ? `?status=${status}` : ""}`),
+    evaluate: (p: unknown) => post<RiskEval>("risk/evaluate", p),
+  },
+
+  // Treasury
+  treasury: {
+    position: () => get<TreasuryPosition>("treasury/position"),
+    transfers: () => get<Transfer[]>("treasury/transfers"),
+    createTransfer: (p: unknown) => post<Transfer>("treasury/transfers", p),
+    forecast: () => get<Forecast>("treasury/forecast"),
+    generateForecast: () => post<Forecast>("treasury/forecast"),
+  },
+
+  // Invoicing
+  invoices: {
+    list: (status = "") => get<Invoice[]>(`invoices${status ? `?status=${status}` : ""}`),
+    create: (p: unknown) => post<Invoice>("invoices", p),
+    get: (id: string) => get<Invoice>(`invoices/${id}`),
+    aging: () => get<AgingBucket[]>("invoices/aging"),
+    issue: (id: string) => post<unknown>(`invoices/${id}/issue`),
+  },
+
+  // Team & approvals
+  team: {
+    members: () => get<Member[]>("team/members"),
+    invite: (p: unknown) => post<Member>("team/members", p),
+    updateRole: (userID: string, role: string) => put(`team/members/${userID}/role`, { role }),
+    remove: (userID: string) => del(`team/members/${userID}`),
+    approvals: (status = "") => get<Approval[]>(`team/approvals${status ? `?status=${status}` : ""}`),
+    decide: (id: string, decision: string) => post<unknown>(`team/approvals/${id}/decide`, { decision }),
   },
 }
