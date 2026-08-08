@@ -122,3 +122,12 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO invoices (id, merchant_id, invoice_number, customer_name, customer_email, issue_date, due_date, currency, subtotal, tax_amount, withholding_amount, total_amount, status)
 VALUES ('inv_smoke', 'mer_docker_smoke', 'INV-SMOKE-001', 'Smoke Customer', 'customer@example.et', current_date, current_date + interval '30 days', 'ETB', 1000.00, 150.00, 20.00, 1130.00, 'sent')
 ON CONFLICT (id) DO NOTHING;
+
+-- Compliance + fixed asset + analytics smoke seed.
+INSERT INTO compliance_console (merchant_id, onboarding_status, fayda_verified, risk_tier, overall_status)
+VALUES ('mer_docker_smoke', 'approved', true, 'medium', 'good')
+ON CONFLICT (merchant_id) DO NOTHING;
+
+INSERT INTO fixed_assets (id, merchant_id, asset_name, category, acquisition_date, cost, useful_life_years, depreciation_method, net_book_value)
+VALUES ('fa_smoke', 'mer_docker_smoke', 'Delivery Van', 'vehicle', current_date - interval '365 days', 1200000, 5, 'straight_line', 1200000)
+ON CONFLICT (id) DO NOTHING;

@@ -304,6 +304,24 @@ export type AgingBucket = { bucket: string; count: number; amount: string }
 export type Member = { user_id: string; email: string; name: string; role: string; permissions: string[]; created_at: string }
 export type Approval = { id: string; resource_type: string; resource_id: string; action: string; summary: string; amount: string; currency: string; status: string; required_approvals: number; approvals: Array<{ user_id: string; name: string; role: string; decision: string; decided_at: string }>; created_at: string }
 
+// ---- Compliance console ----
+export type ComplianceStatus = { merchant_id: string; onboarding_status: string; kyc_expiry_date?: string; license_expiry?: string; fayda_verified: boolean; risk_tier: string; next_erca_due?: string; next_pension_due?: string; annual_tax_filing_due?: string; aml_due?: string; overall_status: string; notes?: string }
+export type ComplianceCheck = { id: string; check_type: string; status: string; detail: string; checked_at: string }
+
+// ---- Notification preferences ----
+export type NotifyPref = { event_type: string; email: boolean; sms: boolean; push: boolean; in_app: boolean }
+
+// ---- Fixed assets ----
+export type FixedAsset = { id: string; asset_name: string; category: string; acquisition_date: string; cost: string; salvage_value: string; useful_life_years: number; depreciation_method: string; depreciation_rate?: string; accumulated_depreciation: string; net_book_value: string; status: string }
+export type DepreciationEntry = { id: string; asset_id: string; period: string; amount: string; book_value_after: string }
+
+// ---- Analytics ----
+export type RevenueDaily = { stat_date: string; revenue: string; tpv: string; payment_count: number; success_count: number; failed_count: number; refund_amount: string }
+export type Cohort = { cohort_month: string; customers: number; month1_retention: string; month2_retention: string; month3_retention: string; mrr: string }
+
+// ---- 2FA ----
+export type TwoFAEnroll = { secret: string; otpauth_url: string; issuer: string }
+
 export const api = {
   // Dashboard
   summary: () => get<DashboardSummary>("dashboard"),
@@ -392,5 +410,39 @@ export const api = {
     remove: (userID: string) => del(`team/members/${userID}`),
     approvals: (status = "") => get<Approval[]>(`team/approvals${status ? `?status=${status}` : ""}`),
     decide: (id: string, decision: string) => post<unknown>(`team/approvals/${id}/decide`, { decision }),
+  },
+
+  // Compliance console
+  compliance: {
+    status: () => get<ComplianceStatus>("compliance-console/status"),
+    checks: () => get<ComplianceCheck[]>("compliance-console/checks"),
+    addCheck: (p: unknown) => post<unknown>("compliance-console/checks", p),
+  },
+
+  // Notification preferences
+  notificationsPrefs: {
+    list: () => get<NotifyPref[]>("notifications/preferences"),
+    update: (p: NotifyPref) => put<NotifyPref>("notifications/preferences", p),
+  },
+
+  // Fixed assets
+  fixedAssets: {
+    list: () => get<FixedAsset[]>("fixed-assets"),
+    create: (p: unknown) => post<FixedAsset>("fixed-assets", p),
+    depreciate: (id: string) => post<DepreciationEntry>(`fixed-assets/${id}/depreciate`),
+    entries: () => get<DepreciationEntry[]>("fixed-assets/depreciation"),
+  },
+
+  // Analytics
+  analytics: {
+    revenue: () => get<RevenueDaily[]>("analytics/revenue"),
+    methods: () => get<Array<{ method: string; count: number; success: number; revenue: string }>>("analytics/methods"),
+    cohorts: () => get<Cohort[]>("analytics/cohorts"),
+  },
+
+  // Real 2FA (TOTP)
+  twofa: {
+    enroll: (account: string) => post<TwoFAEnroll>("2fa/enroll", { account }),
+    verify: (secret: string, code: string) => post<{ verified: boolean }>("2fa/verify", { secret, code }),
   },
 }

@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   LayoutDashboard, Receipt, RefreshCcw, Landmark,
-  Users, HandCoins, KeySquare, ShieldCheck, LogOut
+  Users, HandCoins, KeySquare, ShieldCheck, LogOut,
+  Building2, ShieldAlert, Wallet, FileText, UserCog, TrendingUp, Bell, Settings
 } from "lucide-react"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
@@ -20,9 +21,19 @@ export function Sidebar({ isCollapsed }: { isCollapsed?: boolean }) {
     { href: "/refunds",      icon: RefreshCcw,       label: t("Refunds",       "ተመላሽ ገንዘብ") },
     { href: "/payouts",      icon: Landmark,          label: t("Payouts",       "ወጪ ክፍያዎች") },
     { href: "/payroll",      icon: Users,             label: t("Payroll",       "የደሞዝ ክፍያ") },
+    { href: "/hris",         icon: Building2,         label: t("Workforce",     "የሰው ሃይል") },
     { href: "/subscriptions",icon: HandCoins,         label: t("Subscriptions", "ምዝገባዎች") },
+    { href: "/banking",      icon: Wallet,            label: t("Banking",       "ባንክ") },
+    { href: "/treasury",     icon: TrendingUp,        label: t("Treasury",      "ግምጃ") },
+    { href: "/invoices",     icon: FileText,          label: t("Invoices",      "ኢንቮይስ") },
+    { href: "/risk",         icon: ShieldAlert,       label: t("Risk & Fraud",  "አደጋ") },
+    { href: "/analytics",    icon: TrendingUp,        label: t("Analytics",     "ትንታኔ") },
+    { href: "/fixed-assets", icon: Building2,         label: t("Fixed Assets",  "ቋሚ ንብረት") },
+    { href: "/compliance-console", icon: ShieldCheck, label: t("Compliance",   "ተገዢነት") },
+    { href: "/team",         icon: UserCog,           label: t("Team",          "ቡድን") },
+    { href: "/settings/notifications", icon: Bell,    label: t("Notifications", "ማሳወቂያ") },
+    { href: "/settings/2fa", icon: ShieldCheck,       label: t("2FA Security",  "ደህንነት") },
     { href: "/developers",   icon: KeySquare,         label: t("Developers",    "አልሚዎች") },
-    { href: "/compliance",   icon: ShieldCheck,       label: t("Compliance",    "ተገዢነት") },
   ]
 
   return (

@@ -139,3 +139,15 @@ test "$(curl -s -o /tmp/inv_aging.json -w '%{http_code}' -H "Authorization: Bear
 grep -q 'bucket' /tmp/inv_aging.json
 
 echo 'Docker API smoke suite passed'
+
+# ---- 16. Compliance console, fixed assets, analytics, 2FA. ----
+test "$(curl -s -o /tmp/compliance_status.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/compliance-console/status")" = "200"
+grep -q 'overall_status' /tmp/compliance_status.json
+test "$(curl -s -o /tmp/fixed_assets.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/fixed-assets")" = "200"
+grep -q 'Delivery Van' /tmp/fixed_assets.json
+test "$(curl -s -o /tmp/analytics.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/analytics/revenue")" = "200"
+test "$(curl -s -o /tmp/2fa.json -w '%{http_code}' -X POST "$API/v1/2fa/enroll" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' -d '{"account":"demo@apexpay.et"}')" = "200"
+grep -q 'secret' /tmp/2fa.json
+
+echo 'Docker API smoke suite passed'

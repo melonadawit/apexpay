@@ -30,20 +30,25 @@ import (
 	"apexpay/internal/platform/storage"
 
 	"apexpay/internal/admin"
+	"apexpay/internal/analytics"
 	"apexpay/internal/auth"
 	"apexpay/internal/banking"
 	"apexpay/internal/bankverification"
 	"apexpay/internal/checkout"
+	"apexpay/internal/compliance"
 	"apexpay/internal/connector"
 	"apexpay/internal/fayda"
+	"apexpay/internal/fixedasset"
 	"apexpay/internal/hris"
 	"apexpay/internal/invoicing"
 	"apexpay/internal/ledger"
 	"apexpay/internal/link"
+	"apexpay/internal/notify"
 	"apexpay/internal/onboarding"
 	"apexpay/internal/payment"
 	"apexpay/internal/payout"
 	"apexpay/internal/payroll"
+	"apexpay/internal/platform/twofa"
 	"apexpay/internal/reconciliation"
 	"apexpay/internal/refund"
 	"apexpay/internal/risk"
@@ -147,6 +152,11 @@ func main() {
 	treasuryHandler := treasury.NewHandler(treasury.NewService(treasury.NewRepository(pool)))
 	invoicingHandler := invoicing.NewHandler(invoicing.NewService(invoicing.NewRepository(pool)))
 	teamHandler := team.NewHandler(team.NewRepository(pool))
+	complianceHandler := compliance.NewHandler(compliance.NewRepository(pool))
+	notifyHandler := notify.NewHandler(notify.NewRepository(pool))
+	fixedAssetHandler := fixedasset.NewHandler(fixedasset.NewRepository(pool))
+	analyticsHandler := analytics.NewHandler(analytics.NewRepository(pool))
+	twoFAProvider := twofa.New()
 	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
 		sess, err := authSvc.Validate(ctx, token)
 		if err != nil {
@@ -220,6 +230,32 @@ func main() {
 			})
 		})
 
+		// Real TOTP 2FA (RFC 6238 via pquerna/otp) — enrollment + verification.
+		r.Route("/2fa", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			r.Post("/enroll", func(w http.ResponseWriter, r *http.Request) {
+				var req struct {
+					Account string `json:"account"`
+				}
+				_ = json.NewDecoder(r.Body).Decode(&req)
+				secret, url, err := twoFAProvider.GenerateSecret(req.Account)
+				if err != nil {
+					pkghttp.WriteErrorWithBody(w, r, 500, "2fa_error", err.Error())
+					return
+				}
+				pkghttp.WriteJSON(w, r, 200, map[string]string{"secret": secret, "otpauth_url": url, "issuer": "ApexPay"})
+			})
+			r.Post("/verify", func(w http.ResponseWriter, r *http.Request) {
+				var req struct {
+					Secret string `json:"secret"`
+					Code   string `json:"code"`
+				}
+				_ = json.NewDecoder(r.Body).Decode(&req)
+				ok := twoFAProvider.VerifyCode(req.Secret, req.Code)
+				pkghttp.WriteJSON(w, r, 200, map[string]bool{"verified": ok})
+			})
+		})
+
 		// Dashboard banking modules (session-authenticated, like the dashboard pages).
 		r.Route("/banking", func(r chi.Router) {
 			r.Use(sessionAuthMw)
@@ -254,6 +290,30 @@ func main() {
 		r.Route("/team", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			teamHandler.Routes(r)
+		})
+
+		// Compliance console (session-authenticated dashboard module).
+		r.Route("/compliance-console", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			complianceHandler.Routes(r)
+		})
+
+		// Notification preferences (session-authenticated).
+		r.Route("/notifications/preferences", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			notifyHandler.Routes(r)
+		})
+
+		// Fixed assets & depreciation (session-authenticated).
+		r.Route("/fixed-assets", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			fixedAssetHandler.Routes(r)
+		})
+
+		// Analytics & cohort (session-authenticated).
+		r.Route("/analytics", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			analyticsHandler.Routes(r)
 		})
 
 		// Public checkout token verification (no auth) — outstanding for checkout-web mobile 420px
