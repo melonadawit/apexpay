@@ -128,3 +128,72 @@ type ForexRate struct {
 	Source       string `json:"source"`
 	LastUpdated  string `json:"last_updated_at"`
 }
+
+// ---- Create request types (action-oriented modules) ----
+
+type VendorInvoice struct {
+	ID                   string  `json:"id"`
+	VendorID             string  `json:"vendor_id,omitempty"`
+	InvoiceNumber        string  `json:"invoice_number"`
+	InvoiceDate          string  `json:"invoice_date"`
+	DueDate              string  `json:"due_date,omitempty"`
+	Amount               string  `json:"amount"`
+	Currency             string  `json:"currency"`
+	TaxAmount            string  `json:"tax_amount"`
+	WithholdingTaxAmount string  `json:"withholding_tax_amount"`
+	TotalAmount          string  `json:"total_amount"`
+	Status               string  `json:"status"`
+	OCRConfidence        float64 `json:"ocr_confidence"`
+	VendorName           string  `json:"vendor_name,omitempty"`
+	FileKey              string  `json:"file_key,omitempty"`
+	CreatedAt            string  `json:"created_at"`
+}
+
+type PettyCashBudget struct {
+	ID              string `json:"id"`
+	BudgetName      string `json:"budget_name"`
+	Amount          string `json:"amount"`
+	AssignedTo      string `json:"assigned_to,omitempty"`
+	Status          string `json:"status"`
+	SpentAmount     string `json:"spent_amount"`
+	RemainingAmount string `json:"remaining_amount"`
+	CreatedAt       string `json:"created_at"`
+}
+
+type PettyCashExpense struct {
+	ID          string `json:"id"`
+	BudgetID    string `json:"budget_id"`
+	Amount      string `json:"amount"`
+	Description string `json:"description"`
+	ReceiptKey  string `json:"receipt_file_key,omitempty"`
+	Status      string `json:"status"`
+	CreatedAt   string `json:"created_at"`
+}
+
+type TaxPayment struct {
+	ID               string `json:"id"`
+	TaxType          string `json:"tax_type"`
+	Amount           string `json:"amount"`
+	Currency         string `json:"currency"`
+	PeriodMonth      *int   `json:"period_month,omitempty"`
+	PeriodYear       *int   `json:"period_year,omitempty"`
+	DueDate          string `json:"due_date,omitempty"`
+	Status           string `json:"status"`
+	PaymentReference string `json:"payment_reference,omitempty"`
+	PaidAt           string `json:"paid_at,omitempty"`
+	CreatedAt        string `json:"created_at"`
+}
+
+type PayoutLink struct {
+	ID             string `json:"id"`
+	Amount         string `json:"amount"`
+	Currency       string `json:"currency"`
+	PublicToken    string `json:"public_token"`
+	RecipientName  string `json:"recipient_name,omitempty"`
+	RecipientPhone string `json:"recipient_phone,omitempty"`
+	RecipientEmail string `json:"recipient_email,omitempty"`
+	Purpose        string `json:"purpose,omitempty"`
+	Status         string `json:"status"`
+	ExpiresAt      string `json:"expires_at"`
+	CreatedAt      string `json:"created_at"`
+}

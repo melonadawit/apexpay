@@ -199,6 +199,73 @@ export type BankVerification = {
   created_at: string
 }
 
+export type VendorInvoice = {
+  id: string
+  vendor_id?: string
+  invoice_number: string
+  invoice_date: string
+  due_date?: string
+  amount: string
+  currency: string
+  tax_amount: string
+  withholding_tax_amount: string
+  total_amount: string
+  status: string
+  ocr_confidence: number
+  vendor_name?: string
+  file_key?: string
+  created_at: string
+}
+
+export type PettyCashBudget = {
+  id: string
+  budget_name: string
+  amount: string
+  assigned_to?: string
+  status: string
+  spent_amount: string
+  remaining_amount: string
+  created_at: string
+}
+
+export type PettyCashExpense = {
+  id: string
+  budget_id: string
+  amount: string
+  description: string
+  receipt_file_key?: string
+  status: string
+  created_at: string
+}
+
+export type TaxPayment = {
+  id: string
+  tax_type: string
+  amount: string
+  currency: string
+  period_month?: number
+  period_year?: number
+  due_date?: string
+  status: string
+  payment_reference?: string
+  paid_at?: string
+  created_at: string
+}
+
+export type PayoutLink = {
+  id: string
+  amount: string
+  currency: string
+  public_token: string
+  recipient_name?: string
+  recipient_phone?: string
+  recipient_email?: string
+  purpose?: string
+  status: string
+  expires_at: string
+  created_at: string
+}
+
 export const api = {
   // Dashboard
   summary: () => get<DashboardSummary>("dashboard"),
@@ -225,5 +292,17 @@ export const api = {
     escrow: () => get<EscrowAccount[]>("banking/escrow"),
     supportTickets: () => get<SupportTicket[]>("banking/support_tickets"),
     bankVerifications: () => get<BankVerification[]>("banking/bank_verifications"),
+    vendorInvoices: () => get<VendorInvoice[]>("banking/vendor_invoices"),
+    createVendorInvoice: (payload: unknown) => post<VendorInvoice>("banking/vendor_invoices", payload),
+    pettyCashBudgets: () => get<PettyCashBudget[]>("banking/petty_cash_budgets"),
+    createPettyCashBudget: (payload: unknown) => post<PettyCashBudget>("banking/petty_cash_budgets", payload),
+    pettyCashExpenses: () => get<PettyCashExpense[]>("banking/petty_cash_expenses"),
+    createPettyCashExpense: (payload: unknown) => post<PettyCashExpense>("banking/petty_cash_expenses", payload),
+    taxPayments: () => get<TaxPayment[]>("banking/tax_payments"),
+    createTaxPayment: (payload: unknown) => post<TaxPayment>("banking/tax_payments", payload),
+    payoutLinks: () => get<PayoutLink[]>("banking/payout_links"),
+    createPayoutLink: (payload: unknown) => post<PayoutLink>("banking/payout_links", payload),
+    relationshipManagers: () => get<Array<{ id: string; rm_user_id: string; status: string; assigned_at: string }>>("banking/relationship_managers"),
+    accountingIntegrations: () => get<Array<{ id: string; provider: string; status: string; last_sync_status: string; last_sync_error: string; created_at: string }>>("banking/accounting_integrations"),
   },
 }

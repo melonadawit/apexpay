@@ -1,25 +1,37 @@
 "use client"
-import * as React from "react"
-
-function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
-function Badge({ children, variant = "default" }: any) {
-  const map: any = { default: "bg-neutral-100", success: "bg-green-500/15 text-green-700 border", warning: "bg-amber-500/15 text-amber-700 border" }
-  return <span className={`px-2 py-0.5 rounded-full text-[11px] border ${map[variant]}`}>{children}</span>
-}
+import { useRequireAuth } from "@/lib/api/require-auth"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 export default function RelationshipManagersPage() {
+  const { checking } = useRequireAuth()
+  const { data, loading } = useData(() => api.banking.relationshipManagers(), [])
+
+  if (checking) return <Centered>Checking session…</Centered>
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Relationship Managers • Dedicated RM • Priority Support • One RM Per Merchant • Outstanding • RazorpayX Parity • P0 • RM • SLA • Support Tickets</h1>
-        <Card className="p-6">
-          <p className="text-sm">Dedicated Relationship Manager per RazorpayX: Dedicated Relationship Manager to help you with a seamless banking experience, Priority Support Services Benefit from prompt issue resolution and priority support ensuring smooth banking operations. Merchant ID mer_01H • RM User ID user_rm_001 • Assigned At 2026-01-15 • Assigned By Admin • Status Active • One RM Per Merchant • Unique Merchant ID • Outstanding per RazorpayX.</p>
-          <div className="mt-4 rounded-xl border p-4">
-            <p className="font-medium text-sm">RM: Abebe Kebede • Senior RM • abebe@apextrading.et • Phone +251911111111 • Assigned At 2026-01-15 • Assigned By Admin • Status Active • One RM Per Merchant</p>
-            <p className="text-[11px] text-muted-foreground mt-1">Merchant ID mer_01H • RM User ID user_rm_001 • Assigned At 2026-01-15T10:00:00Z • Assigned By Admin • Status Active • One RM Per Merchant • Unique Merchant ID • One RM Per Merchant • Outstanding per RazorpayX Dedicated Relationship Manager + Priority Support</p>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold">Relationship Managers • የግንኙነት አስተዳዳሪዎች</h1>
+        <div className="rounded-2xl border bg-card overflow-hidden">
+          <div className="grid grid-cols-4 gap-2 bg-muted p-3 text-[11px] font-semibold">
+            <span>ID</span><span>RM User</span><span>Status</span><span>Assigned</span>
           </div>
-        </Card>
+          {loading && <p className="p-4 text-sm text-muted-foreground">Loading…</p>}
+          {(data ?? []).map((rm) => (
+            <div key={rm.id} className="grid grid-cols-4 gap-2 p-3 border-t text-xs hover:bg-muted/50">
+              <span className="font-mono text-[10px]">{rm.id}</span>
+              <span>{rm.rm_user_id}</span>
+              <span className={`px-2 py-0.5 rounded-full text-[11px] ${rm.status === "active" ? "bg-green-500/15 text-green-700" : "bg-amber-500/15 text-amber-700"}`}>{rm.status}</span>
+              <span>{rm.assigned_at}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
+}
+
+function Centered({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-screen flex items-center justify-center bg-neutral-50 text-sm text-muted-foreground">{children}</div>
 }

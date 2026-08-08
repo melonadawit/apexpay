@@ -1,62 +1,107 @@
 "use client"
 import * as React from "react"
-
-function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
-function Badge({ children, variant = "default" }: any) {
-  const map: any = { default: "bg-neutral-100", success: "bg-green-500/15 text-green-700 border", warning: "bg-amber-500/15 text-amber-700 border" }
-  return <span className={`px-2 py-0.5 rounded-full text-[11px] border ${map[variant]}`}>{children}</span>
-}
-
-const mockBudgets = [
-  { id: "pcb_001", budget_name: "Office Supplies • የቢሮ እቃዎች", amount: "50000", assigned_to: "Finance Manager", status: "active", spent_amount: "15000", remaining_amount: "35000", created_at: "2026-07-01" },
-  { id: "pcb_002", budget_name: "Marketing • ግብይት", amount: "100000", assigned_to: "Marketing Manager", status: "active", spent_amount: "60000", remaining_amount: "40000", created_at: "2026-07-05" },
-]
-const mockExpenses = [
-  { id: "pce_001", budget_id: "pcb_001", amount: "1500", description: "Office supplies - printer ink", receipt_file_key: "petty_cash/receipt_001.jpg", receipt_file_hash: "hash_pce_001", status: "paid", approved_by: "Finance Manager", created_by: "Admin" },
-]
+import { useRequireAuth } from "@/lib/api/require-auth"
+import { api, type PettyCashBudget, type PettyCashExpense } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 export default function PettyCashPage() {
+  const { checking } = useRequireAuth()
+  const { data: budgets, refetch: refetchBudgets } = useData(() => api.banking.pettyCashBudgets(), [])
+  const { data: expenses, refetch: refetchExpenses } = useData(() => api.banking.pettyCashExpenses(), [])
+
+  const [budgetName, setBudgetName] = React.useState("")
+  const [budgetAmount, setBudgetAmount] = React.useState("")
+  const [budgetErr, setBudgetErr] = React.useState("")
+  const [creatingBudget, setCreatingBudget] = React.useState(false)
+
+  const [budgetID, setBudgetID] = React.useState("")
+  const [expenseAmount, setExpenseAmount] = React.useState("")
+  const [expenseDesc, setExpenseDesc] = React.useState("")
+  const [expenseErr, setExpenseErr] = React.useState("")
+  const [creatingExpense, setCreatingExpense] = React.useState(false)
+
+  if (checking) return <Centered>Checking session…</Centered>
+
+  const createBudget = async () => {
+    setCreatingBudget(true); setBudgetErr("")
+    try {
+      await api.banking.createPettyCashBudget({ budget_name: budgetName, amount: budgetAmount })
+      setBudgetName(""); setBudgetAmount(""); refetchBudgets()
+    } catch (e) { setBudgetErr((e as Error).message) } finally { setCreatingBudget(false) }
+  }
+
+  const createExpense = async () => {
+    setCreatingExpense(true); setExpenseErr("")
+    try {
+      await api.banking.createPettyCashExpense({ budget_id: budgetID, amount: expenseAmount, description: expenseDesc })
+      setExpenseAmount(""); setExpenseDesc(""); refetchExpenses()
+    } catch (e) { setExpenseErr((e as Error).message) } finally { setCreatingExpense(false) }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold">Petty Cash • ጥቃቅን ጥሬ ገንዘብ • Budgets & Expenses • Track Petty Cash Budgets and Make Payments from Assigned Budgets • Add Bills & Receipt as Attachments to Petty Cash Expenses • RazorpayX Parity • P0</h1>
-            <p className="text-sm text-muted-foreground mt-2">Track petty cash budgets and make payments from assigned budgets add bills & receipt as attachments to petty cash expenses • Petty cash budgets id merchant_id budget_name amount assigned_to status active/closed/exhausted spent_amount remaining_amount created_by created_at index merchant status + petty cash expenses id budget_id merchant_id amount description receipt_file_key receipt_file_hash status pending/approved/rejected/paid approved_by created_by created_at index budget status • Outstanding modern UI glassmorphic Recharts • RazorpayX — Track petty cash budgets and make payments from assigned budgets • Add bills & receipt as attachments to petty cash expenses • Bug fixes and app performance improvements</p>
-          </div>
-          <button className="rounded-xl bg-primary text-white h-10 px-6 text-xs">+ Create Petty Cash Budget • Budget Name Amount Assigned To Status Active/Closed/Exhausted Spent Remaining • Outstanding</button>
+        <div>
+          <h1 className="text-3xl font-bold">Petty Cash • አነስተኛ ገንዘብ</h1>
+          <p className="text-sm text-muted-foreground mt-2">Track petty cash budgets and expenses with receipts.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h3 className="font-semibold">Petty Cash Budgets • Budget Name Amount Assigned To Status Active/Closed/Exhausted Spent Amount Remaining Amount • Outstanding • Track Petty Cash Budgets and Make Payments from Assigned Budgets</h3>
-            <div className="mt-4 space-y-3">
-              {mockBudgets.map(b => (
-                <div key={b.id} className="rounded-xl border p-4 hover:bg-muted/50">
-                  <div className="flex justify-between"><p className="font-medium text-sm">{b.budget_name} • {b.assigned_to}</p><Badge variant={b.status==="active" ? "success" : "warning"}>{b.status}</Badge></div>
-                  <p className="text-[11px] text-muted-foreground mt-1">Amount {b.amount} ETB • Spent {b.spent_amount} • Remaining {b.remaining_amount} • Created {b.created_at} • Assigned To {b.assigned_to} • Status {b.status} • Outstanding per RazorpayX track petty cash budgets and make payments from assigned budgets</p>
-                  <div className="mt-2 h-2 rounded-full bg-neutral-100 overflow-hidden"><div className="h-full bg-primary rounded-full" style={{ width: `${(parseInt(b.spent_amount)/parseInt(b.amount))*100}%` }} /></div>
+          <div className="rounded-2xl border bg-card p-6 space-y-3">
+            <h3 className="font-semibold">Budgets</h3>
+            <div className="flex gap-2">
+              <input value={budgetName} onChange={(e) => setBudgetName(e.target.value)} placeholder="Budget name" className="flex-1 rounded-xl border h-11 px-3 text-sm" />
+              <input value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)} placeholder="Amount" className="w-28 rounded-xl border h-11 px-3 text-sm" />
+              <button onClick={createBudget} disabled={creatingBudget} className="rounded-xl bg-primary text-white px-4 text-sm disabled:opacity-50">Add</button>
+            </div>
+            {budgetErr && <p className="text-sm text-red-600">{budgetErr}</p>}
+            <div className="space-y-2">
+              {(budgets ?? []).map((b) => (
+                <div key={b.id} className="rounded-xl border p-3">
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm font-medium">{b.budgetName}</p>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-500/15 text-green-700">{b.status}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ETB {b.amount} • Spent ETB {b.spent_amount} • Remaining ETB {b.remaining_amount}
+                  </p>
                 </div>
               ))}
-              <button className="w-full rounded-xl border border-dashed h-10 text-xs">+ Create Petty Cash Budget • Budget Name Office Supplies Amount 50000 Assigned To Finance Manager Status Active Spent 0 Remaining 50000 Created By Finance Manager • Outstanding • Track Petty Cash Budgets and Make Payments from Assigned Budgets</button>
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <h3 className="font-semibold">Petty Cash Expenses • Amount Description Receipt File Key Receipt File Hash Status Pending/Approved/Rejected/Paid • Add Bills & Receipt as Attachments to Petty Cash Expenses • Outstanding • DocumentViewerOCR Side-by-side OCR</h3>
-            <div className="mt-4 space-y-3">
-              {mockExpenses.map(e => (
-                <div key={e.id} className="rounded-xl border p-4 hover:bg-muted/50">
-                  <div className="flex justify-between"><p className="font-medium text-sm">{e.description} • {e.amount} ETB</p><Badge variant={e.status==="paid" ? "success" : "warning"}>{e.status}</Badge></div>
-                  <p className="text-[11px] text-muted-foreground mt-1">Budget ID {e.budget_id} • Amount {e.amount} • Receipt File Key {e.receipt_file_key} • Hash {e.receipt_file_hash} • Status {e.status} • Approved By {e.approved_by} • Created By {e.created_by} • Outstanding per RazorpayX add bills & receipt as attachments to petty cash expenses track petty cash budgets and make payments from assigned budgets • Receipt Preview Thumbs • DocumentViewerOCR side-by-side OCR • Hash Integrity • Progress Donut • Outstanding Modern • Mercury/Linear inspiration • Glassmorphic</p>
-                  <div className="mt-2 flex gap-2"><div className="h-16 w-16 rounded-xl bg-neutral-100 border flex items-center justify-center text-[10px]">🖼️ JPG<br/>Expense<br/>Receipt</div><div><p className="text-[11px]">Receipt File Key {e.receipt_file_key} • Hash {e.receipt_file_hash} • MinIO presigned 15m • Encrypted SSE-S3 • 7y retention NBE • File key petty_cash/receipt_001.jpg • Hash integrity • ClamAV clean • Preview thumbs • DocumentViewer.tsx side-by-side OCR</p><button className="mt-1 rounded-xl border h-7 px-3 text-[10px]">View Receipt • MinIO presigned 15m • Thumb preview • DocumentViewer.tsx</button></div></div>
+          <div className="rounded-2xl border bg-card p-6 space-y-3">
+            <h3 className="font-semibold">Expenses</h3>
+            <div className="space-y-2">
+              <select value={budgetID} onChange={(e) => setBudgetID(e.target.value)} className="w-full rounded-xl border h-11 px-3 text-sm">
+                <option value="">Select budget…</option>
+                {(budgets ?? []).map((b) => <option key={b.id} value={b.id}>{b.budgetName}</option>)}
+              </select>
+              <div className="flex gap-2">
+                <input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder="Amount" className="w-28 rounded-xl border h-11 px-3 text-sm" />
+                <input value={expenseDesc} onChange={(e) => setExpenseDesc(e.target.value)} placeholder="Description" className="flex-1 rounded-xl border h-11 px-3 text-sm" />
+                <button onClick={createExpense} disabled={creatingExpense} className="rounded-xl bg-primary text-white px-4 text-sm disabled:opacity-50">Add</button>
+              </div>
+            </div>
+            {expenseErr && <p className="text-sm text-red-600">{expenseErr}</p>}
+            <div className="space-y-2">
+              {(expenses ?? []).map((e) => (
+                <div key={e.id} className="rounded-xl border p-3 flex justify-between">
+                  <div>
+                    <p className="text-sm font-medium">ETB {e.amount} • {e.description}</p>
+                    <p className="text-xs text-muted-foreground">Budget {e.budget_id}</p>
+                  </div>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700">{e.status}</span>
                 </div>
               ))}
-              <button className="w-full rounded-xl border border-dashed h-10 text-xs">+ Create Petty Cash Expense • Budget ID pcb_001 • Amount 1500 • Description Office supplies - printer ink • Receipt File Key petty_cash/receipt_001.jpg • Hash hash_pce_001 • Status pending • Approved By Finance Manager • Created By Admin • Outstanding • Add Bills & Receipt as Attachments to Petty Cash Expenses • Track Petty Cash Budgets and Make Payments from Assigned Budgets</button>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
   )
+}
+
+function Centered({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-screen flex items-center justify-center bg-neutral-50 text-sm text-muted-foreground">{children}</div>
 }
