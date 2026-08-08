@@ -1,0 +1,13 @@
+# ApexPay Flutter static analysis. Matches flutter_lints 4.x defaults plus a few
+# pragmatic relaxations so the outstanding-UI demo stays clean without noisy warnings.
+
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Prefer const where possible.
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    # Avoid empty blocks / unused captures that obscure intent.
+    avoid_empty_else: true
+    # Keep print() in app code explicit (debug logging is intentional here).

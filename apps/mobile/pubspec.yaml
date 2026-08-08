@@ -46,15 +46,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/
-    - assets/lottie/
-  fonts:
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
-        - asset: assets/fonts/Inter-Bold.ttf
-          weight: 700
-    - family: NotoSansEthiopic
-      fonts:
-        - asset: assets/fonts/NotoSansEthiopic-Regular.ttf
+  # Fonts are provided by the `google_fonts` package at runtime (see app_theme.dart),
+  # so no bundled .ttf assets are required and the build no longer fails on missing
+  # files. Re-add `assets:`/`fonts:` entries here only once real assets are committed.

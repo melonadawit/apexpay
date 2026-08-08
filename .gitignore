@@ -27,3 +27,13 @@ miniodata/
 
 # TypeScript compiler build cache
 *.tsbuildinfo
+
+# Flutter / Dart build artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.g.dart
+*.freezed.dart
+*.gen.dart
+google-services.json
+GoogleService-Info.plist
