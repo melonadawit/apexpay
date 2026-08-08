@@ -293,4 +293,14 @@ test "$(curl -s -o /tmp/tx_post.json -w '%{http_code}' -X POST "$API/v1/tax/sche
 test "$(curl -s -o /tmp/tx_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
 grep -q 'liability:tax' /tmp/tx_tb.json
 
+# ---- 25. Multi-currency FX revaluation posts unrealized FX gain/loss to the GL. ----
+# Revalue foreign-currency accounts for the current period (200). The USD account was
+# booked at 50.0 and revalues at 57.5, producing a recognized FX gain.
+test "$(curl -s -o /tmp/fx.json -w '%{http_code}' -X POST "$API/v1/fx/revalue" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' -d '{}')" = "200"
+grep -q '"currency":"USD"' /tmp/fx.json
+# The GL trial balance now contains the fx gain/loss account (posted).
+test "$(curl -s -o /tmp/fx_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
+grep -qE 'fx_gain|fx_loss' /tmp/fx_tb.json
+
 echo 'Docker API smoke suite passed'

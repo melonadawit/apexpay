@@ -55,6 +55,8 @@ func (r *Repository) EnsureOperatingBook(ctx context.Context, merchantID string)
 		{"expense:operating", "Operating Expenses", "debit"},
 		{"expense:admin", "Admin & Overhead", "debit"},
 		{"expense:depreciation", "Depreciation", "debit"},
+		{"revenue:fx_gain", "FX Gain", "credit"},
+		{"expense:fx_loss", "FX Loss", "debit"},
 	}
 	for i, a := range accounts {
 		acid := fmt.Sprintf("%s_%d", bookID, i+1)

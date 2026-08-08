@@ -69,7 +69,9 @@ VALUES
   ('la_docker_cogs', 'book_docker_smoke', 'expense:cost_of_sales', 'Cost of Sales', 'debit'),
   ('la_docker_inv', 'book_docker_smoke', 'asset:inventory', 'Inventory', 'debit'),
   ('la_docker_tax', 'book_docker_smoke', 'liability:tax', 'Tax Payable', 'credit'),
-  ('la_docker_ar', 'book_docker_smoke', 'asset:receivable', 'Accounts Receivable', 'debit')
+  ('la_docker_ar', 'book_docker_smoke', 'asset:receivable', 'Accounts Receivable', 'debit'),
+  ('la_docker_fxgain', 'book_docker_smoke', 'revenue:fx_gain', 'FX Gain', 'credit'),
+  ('la_docker_fxloss', 'book_docker_smoke', 'expense:fx_loss', 'FX Loss', 'debit')
 ON CONFLICT (book_id, code) DO NOTHING;
 
 -- Product with a known cost price so order COGS posts to the GL in the smoke suite.
@@ -122,6 +124,18 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO current_accounts (id, merchant_id, account_number, account_name, account_type, currency, bank_code, partner_bank_name, status, balance, available_balance)
 VALUES ('ca_smoke', 'mer_docker_smoke', 'ETB-CBE-7778889990', 'Docker Smoke PLC', 'current', 'ETB', 'CBE', 'Commercial Bank of Ethiopia', 'active', 125000.00, 125000.00)
+ON CONFLICT (id) DO NOTHING;
+
+-- Foreign-currency account so multi-currency revaluation can be exercised in smoke.
+-- Held USD: 10,000 at booked cost; the ETB-equivalent is revalued against forex_rates.
+INSERT INTO current_accounts (id, merchant_id, account_number, account_name, account_type, currency, bank_code, partner_bank_name, status, balance, available_balance)
+VALUES ('ca_smoke_usd', 'mer_docker_smoke', 'USD-CBE-1000001', 'Docker Smoke USD', 'current', 'USD', 'CBE', 'Commercial Bank of Ethiopia', 'active', 10000.00, 10000.00)
+ON CONFLICT (id) DO NOTHING;
+
+-- Prior FX revaluation baseline for the USD account at an older rate (50.0 ETB/USD) so the
+-- current-period revaluation (57.5) produces a recognized unrealized FX gain in the smoke.
+INSERT INTO fx_revaluations (id, merchant_id, period, account_id, currency, amount_fx, rate, amount_etb, fx_gain)
+VALUES ('fxr_baseline_usd', 'mer_docker_smoke', '2026-07', 'ca_smoke_usd', 'USD', 10000, 50.00, 500000.00, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- HRIS + Risk smoke seed.

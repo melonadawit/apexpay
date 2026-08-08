@@ -42,6 +42,7 @@ import (
 	"apexpay/internal/dispute"
 	"apexpay/internal/fayda"
 	"apexpay/internal/fixedasset"
+	"apexpay/internal/fxreval"
 	"apexpay/internal/hris"
 	"apexpay/internal/inventory"
 	"apexpay/internal/invoicing"
@@ -171,6 +172,7 @@ func main() {
 	invoicingSvc := invoicing.NewService(invoicing.NewRepository(pool))
 	invoicingSvc.SetTaxRecorder(taxSvc)
 	invoicingHandler := invoicing.NewHandler(invoicingSvc)
+	fxrevalHandler := fxreval.NewHandler(fxreval.NewService(fxreval.NewRepository(pool), accountingRepo, ledgerRepo))
 	fixedAssetSvc := fixedasset.NewService(fixedasset.NewRepository(pool), accountingRepo, ledgerRepo)
 	fixedAssetHandler := fixedasset.NewHandler(fixedasset.NewRepository(pool), fixedAssetSvc)
 	inventorySvc := inventory.NewService(inventory.NewRepository(pool), accountingRepo, ledgerRepo)
@@ -307,6 +309,12 @@ func main() {
 		r.Route("/tax", func(r chi.Router) {
 			r.Use(sessionAuthMw)
 			taxHandler.Routes(r)
+		})
+
+		// Multi-currency FX revaluation (session-authenticated).
+		r.Route("/fx/revalue", func(r chi.Router) {
+			r.Use(sessionAuthMw)
+			fxrevalHandler.Routes(r)
 		})
 
 		// Treasury & Cash Management — session-authenticated.
