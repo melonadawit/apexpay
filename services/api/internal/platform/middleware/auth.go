@@ -44,6 +44,17 @@ func APIKeyIDFromContext(ctx context.Context) (string, bool) {
 	return keyID, ok && keyID != ""
 }
 
+func RoleFromContext(ctx context.Context) (string, bool) {
+	role, ok := ctx.Value(CtxRole).(string)
+	return role, ok && role != ""
+}
+
+// Role returns the authenticated role, or "" when none was established.
+func Role(ctx context.Context) string {
+	role, _ := RoleFromContext(ctx)
+	return role
+}
+
 type AuthMiddleware struct{ pool *pgxpool.Pool }
 
 func NewAuth(pool *pgxpool.Pool) *AuthMiddleware { return &AuthMiddleware{pool: pool} }

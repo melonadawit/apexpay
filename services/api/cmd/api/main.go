@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -18,6 +21,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/shopspring/decimal"
 
+	"apexpay/internal/id"
 	"apexpay/internal/platform/config"
 	platformcrypto "apexpay/internal/platform/crypto"
 	pkghttp "apexpay/internal/platform/http"
@@ -25,6 +29,7 @@ import (
 	mw "apexpay/internal/platform/middleware"
 	"apexpay/internal/platform/storage"
 
+	"apexpay/internal/admin"
 	"apexpay/internal/bankverification"
 	"apexpay/internal/connector"
 	"apexpay/internal/fayda"
@@ -121,6 +126,7 @@ func main() {
 	linkHandler := link.NewHandler(linkSvc)
 	webhookHandler := webhook.NewHandler(webhookRepo, platformcrypto.DeriveKey(cfg.ConnectorEncKey, "webhook-secret"))
 	reconciliationHandler := reconciliation.NewHandler(reconciliationSvc)
+	adminHandler := admin.NewHandler(admin.NewRepository(pool))
 	bankVerificationHandler := bankverification.NewHandler(pool)
 
 	authMw := mw.NewAuth(pool)
@@ -261,15 +267,7 @@ func main() {
 			})
 
 			r.Route("/compliance", func(r chi.Router) {
-				r.Post("/ask", func(w http.ResponseWriter, r *http.Request) {
-					// In prod, proxy to Python rag-worker http://rag:8001/v1/compliance/ask with embedding e5-large 1024 dim
-					pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
-						"answer":    "Transactions above 5000 ETB require two-factor authentication (PIN, OTP, or biometric) per NBE ONPS/10/2025 Directive §5.2 [1].",
-						"citations": []map[string]interface{}{{"document_id": "rdoc_nbe_10_2025", "title": "NBE ONPS/10/2025", "page": 3, "score": 0.92, "chunk_id": "rdoc_nbe_10_2025_c5"}},
-						"no_answer": false,
-						"query":     r.URL.Query().Get("q"),
-					})
-				})
+				r.Post("/ask", ragAskProxy(cfg))
 			})
 
 			r.Route("/swarm", func(r chi.Router) {
@@ -278,9 +276,22 @@ func main() {
 
 			r.Route("/agent", func(r chi.Router) {
 				r.Post("/chat", func(w http.ResponseWriter, r *http.Request) {
-					pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
-						"output":     "Created payment link https://checkout.apexpay.et/c/coffee100 — TPV today ETB 125,430",
-						"tool_calls": []map[string]interface{}{{"tool": "create_payment_link", "args": map[string]interface{}{"amount": 100}, "result": map[string]interface{}{"payment_link_url": "https://checkout.apexpay.et/c/coffee100"}}},
+					var req struct {
+						Goal string `json:"goal"`
+					}
+					if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+						pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
+						return
+					}
+					sess, err := swarmSvc.Run(r.Context(), mw.MerchantID(r.Context()), mw.UserID(r.Context()), req.Goal)
+					if err != nil {
+						pkghttp.WriteError(w, r, err)
+						return
+					}
+					pkghttp.WriteJSON(w, r, 201, map[string]interface{}{
+						"session_id": sess.ID,
+						"status":     sess.Status,
+						"output":     sess.FinalOutput,
 					})
 				})
 			})
@@ -290,68 +301,46 @@ func main() {
 			})
 
 			r.Post("/devices/register", func(w http.ResponseWriter, r *http.Request) {
-				pkghttp.WriteJSON(w, r, 201, map[string]string{"id": "device_01H", "status": "registered", "platform": "android", "message": "push_devices FCM token unique per DATABASE"})
+				var req struct {
+					Platform   string                 `json:"platform"`
+					FCMToken   string                 `json:"fcm_token"`
+					DeviceInfo map[string]interface{} `json:"device_info"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+					pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "invalid json")
+					return
+				}
+				if req.Platform != "android" && req.Platform != "ios" && req.Platform != "web" {
+					req.Platform = "android"
+				}
+				if req.FCMToken == "" {
+					pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "fcm_token required")
+					return
+				}
+				userID := mw.UserID(r.Context())
+				if userID == "" {
+					pkghttp.WriteErrorWithBody(w, r, 401, "unauthorized", "user context required")
+					return
+				}
+				deviceID := id.New("dev")
+				_, err := pool.Exec(r.Context(), `INSERT INTO push_devices (id, merchant_id, user_id, platform, fcm_token, device_info, last_active_at)
+					VALUES ($1,$2,$3,$4,$5,$6::jsonb, now())
+					ON CONFLICT (fcm_token) DO UPDATE SET platform=EXCLUDED.platform, device_info=EXCLUDED.device_info, last_active_at=now()`,
+					deviceID, mw.MerchantID(r.Context()), userID, req.Platform, req.FCMToken, jsonString(req.DeviceInfo))
+				if err != nil {
+					pkghttp.WriteError(w, r, err)
+					return
+				}
+				pkghttp.WriteJSON(w, r, 201, map[string]string{"id": deviceID, "status": "registered", "platform": req.Platform})
 			})
 		})
 
-		// Admin — role gated (compliance/ops) maker-checker dual approval risk>=70 or TPV>1M
+		// Admin — role gated (compliance/ops/owner). DB-backed; no fabricated data.
 		r.Route("/admin", func(r chi.Router) {
 			r.Use(authMw.APIKeyAuth)
 			r.Use(mw.RBAC("admin", "compliance", "ops", "owner"))
-			r.Get("/onboarding/queue", func(w http.ResponseWriter, r *http.Request) {
-				rows, _ := pool.Query(r.Context(), `SELECT m.id, m.legal_name, m.email, kyc.onboarding_status, m.risk_score, m.fayda_verified FROM merchants m JOIN merchant_kyc_profiles kyc ON kyc.merchant_id=m.id WHERE kyc.onboarding_status IN ('submitted','in_review','fayda_pending','compliance_check') ORDER BY kyc.created_at ASC LIMIT 50`)
-				var list []map[string]interface{}
-				if rows != nil {
-					defer rows.Close()
-					for rows.Next() {
-						var mid, legal, email, status string
-						var risk int
-						var faydaVerified bool
-						_ = rows.Scan(&mid, &legal, &email, &status, &risk, &faydaVerified)
-						list = append(list, map[string]interface{}{"merchant_id": mid, "legal_name": legal, "email": email, "onboarding_status": status, "risk_score": risk, "fayda_verified": faydaVerified})
-					}
-				}
-				if len(list) == 0 {
-					list = []map[string]interface{}{{"merchant_id": "mer_01H", "legal_name": "Apex Trading PLC", "onboarding_status": "submitted", "risk_score": 42, "fayda_verified": true}}
-				}
-				pkghttp.WriteJSON(w, r, 200, list)
-			})
-			r.Post("/onboarding/{id}/review", func(w http.ResponseWriter, r *http.Request) {
-				// In real, parse reviewer_id from context + action approve/reject/request_info
-				pkghttp.WriteJSON(w, r, 200, map[string]string{"status": "approved", "message": "merchant active + operating book created + 6 accounts seeded + outbox merchant.activated"})
-			})
-			r.Get("/connectors/health", func(w http.ResponseWriter, r *http.Request) {
-				rows, _ := pool.Query(r.Context(), `SELECT connector_id, AVG(latency_ms)::int as avg_lat, COUNT(*) FILTER (WHERE success)::float / COUNT(*)::float as success_rate FROM connector_health_samples WHERE sampled_at >= now() - interval '5 minutes' GROUP BY connector_id`)
-				var health []map[string]interface{}
-				if rows != nil {
-					defer rows.Close()
-					for rows.Next() {
-						var connID string
-						var avgLat int
-						var successRate float64
-						_ = rows.Scan(&connID, &avgLat, &successRate)
-						health = append(health, map[string]interface{}{"connector": connID, "avg_latency_5m": avgLat, "success_rate_5m": successRate, "circuit": "closed"})
-					}
-				}
-				if len(health) == 0 {
-					health = []map[string]interface{}{{"connector": "telebirr", "latency": []int{210, 200, 190}, "success_rate": 0.96, "circuit": "closed"}, {"connector": "cbe_birr", "latency": []int{260, 270}, "success_rate": 0.89}}
-				}
-				pkghttp.WriteJSON(w, r, 200, health)
-			})
+			adminHandler.Routes(r)
 			reconciliationHandler.Routes(r)
-			r.Get("/recon/breaks", func(w http.ResponseWriter, r *http.Request) {
-				pkghttp.WriteJSON(w, r, 200, []interface{}{})
-			})
-			r.Get("/evidence", func(w http.ResponseWriter, r *http.Request) {
-				txRef := r.URL.Query().Get("tx_ref")
-				pkghttp.WriteJSON(w, r, 200, map[string]interface{}{"tx_ref": txRef, "ledger_journals": []interface{}{}, "fayda_verified": true, "docs_hashes": []string{"hash_company_reg", "hash_tin"}, "onboarding_reviews_chain": []interface{}{}, "audit_logs": []interface{}{}, "webhook_deliveries": []interface{}{}})
-			})
-			r.Get("/merchants/{id}/exam", func(w http.ResponseWriter, r *http.Request) {
-				merchantID := chi.URLParam(r, "id")
-				pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
-					"merchant_id": merchantID, "kyc_profiles": []interface{}{}, "owners": []interface{}{"fayda_verified badge face 0.92 OTP"}, "documents": []interface{}{"company_registration verified", "tin_certificate verified"}, "compliance_checks": []interface{}{"tin_validation passed", "fayda_verification passed"}, "onboarding_reviews_timeline": []interface{}{"draft->submitted risk 42", "submitted->approved dual"}, "banks": []interface{}{"CBE ****1234 verified"}, "ledger_books": []interface{}{"merchant_operating book 6 accounts"},
-				})
-			})
 		})
 	})
 
@@ -377,4 +366,44 @@ func main() {
 		l.Fatal().Err(err).Msg("shutdown")
 	}
 	l.Info().Msg("server exited")
+}
+
+// jsonString marshals a value to a JSON string for storage in a jsonb column.
+func jsonString(v interface{}) string {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
+}
+
+// ragAskProxy forwards a compliance question to the Python RAG service. It fails loudly
+// (503) when the RAG worker is unreachable rather than fabricating an answer, so operators
+// know the citation-backed compliance endpoint is genuinely unavailable.
+func ragAskProxy(cfg *config.Config) http.HandlerFunc {
+	client := &http.Client{Timeout: 12 * time.Second}
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Query string `json:"query"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		if req.Query == "" {
+			req.Query = r.URL.Query().Get("q")
+		}
+		if req.Query == "" {
+			pkghttp.WriteErrorWithBody(w, r, 400, "validation_error", "query required")
+			return
+		}
+		body, _ := json.Marshal(map[string]string{"query": req.Query})
+		resp, err := client.Post(cfg.RAGServiceURL+"/v1/compliance/ask", "application/json", bytes.NewReader(body))
+		if err != nil {
+			pkghttp.WriteErrorWithBody(w, r, http.StatusServiceUnavailable, "rag_unavailable", "compliance RAG service is unreachable")
+			return
+		}
+		defer resp.Body.Close()
+		out, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(resp.StatusCode)
+		_, _ = w.Write(out)
+	}
 }

@@ -26,6 +26,7 @@ type Config struct {
 	FaydaPartnerKey  string `mapstructure:"fayda_partner_key"`
 	FaydaBaseURL     string `mapstructure:"fayda_base_url"`
 	RedisCacheTTL    int    `mapstructure:"redis_cache_ttl_seconds"`
+	RAGServiceURL    string `mapstructure:"rag_service_url"` // base URL of the Python RAG/compliance worker
 }
 
 func Load() (*Config, error) {
@@ -38,6 +39,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("minio_use_ssl", false)
 	viper.SetDefault("fayda_mode", "mock")
 	viper.SetDefault("fayda_base_url", "https://id.gov.et/api")
+	viper.SetDefault("rag_service_url", "http://rag:8001")
 	viper.SetDefault("redis_cache_ttl_seconds", 300)
 
 	var cfg Config
