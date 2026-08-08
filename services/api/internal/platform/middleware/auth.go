@@ -103,6 +103,39 @@ func (a *AuthMiddleware) APIKeyAuth(next http.Handler) http.Handler {
 	})
 }
 
+// SessionValidator validates an opaque dashboard session token and returns the
+// authenticated tenant context. Implemented by the auth service; kept as an interface
+// here to avoid an import cycle (auth -> middleware).
+type SessionValidator func(ctx context.Context, token string) (userID, merchantID, role string, ok bool)
+
+// SessionAuth authenticates dashboard users via an opaque session token. It populates the
+// same typed tenant context (merchant_id, user_id, role) as APIKeyAuth, so downstream
+// handlers are identical regardless of which credential presented them.
+func SessionAuth(validate SessionValidator) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			parts := strings.Fields(r.Header.Get("Authorization"))
+			if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || len(parts[1]) < 16 {
+				pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "Bearer session required")
+				return
+			}
+			userID, merchantID, role, ok := validate(r.Context(), parts[1])
+			if !ok {
+				pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "invalid or expired session")
+				return
+			}
+			ctx := context.WithValue(r.Context(), CtxUserID, userID)
+			ctx = context.WithValue(ctx, CtxMerchantID, merchantID)
+			if role != "" {
+				ctx = context.WithValue(ctx, CtxRole, role)
+			}
+			// Compatibility bridge, same as APIKeyAuth.
+			ctx = context.WithValue(ctx, "merchant_id", merchantID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
 func fmtSHA256(sum [sha256.Size]byte) string {
 	const hexdigits = "0123456789abcdef"
 	buf := make([]byte, sha256.Size*2)

@@ -30,6 +30,7 @@ import (
 	"apexpay/internal/platform/storage"
 
 	"apexpay/internal/admin"
+	"apexpay/internal/auth"
 	"apexpay/internal/bankverification"
 	"apexpay/internal/checkout"
 	"apexpay/internal/connector"
@@ -128,6 +129,15 @@ func main() {
 	webhookHandler := webhook.NewHandler(webhookRepo, platformcrypto.DeriveKey(cfg.ConnectorEncKey, "webhook-secret"))
 	reconciliationHandler := reconciliation.NewHandler(reconciliationSvc)
 	adminHandler := admin.NewHandler(admin.NewRepository(pool))
+	authSvc := auth.NewService(auth.NewRepository(pool))
+	authHandler := auth.NewHandler(authSvc)
+	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
+		sess, err := authSvc.Validate(ctx, token)
+		if err != nil {
+			return "", "", "", false
+		}
+		return sess.UserID, sess.MerchantID, sess.Role, true
+	})
 	checkoutHandler := checkout.NewHandler(linkRepo, paymentSvc)
 	bankVerificationHandler := bankverification.NewHandler(pool)
 
@@ -182,6 +192,16 @@ func main() {
 		// Public hosted-checkout API — the payment link token is the capability.
 		r.Route("/checkout", func(r chi.Router) {
 			checkoutHandler.Routes(r)
+		})
+
+		// Dashboard auth: login is public; logout + me are session-authenticated.
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/login", authHandler.Login)
+			r.Group(func(r chi.Router) {
+				r.Use(sessionAuthMw)
+				r.Post("/logout", authHandler.Logout)
+				r.Get("/me", authHandler.Me)
+			})
 		})
 
 		// Public checkout token verification (no auth) — outstanding for checkout-web mobile 420px

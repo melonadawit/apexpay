@@ -80,4 +80,17 @@ test "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/v1/transactions/$PA
 test "$(curl -s -o /tmp/verify.json -w '%{http_code}' -H "Authorization: Bearer $KEY" "$API/v1/transactions/verify/docker-smoke-001")" = "200"
 grep -q 'succeeded' /tmp/verify.json
 
+# ---- 11. Dashboard session auth: login → me → logout. ----
+test "$(curl -s -o /tmp/auth_fail.json -w '%{http_code}' -X POST "$API/v1/auth/login" \
+  -H 'Content-Type: application/json' -d '{"email":"demo@apexpay.et","password":"wrong-password"}')" = "401"
+test "$(curl -s -o /tmp/auth.json -w '%{http_code}' -X POST "$API/v1/auth/login" \
+  -H 'Content-Type: application/json' -d '{"email":"demo@apexpay.et","password":"Admin@12345"}')" = "200"
+SESSION_TOKEN=$(sed -n 's/.*"token":"\([^"]*\)".*/\1/p' /tmp/auth.json | head -1)
+test -n "$SESSION_TOKEN"
+test "$(curl -s -o /tmp/auth_me.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/auth/me")" = "200"
+grep -q 'demo@apexpay.et' /tmp/auth_me.json
+test "$(curl -s -o /tmp/auth_logout.json -w '%{http_code}' -X POST -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/auth/logout")" = "200"
+# Revoked session must now be rejected.
+test "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/auth/me")" = "401"
+
 echo 'Docker API smoke suite passed'

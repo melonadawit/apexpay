@@ -1,11 +1,25 @@
 "use client"
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { useLanguage } from "@/components/providers/language-provider"
 import { ThemeToggle } from "@/components/providers/theme-provider"
-import { Globe, Bell, Menu } from "lucide-react"
+import { logout } from "@/lib/api/auth"
+import { Globe, Bell, Menu, LogOut } from "lucide-react"
 
 export function Header({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const { language, setLanguage } = useLanguage()
+  const router = useRouter()
+  const [signingOut, setSigningOut] = React.useState(false)
+
+  const signOut = async () => {
+    setSigningOut(true)
+    try {
+      await logout()
+    } finally {
+      router.push("/login")
+      router.refresh()
+    }
+  }
 
   return (
     <header className="h-16 border-b border-border sticky top-0 z-30 flex items-center justify-between px-6
@@ -50,6 +64,18 @@ export function Header({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           <Bell size={17} />
           <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2
             border-card" />
+        </button>
+
+        {/* Sign out */}
+        <button
+          onClick={signOut}
+          disabled={signingOut}
+          title="Sign out"
+          className="h-9 px-3 rounded-full flex items-center gap-1.5 text-sm font-medium transition-colors
+            text-muted-foreground hover:bg-background/5 hover:text-foreground disabled:opacity-50"
+        >
+          <LogOut size={15} />
+          <span className="hidden sm:inline">{signingOut ? "…" : "Sign out"}</span>
         </button>
       </div>
     </header>

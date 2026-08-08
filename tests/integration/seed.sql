@@ -81,3 +81,16 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO payment_reconciliation_cases (merchant_id, idempotency_key, tx_ref, status)
 VALUES ('mer_docker_smoke', 'idem_recon_smoke', 'txr_recon_smoke', 'open')
 ON CONFLICT (merchant_id, idempotency_key) DO NOTHING;
+
+-- Dashboard user for session auth. Email demo@apexpay.et / password Admin@12345
+-- (argon2id hash, random salt per hash).
+INSERT INTO users (id, email, name, status, email_verified)
+VALUES ('user_docker_admin', 'demo@apexpay.et', 'Demo Admin', 'active', true)
+ON CONFLICT (id) DO NOTHING;
+
+UPDATE users SET password_hash = '$argon2id$v=19$m=65536,t=1,p=4$KO6YyM3nOeOgcEmBGietGg$VndoW28CBk6wfmj9cQLHJ8BBU7P19Lqyxdpfk1A5wYI'
+WHERE id = 'user_docker_admin' AND (password_hash IS NULL OR password_hash = '');
+
+INSERT INTO merchant_members (merchant_id, user_id, role)
+VALUES ('mer_docker_smoke', 'user_docker_admin', 'owner')
+ON CONFLICT (merchant_id, user_id) DO NOTHING;

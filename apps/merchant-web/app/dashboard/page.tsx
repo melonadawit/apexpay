@@ -6,10 +6,16 @@ import { DonutProgress } from "@/components/ui/progress"
 import { TPVRecharts, HealthRecharts } from "./recharts"
 import { api } from "@/lib/api/client"
 import { useData, formatETB } from "@/lib/api/use-data"
+import { useRequireAuth } from "@/lib/api/require-auth"
 
 export default function DashboardPage() {
+  const { checking } = useRequireAuth()
   const { data: summary, loading: summaryLoading } = useData(() => api.summary(), [])
   const { data: payments } = useData(() => api.payments(5), [])
+
+  if (checking) {
+    return <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">Checking session…</div>
+  }
 
   const tpvToday = formatETB(summary?.tpv_today)
   const successRate = summary ? (summary.success_rate_7_days * 100).toFixed(1) : "—"
