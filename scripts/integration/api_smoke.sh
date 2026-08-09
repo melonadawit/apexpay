@@ -303,4 +303,20 @@ grep -q '"currency":"USD"' /tmp/fx.json
 test "$(curl -s -o /tmp/fx_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
 grep -qE 'fx_gain|fx_loss' /tmp/fx_tb.json
 
+# ---- 26. Expense claim finance-approval posts reimbursement to the GL. ----
+# Claims live under the API-key-protected payroll group, so use $KEY (not the session token).
+# Create an expense claim for the seeded employee (201).
+test "$(curl -s -o /tmp/exp_claim.json -w '%{http_code}' -X POST "$API/v1/payroll/claims" \
+  -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' \
+  -d '{"employee_id":"emp_smoke","claim_type":"expense","amount":"3000.00","description":"travel"}' )" = "201"
+grep -q '"ID"' /tmp/exp_claim.json
+EXP_CLAIM=$(sed -n 's/.*"ID":"\([^"]*\)".*/\1/p' /tmp/exp_claim.json | head -1)
+test -n "$EXP_CLAIM"
+# Approve (finance approval posts the reimbursement to the GL). Manager approval first, then finance.
+curl -s -o /dev/null -X POST "$API/v1/payroll/claims/$EXP_CLAIM/approve/manager" -H "Authorization: Bearer $KEY" >/dev/null
+test "$(curl -s -o /tmp/exp_approve.json -w '%{http_code}' -X POST "$API/v1/payroll/claims/$EXP_CLAIM/approve/finance" -H "Authorization: Bearer $KEY")" = "200"
+# The GL trial balance now contains liability:payable (reimbursement owed).
+test "$(curl -s -o /tmp/exp_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
+grep -q 'liability:payable' /tmp/exp_tb.json
+
 echo 'Docker API smoke suite passed'

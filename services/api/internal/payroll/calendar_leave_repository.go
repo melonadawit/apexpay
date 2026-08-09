@@ -3,8 +3,10 @@ package payroll
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
+	"apexpay/internal/id"
 	"apexpay/internal/ledger"
 	"github.com/shopspring/decimal"
 )
@@ -244,13 +246,60 @@ func (r *PgRepository) ListClaimsByEmployee(ctx context.Context, merchantID, emp
 }
 
 func (r *PgRepository) ApproveClaimManager(ctx context.Context, claimID, managerID string) error {
-	_, err := r.pool.Exec(ctx, `UPDATE payroll_claims SET approved_by_manager=$1, manager_approved_at=now(), status='approved_by_manager', updated_at=now() WHERE id=$2`, managerID, claimID)
+	// Use NULL for the approver when no dashboard user is present (API-key actors have no
+	// session user and the column has an FK to users(id)).
+	_, err := r.pool.Exec(ctx, `UPDATE payroll_claims SET approved_by_manager=$1, manager_approved_at=now(), status='approved_by_manager', updated_at=now() WHERE id=$2`, nilStrApprov(managerID), claimID)
 	return err
 }
 
 func (r *PgRepository) ApproveClaimFinance(ctx context.Context, claimID, financeID string) error {
-	_, err := r.pool.Exec(ctx, `UPDATE payroll_claims SET approved_by_finance=$1, finance_approved_at=now(), status='approved', updated_at=now() WHERE id=$2`, financeID, claimID)
-	return err
+	// Read the claim's merchant + amount so we can post the reimbursement to the GL.
+	var merchantID, amountStr string
+	if err := r.pool.QueryRow(ctx, `SELECT merchant_id, amount::text FROM payroll_claims WHERE id=$1`, claimID).Scan(&merchantID, &amountStr); err != nil {
+		return err
+	}
+
+	// Mark the claim approved, then post the expense to the operating ledger in the same
+	// logical step. Debit expense:operating, credit liability:payable (reimbursement owed).
+	if _, err := r.pool.Exec(ctx, `UPDATE payroll_claims SET approved_by_finance=$1, finance_approved_at=now(), status='approved', updated_at=now() WHERE id=$2`, nilStrApprov(financeID), claimID); err != nil {
+		return err
+	}
+	if r.ledger != nil {
+		amount, _ := decimal.NewFromString(amountStr)
+		if amount.GreaterThan(decimal.Zero) {
+			if err := r.postClaimReimbursement(ctx, merchantID, claimID, amount); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// postClaimReimbursement posts an approved expense claim to the merchant's operating ledger
+// (debit expense:operating, credit liability:payable). Idempotent per claim via the posting
+// key so re-approvals never double-post.
+func (r *PgRepository) postClaimReimbursement(ctx context.Context, merchantID, claimID string, amount decimal.Decimal) error {
+	var bookID, expenseID, payableID string
+	err := r.pool.QueryRow(ctx, `
+		SELECT lb.id,
+			MAX(la.id) FILTER (WHERE la.code='expense:operating'),
+			MAX(la.id) FILTER (WHERE la.code='liability:payable')
+		FROM ledger_books lb JOIN ledger_accounts la ON la.book_id=lb.id
+		WHERE lb.merchant_id=$1 AND lb.book_type='merchant_operating' AND lb.status='open'
+		GROUP BY lb.id ORDER BY lb.id LIMIT 1`, merchantID).Scan(&bookID, &expenseID, &payableID)
+	if err != nil || expenseID == "" || payableID == "" {
+		return fmt.Errorf("claim ledger accounts unavailable: %w", err)
+	}
+	journalID := id.NewLedgerJournal()
+	journal := &ledger.Journal{
+		ID: journalID, BookID: bookID, PostingKey: "claim_" + claimID,
+		Memo: "Expense claim reimbursement " + claimID, ReferenceType: "expense_claim", ReferenceID: claimID,
+	}
+	entries := []ledger.Entry{
+		{ID: id.New("lent"), JournalID: journalID, BookID: bookID, AccountID: expenseID, Direction: "debit", Amount: amount, Currency: "ETB"},
+		{ID: id.New("lent"), JournalID: journalID, BookID: bookID, AccountID: payableID, Direction: "credit", Amount: amount, Currency: "ETB"},
+	}
+	return r.ledger.PostJournalTx(ctx, journal, entries)
 }
 
 // ==================== Escrow Accounts Automated Marketplace P2P Hold & Release ====================
@@ -467,4 +516,13 @@ func (r *PgRepository) ApprovedLeaveDaysForPeriod(ctx context.Context, merchantI
 		out[empID] = d
 	}
 	return out, rows.Err()
+}
+
+// nilStrApprov returns NULL for an empty approver id so FK-constrained approver columns
+// accept API-key actors who have no dashboard user.
+func nilStrApprov(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
 }

@@ -71,8 +71,14 @@ VALUES
   ('la_docker_tax', 'book_docker_smoke', 'liability:tax', 'Tax Payable', 'credit'),
   ('la_docker_ar', 'book_docker_smoke', 'asset:receivable', 'Accounts Receivable', 'debit'),
   ('la_docker_fxgain', 'book_docker_smoke', 'revenue:fx_gain', 'FX Gain', 'credit'),
-  ('la_docker_fxloss', 'book_docker_smoke', 'expense:fx_loss', 'FX Loss', 'debit')
+  ('la_docker_fxloss', 'book_docker_smoke', 'expense:fx_loss', 'FX Loss', 'debit'),
+  ('la_docker_ap_payable', 'book_docker_smoke', 'liability:payable', 'Accounts Payable', 'credit')
 ON CONFLICT (book_id, code) DO NOTHING;
+
+-- Employee so the expense-claim -> GL reimbursement flow can be smoke-tested.
+INSERT INTO employees (id, merchant_id, employee_code, name, base_salary, employment_date, employment_type, status, metadata)
+VALUES ('emp_smoke', 'mer_docker_smoke', 'E-SMOKE', 'Smoke Employee', 50000, current_date - interval '365 days', 'permanent', 'active', '{}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
 
 -- Product with a known cost price so order COGS posts to the GL in the smoke suite.
 INSERT INTO products (id, merchant_id, name, sku, price, cost_price, currency, vat_category, stock_qty, low_stock_threshold, status)
