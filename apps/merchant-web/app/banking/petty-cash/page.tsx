@@ -59,7 +59,7 @@ export default function PettyCashPage() {
               {(budgets ?? []).map((b) => (
                 <div key={b.id} className="rounded-xl border p-3">
                   <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium">{b.budgetName}</p>
+                    <p className="text-sm font-medium">{b.budget_name}</p>
                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-500/15 text-green-700">{b.status}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -75,7 +75,7 @@ export default function PettyCashPage() {
             <div className="space-y-2">
               <select value={budgetID} onChange={(e) => setBudgetID(e.target.value)} className="w-full rounded-xl border h-11 px-3 text-sm">
                 <option value="">Select budget…</option>
-                {(budgets ?? []).map((b) => <option key={b.id} value={b.id}>{b.budgetName}</option>)}
+                {(budgets ?? []).map((b) => <option key={b.id} value={b.id}>{b.budget_name}</option>)}
               </select>
               <div className="flex gap-2">
                 <input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder="Amount" className="w-28 rounded-xl border h-11 px-3 text-sm" />

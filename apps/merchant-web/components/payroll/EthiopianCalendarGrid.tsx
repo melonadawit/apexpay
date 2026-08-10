@@ -23,7 +23,7 @@ export function EthiopianCalendarGrid({ year = 2026 }: { year?: number }) {
           return (
             <button
               key={m}
-              onClick={() => setSelected(gregMonth)}
+              onClick={() => setSelectedMonth(gregMonth)}
               className={`rounded-xl border p-3 text-left hover:bg-muted transition-all ${isSelected ? "bg-primary text-white border-primary shadow-medium" : isPagume ? "bg-amber-500/10 border-amber-500/20" : "bg-card"} ${isPagume ? "col-span-1" : ""}`}
             >
               <p className="font-medium text-xs">{m}</p>

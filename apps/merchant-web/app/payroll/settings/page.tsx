@@ -43,7 +43,7 @@ export default function PayrollSettingsPage() {
               ))}
             </div>
             <div className="mt-4 flex gap-2">
-              <button className="rounded-xl border h-9 px-4 text-xs">+ Add Bracket • Versioned effective_from/to O(log n) binary search via sort.Search len brackets func taxable<Max</button>
+              <button className="rounded-xl border h-9 px-4 text-xs">+ Add Tax Bracket</button>
               <button className="rounded-xl border h-9 px-4 text-xs">Validate • tax=taxable*rate-deduction rounded 2 decimals • p99&lt;30ms benchmark 10k iterations deterministic seed 42</button>
             </div>
             <div className="mt-4 rounded-xl bg-green-500/10 border border-green-500/20 p-3 text-[11px]">

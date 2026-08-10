@@ -125,12 +125,4 @@ export default function PayrollCalendarPage() {
   )
 }
 
-function formatEthiopianDate(d: Date) {
-  try {
-    // dynamic import would be better, but for this file we have already imported gregorianToEthiopian
-    // Use simple fallback
-    return d.toLocaleDateString()
-  } catch {
-    return d.toISOString().split("T")[0]
-  }
-}
+

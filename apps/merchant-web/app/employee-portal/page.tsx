@@ -78,7 +78,7 @@ export default function EmployeePortalPage() {
                   <p>Employee: Abebe Kebede • አበበ ከበደ • EMP001 • Engineering • G3 • Fayda ****1234 ✓ face_score 0.92 • Bank CBE ****1234 Abebe Kebede Verified ✓ Levenshtein &lt;3 Bank Letter • TIN 0098765432 • Pension PEN-001 • Dept Engineering CC-100 Cost Center</p>
                   <div className="grid grid-cols-2 gap-4 border rounded-xl p-3 bg-muted/30 text-[11px]">
                     <div><p className="font-semibold">Earnings • Gross ETB 21,250 • CTC Monthly 20,000 • Paid 25/30 Factor 0.8333</p><p>BASIC 16,666 (CTC*0.4 16666.67*0.8333=13888?) Actually BASIC = CTC_MONTHLY*0.4=16666.67*0.8333=13888 + HOUSING 8333*0.8333=6944 + TRANSPORT 3000*0.8333=2500 + FUEL 2000*0.8333=1666 = 24998? Simplify 20000+OT 1250=21250 per calc</p><p>HOUSING 8,333 • TRANSPORT 3,000 non-taxable limit 1000 exempt • FUEL 2,000 • OT 1,250 (5h weekday 1.25x hourly_rate 96.15 = 120.19*5=600? Actually 5h*120=600 + previous?) = Gross 21,250</p><p>BONUS 0 • COMMISSION 0 in this example • Other Allow 0</p></div>
-                    <div><p className="font-semibold">Deductions • ETB 4,450 + Loan EMI 5,000 = Total Deductions 9,450</p><p>Taxable Income Gross - Pension Emp 7% 1,400 = 19,850 • Income Tax binary search O(log n) bracket 1651-3200 15%-142.5? Actually 19850 bracket >10900 35%-1500 = 19850*0.35-1500=5447.5? Simplified 1800 per mock • Pension Emp 7% 1,400 • Loan EMI salary_advance 5,000 • Other 0</p><p>Employer Contributions: Pension Employer 11% 2,200 • Total Employer Cost 23,450 = Gross 21,250 + 2,200</p></div>
+                    <div><p className="font-semibold">Deductions • ETB 9,450</p><p>Income Tax, Pension, and Loan EMI are deducted from your gross pay.</p><p>Employer Pension contribution is added on top of your gross salary.</p></div>
                   </div>
                   <p className="font-bold text-xl">Net Pay ETB 16,800 • የተጣራ • አጠቃላይ • Disburse via Bank IPS CBE pain.001 XML ISO20022</p>
                   <p className="text-[11px]">YTD Gross ETB 140,000 • YTD Tax 12,000 • YTD Net 98,000 • Employer YTD Pension 11% 15,400 • Total YTD Employer Cost 155,400</p>
@@ -128,7 +128,7 @@ export default function EmployeePortalPage() {
                 <div className="rounded-xl border p-3 text-center"><p>🏦</p><p className="font-medium">Bank Letter</p><p className="text-[11px] text-green-600">CBE ****1234 ✓ Levenshtein &lt;3 • bank_code CBE</p></div>
                 <div className="rounded-xl border p-3 text-center"><p>🧾</p><p className="font-medium">TIN Certificate</p><p className="text-[11px] text-green-600">0098765432 ✓ • ERCA withholding • TIN 10-digit</p></div>
               </div>
-              <p className="mt-3 text-[11px] text-muted-foreground">MinIO bucket apexpay-vault merchants/{id}/kyc/{type}_{id}.pdf presigned 15m TTL hash integrity sha256 streaming O(n) SSE-S3 encryption versioning 7y NBE • No plain FIN logs grep test CI</p>
+              <p className="mt-3 text-[11px] text-muted-foreground">Your verified KYC documents are stored securely and retained per NBE policy.</p>
             </Card>
 
             <GlassCard className="p-6">
@@ -136,7 +136,7 @@ export default function EmployeePortalPage() {
               <div className="mt-3 space-y-2 text-[11px]">
                 <p>1. Open ApexPay Merchant App → Scan QR → /qr/scan overlay rounded 260 corner brackets pulse green animation scale 1→1.1 infinite + glare detection brightness &gt;200 warning Move to shade + vibration Haptic</p>
                 <p>2. QR contains runId + employeeCode + netPay hash signed JWT HMAC SHA256 secret CONNECTOR_ENCRYPTION_KEY[:16] + expiry 24h + face_score 0.92</p>
-                <p>3. Verify via https://apexpay.et/verify/payslip/{runId}/{employeeCode} → shows gross/tax/net breakdown + YTD + ledger M4 balanced Dr salary Cr payable Cr tax Cr pension ValidateBalanced ✓ + Fayda badge + cost_center</p>
+                <p>3. The payslip shows your gross, tax, and net pay breakdown plus year-to-date totals.</p>
                 <p>4. RAG compliance ask: What is ET pension rate? → Answer: Employee 7% employer 11% per Private Org Employees Pension Proclamation No.1268/2022 [1] score 0.92 citation mandatory no hallucination guard 0.65 • Amharic/English • Swarm payroll assist goal Run payroll July bonus Sales confirmation modal outstanding</p>
                 <p className="font-semibold text-primary">Password protected PDF: DOB DDMM + last4 • Bilingual EN/AM • Lottie confetti 3s full-screen canvas-confetti + haptics navigator.vibrate(50) • WhatsApp share share_plus + Telegram • Download ZIP 500 employees &lt;2s p99</p>
               </div>
