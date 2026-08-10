@@ -108,6 +108,47 @@ jobs:
           ! grep -R "float64.*amount\|amount.*float64" --include="*.go" services/api/internal/payment services/api/internal/ledger services/api/internal/refund services/api/internal/payout services/api/internal/payroll services/api/internal/worker || (echo "Float money found! Use decimal.Decimal per DATABASE" && exit 1)
           echo "No float money ✓"
 
+  sql-param-cast-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No untyped SQL parameters (pgx cannot infer type)
+        run: |
+          python3 - <<'PY'
+          import os, re, sys
+
+          root = "services/api/internal"
+          problems = []
+
+          # Footgun 1: a bare parameter on the LEFT of a string-literal concatenation
+          # "$N || 'text'". pgx cannot infer the parameter type -> SQLSTATE 42P18. Use a
+          # typed expression such as "$2 * interval '1 day'". (A literal on the left,
+          # e.g. "'pre_' || $N", is fine because Postgres coerces $N to text.)
+          concat = re.compile(r"(?<![|\w])\$[0-9]+\s*\|\|\s*['\"]")
+
+          # Footgun 2: a bare parameter passed to jsonb_build_object without a ::text cast.
+          # pgx cannot infer the parameter type -> SQLSTATE 42P08. Cast with "$N::text".
+          jsonb_bare = re.compile(r"jsonb_build_object\(\s*'[^']*'\s*,\s*\$[0-9]+\s*[,)]")
+
+          for dirpath, _, files in os.walk(root):
+              for fn in files:
+                  if not fn.endswith(".go"):
+                      continue
+                  path = os.path.join(dirpath, fn)
+                  with open(path, "r", errors="ignore") as f:
+                      for i, line in enumerate(f, 1):
+                          if concat.search(line):
+                              problems.append(f"{path}:{i}: unt typed concat '$N || literal' (42P18): {line.strip()}")
+                          if jsonb_bare.search(line):
+                              problems.append(f"{path}:{i}: untyped param in jsonb_build_object (42P08): {line.strip()}")
+
+          if problems:
+              print("Untyped SQL parameters found (pgx cannot infer type):")
+              print("\n".join(problems))
+              sys.exit(1)
+          print("SQL param casts ✓ no untyped params")
+          PY
+
   fin-privacy-lint:
     runs-on: ubuntu-latest
     steps:

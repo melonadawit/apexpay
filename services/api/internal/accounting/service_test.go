@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -125,4 +126,55 @@ func TestPostJournalEntry_InvalidDirection(t *testing.T) {
 	if _, err := svc.PostJournalEntry(context.Background(), "m1", req); err == nil {
 		t.Fatal("expected invalid-direction error")
 	}
+}
+
+// TestPostJournalEntry_MissingAccount covers the error path when an account code is not in
+// the chart of accounts (AccountIDByCode fails).
+func TestPostJournalEntry_MissingAccount(t *testing.T) {
+	repo := &missingAccountRepo{}
+	svc := NewService(repo, &fakePoster{})
+	req := JournalEntryRequest{
+		Memo: "missing acct",
+		Lines: []JournalLine{
+			{AccountCode: "asset:unknown", Direction: "debit", Amount: "100"},
+			{AccountCode: "revenue:product", Direction: "credit", Amount: "100"},
+		},
+	}
+	if _, err := svc.PostJournalEntry(context.Background(), "m1", req); err == nil {
+		t.Fatal("expected missing-account error")
+	}
+}
+
+// TestPeriodCloseThenReopen verifies the close -> reopen lifecycle returns proper status.
+func TestPeriodCloseThenReopen(t *testing.T) {
+	svc, r := newFakeSvc()
+	closed, err := svc.ClosePeriod(context.Background(), "m1", "2026-08", "u1")
+	if err != nil || closed.Status != "closed" {
+		t.Fatalf("ClosePeriod: %v %+v", err, closed)
+	}
+	if r.status["2026-08"] != "closed" {
+		t.Fatal("expected period marked closed in repo")
+	}
+	reopened, err := svc.ReopenPeriod(context.Background(), "m1", "2026-08")
+	if err != nil || reopened.Status != "open" {
+		t.Fatalf("ReopenPeriod: %v %+v", err, reopened)
+	}
+	if r.status["2026-08"] != "open" {
+		t.Fatal("expected period marked open in repo")
+	}
+}
+
+// TestClosePeriodRequiresValue guards the empty-period error path.
+func TestClosePeriodRequiresValue(t *testing.T) {
+	svc, _ := newFakeSvc()
+	if _, err := svc.ClosePeriod(context.Background(), "m1", "", "u1"); err == nil {
+		t.Fatal("expected error for empty period")
+	}
+}
+
+// missingAccountRepo fails AccountIDByCode for all codes.
+type missingAccountRepo struct{ fakeRepo }
+
+func (f *missingAccountRepo) AccountIDByCode(ctx context.Context, bookID, code string) (string, error) {
+	return "", fmt.Errorf("account %s not in chart of accounts", code)
 }
