@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"apexpay/internal/i18n"
 )
 
 // ---- Minimal interfaces (loose coupling). main.go passes the concrete repos. ----
@@ -92,7 +94,7 @@ func merchantSummary(ctx context.Context, r Readers, s Scope) (ToolResult, error
 	if err != nil {
 		return ToolResult{}, err
 	}
-	line := formatSummary(sum)
+	line := formatSummary(sum, s.Locale)
 	return ToolResult{Line: line, Data: sum}, nil
 }
 
@@ -102,9 +104,9 @@ func payments(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 		return ToolResult{}, err
 	}
 	if len(list) == 0 {
-		return ToolResult{Line: "No recent payments yet.", Data: map[string]any{"count": 0}}, nil
+		return ToolResult{Line: cat.Get(s.Locale, "no_recent_payments"), Data: map[string]any{"count": 0}}, nil
 	}
-	return ToolResult{Line: fmt.Sprintf("You have %d recent payments.", len(list)), Data: map[string]any{"count": len(list), "payments": list}}, nil
+	return ToolResult{Line: fmt.Sprintf(cat.Get(s.Locale, "you_have_payments"), len(list)), Data: map[string]any{"count": len(list), "payments": list}}, nil
 }
 
 func invoices(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
@@ -114,10 +116,8 @@ func invoices(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 	}
 	var totalOverdue string
 	overdueCount := 0
-	var buckets []string
 	for _, b := range aging {
 		if bucket, ok := b["bucket"].(string); ok {
-			buckets = append(buckets, bucket)
 			if bucket == "overdue" || bucket == "90plus" {
 				overdueCount += toInt(b["count"])
 				totalOverdue = toStr(b["amount"])
@@ -125,9 +125,9 @@ func invoices(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 		}
 	}
 	if overdueCount == 0 {
-		return ToolResult{Line: "No overdue invoices.", Data: map[string]any{"aging": aging}}, nil
+		return ToolResult{Line: cat.Get(s.Locale, "no_overdue_invoices"), Data: map[string]any{"aging": aging}}, nil
 	}
-	return ToolResult{Line: fmt.Sprintf("%d invoices are overdue totalling %s ETB.", overdueCount, totalOverdue), Data: map[string]any{"aging": aging}}, nil
+	return ToolResult{Line: fmt.Sprintf(cat.Get(s.Locale, "invoices_overdue"), overdueCount, totalOverdue), Data: map[string]any{"aging": aging}}, nil
 }
 
 func inventory(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
@@ -141,7 +141,7 @@ func inventory(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 			low++
 		}
 	}
-	return ToolResult{Line: fmt.Sprintf("You have %d products in inventory, %d below reorder threshold.", len(prods), low),
+	return ToolResult{Line: fmt.Sprintf(cat.Get(s.Locale, "inventory_summary"), len(prods), low),
 		Data: map[string]any{"products": len(prods), "low_stock": low}}, nil
 }
 
@@ -152,11 +152,11 @@ func treasury(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 	}
 	bal := toStr(pos["total_balance"])
 	fc, _ := r.Treasury.LatestForecast(ctx, s.MerchantID)
-	line := fmt.Sprintf("Cash position is %s ETB.", bal)
+	line := fmt.Sprintf(cat.Get(s.Locale, "cash_position"), bal)
 	if fc != nil {
 		net := toStr(fc["net_90d"])
 		if net != "" && net != "0" {
-			line += fmt.Sprintf(" Net 90-day cash flow is forecast at %s ETB.", net)
+			line = fmt.Sprintf(cat.Get(s.Locale, "cash_position_forecast"), bal, net)
 		}
 	}
 	return ToolResult{Line: line, Data: pos}, nil
@@ -168,13 +168,13 @@ func loans(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 		return ToolResult{}, err
 	}
 	if len(list) == 0 {
-		return ToolResult{Line: "No loans on record.", Data: map[string]any{"count": 0}}, nil
+		return ToolResult{Line: cat.Get(s.Locale, "no_loans"), Data: map[string]any{"count": 0}}, nil
 	}
 	outstanding := 0.0
 	for _, l := range list {
 		outstanding += toFloat(l["outstanding_amount"])
 	}
-	return ToolResult{Line: fmt.Sprintf("You have %d loans with %s ETB outstanding.", len(list), formatFloat(outstanding)),
+	return ToolResult{Line: fmt.Sprintf(cat.Get(s.Locale, "loans_outstanding"), len(list), formatFloat(outstanding)),
 		Data: map[string]any{"count": len(list), "outstanding": formatFloat(outstanding)}}, nil
 }
 
@@ -184,7 +184,7 @@ func profitLoss(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 	if err != nil {
 		return ToolResult{}, err
 	}
-	return ToolResult{Line: formatStatement(st), Data: st}, nil
+	return ToolResult{Line: formatStatement(st, s.Locale), Data: st}, nil
 }
 
 func balanceSheet(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
@@ -192,7 +192,7 @@ func balanceSheet(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 	if err != nil {
 		return ToolResult{}, err
 	}
-	return ToolResult{Line: formatStatement(st), Data: st}, nil
+	return ToolResult{Line: formatStatement(st, s.Locale), Data: st}, nil
 }
 
 // defaultPeriod returns a trailing 30-day window (YYYY-MM-DD) as the accounting default,
@@ -211,7 +211,7 @@ func myPay(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 	if err != nil {
 		return ToolResult{}, err
 	}
-	return ToolResult{Line: fmt.Sprintf("Your YTD gross is %s, net is %s, tax %s ETB.",
+	return ToolResult{Line: fmt.Sprintf(cat.Get(s.Locale, "ytd_pay"),
 		toStr(ytd["ytd_gross"]), toStr(ytd["ytd_net"]), toStr(ytd["ytd_tax"])), Data: ytd}, nil
 }
 
@@ -221,7 +221,7 @@ func myLeave(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 		return ToolResult{}, err
 	}
 	if len(list) == 0 {
-		return ToolResult{Line: "No leave balance on record for this year.", Data: map[string]any{"count": 0}}, nil
+		return ToolResult{Line: cat.Get(s.Locale, "no_leave_balance"), Data: map[string]any{"count": 0}}, nil
 	}
 	annual := ""
 	for _, b := range list {
@@ -230,9 +230,9 @@ func myLeave(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 		}
 	}
 	if annual == "" {
-		return ToolResult{Line: fmt.Sprintf("You have %d leave types on record this year.", len(list)), Data: map[string]any{"count": len(list), "leave_types": list}}, nil
+		return ToolResult{Line: fmt.Sprintf(cat.Get(s.Locale, "leave_types_count"), len(list)), Data: map[string]any{"count": len(list), "leave_types": list}}, nil
 	}
-	return ToolResult{Line: fmt.Sprintf("You have %s annual leave days remaining this year.", annual), Data: map[string]any{"annual_remaining": annual, "leave_types": list}}, nil
+	return ToolResult{Line: fmt.Sprintf(cat.Get(s.Locale, "annual_leave_remaining"), annual), Data: map[string]any{"annual_remaining": annual, "leave_types": list}}, nil
 }
 
 func myClaims(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
@@ -241,7 +241,7 @@ func myClaims(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 		return ToolResult{}, err
 	}
 	if len(list) == 0 {
-		return ToolResult{Line: "You have no expense claims on record.", Data: map[string]any{"count": 0}}, nil
+		return ToolResult{Line: cat.Get(s.Locale, "no_expense_claims"), Data: map[string]any{"count": 0}}, nil
 	}
 	pending := 0
 	total := 0.0
@@ -251,28 +251,27 @@ func myClaims(ctx context.Context, r Readers, s Scope) (ToolResult, error) {
 			pending++
 		}
 	}
-	return ToolResult{Line: fmt.Sprintf("You have %d expense claims (%d pending) totalling %s ETB.",
+	return ToolResult{Line: fmt.Sprintf(cat.Get(s.Locale, "expense_claims_count"),
 		len(list), pending, formatFloat(total)), Data: map[string]any{"count": len(list), "pending": pending, "total": formatFloat(total)}}, nil
 }
 
 // ---- formatting helpers ----
 
-func formatStatement(st map[string]any) string {
+func formatStatement(st map[string]any, locale i18n.Locale) string {
 	title := toStr(st["title"])
 	if title == "" {
 		title = "Statement"
 	}
-	// Pull the first "total" line if present for a concise headline.
 	if lines, ok := st["lines"].([]any); ok && len(lines) > 0 {
 		last := lines[len(lines)-1]
 		if lm, ok := last.(map[string]any); ok && toStr(lm["kind"]) == "total" {
-			return fmt.Sprintf("%s: %s %s.", title, toStr(lm["label"]), toStr(lm["amount"]))
+			return fmt.Sprintf(cat.Get(locale, "statement_total"), title, toStr(lm["label"]), toStr(lm["amount"]))
 		}
 	}
-	return title + " is available."
+	return title
 }
 
-func formatSummary(sum map[string]any) string {
+func formatSummary(sum map[string]any, locale i18n.Locale) string {
 	tpv := toStr(sum["tpv_today"])
 	if tpv == "" {
 		tpv = toStr(sum["tpv"])
@@ -281,7 +280,7 @@ func formatSummary(sum map[string]any) string {
 	if count == "" {
 		count = toStr(sum["payment_count"])
 	}
-	return fmt.Sprintf("Today's TPV is %s ETB across %s transactions.", tpv, count)
+	return fmt.Sprintf(cat.Get(locale, "summary_tpv"), tpv, count)
 }
 
 func toStr(v any) string {

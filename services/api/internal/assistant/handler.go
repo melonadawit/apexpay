@@ -49,7 +49,7 @@ func (h *Handler) Chat(w http.ResponseWriter, r *http.Request) {
 		actor = ActorEmployee
 	}
 
-	scope := Scope{MerchantID: merchantID, UserID: userID, Actor: actor}
+	scope := Scope{MerchantID: merchantID, UserID: userID, Actor: actor, Locale: middleware.LocaleFromContext(r.Context())}
 	if actor == ActorEmployee {
 		scope.EmployeeID = empID
 	}

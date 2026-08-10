@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"apexpay/internal/i18n"
 	"apexpay/internal/platform/errors"
 )
+
+// cat is the shared message catalog used to localize assistant framing and tool lines.
+var cat = i18n.New()
 
 // Scope carries everything a read-only tool needs and is fixed before any tool runs. All
 // tools receive the same scope; each tool enforces its own actor allowlist so no tool can
@@ -16,6 +20,7 @@ type Scope struct {
 	UserID     string
 	EmployeeID string // empty unless ActorEmployee
 	Actor      ActorType
+	Locale     i18n.Locale // resolved language for answers (en/am)
 }
 
 // Tool is a single read-only capability. Run must never mutate state.
@@ -77,7 +82,7 @@ func (s *Service) Chat(ctx context.Context, scope Scope, text string) (*Reply, e
 			res, err := tool.Run(ctx, scope)
 			if err != nil {
 				// Read-only tool errors must not crash the turn; report gracefully.
-				results = append(results, ToolResult{Line: fmt.Sprintf("⚠ %s is temporarily unavailable.", tname)})
+				results = append(results, ToolResult{Line: fmt.Sprintf("⚠ %s %s.", tname, cat.Get(scope.Locale, "assistant_unavailable"))})
 				toolsUsed = append(toolsUsed, tname)
 				continue
 			}
@@ -87,7 +92,7 @@ func (s *Service) Chat(ctx context.Context, scope Scope, text string) (*Reply, e
 	}
 
 	// 3. Compose answer.
-	answer, intentName := s.compose(text, results, intents, scope.Actor)
+	answer, intentName := s.compose(text, results, intents, scope.Actor, scope.Locale)
 
 	// 4. Persist thread + messages.
 	thread := &Thread{
@@ -168,19 +173,19 @@ func (s *Service) routeIntent(text string) []Intent {
 }
 
 // compose builds the natural-language answer from tool results.
-func (s *Service) compose(text string, results []ToolResult, intents []Intent, actor ActorType) (string, string) {
+func (s *Service) compose(text string, results []ToolResult, intents []Intent, actor ActorType, locale i18n.Locale) (string, string) {
 	name := "summary"
 	if len(intents) > 0 {
 		name = intents[0].Name
 	}
 	if len(results) == 0 {
-		return "I could not find anything for that. Try asking about payments, invoices, inventory, cash position, or (as an employee) your payslip, leave balance, or expense claims.", name
+		return cat.Get(locale, "assistant_no_results"), name
 	}
 	var b strings.Builder
 	if actor == ActorEmployee {
-		b.WriteString("Here's what I found for you: ")
+		b.WriteString(cat.Get(locale, "assistant_found"))
 	} else {
-		b.WriteString("Here's your business overview: ")
+		b.WriteString(cat.Get(locale, "assistant_overview"))
 	}
 	for i, r := range results {
 		if i > 0 {

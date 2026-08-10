@@ -43,3 +43,21 @@ func TestCatalogGet(t *testing.T) {
 		t.Fatal("unknown key should fall back to the key")
 	}
 }
+
+// TestAssistantMessagesLocalized ensures the assistant's framing and tool lines have
+// distinct Amharic translations so a user in Amharic never sees English framing.
+func TestAssistantMessagesLocalized(t *testing.T) {
+	c := New()
+	keys := []string{"assistant_overview", "assistant_found", "assistant_no_results",
+		"cash_position", "inventory_summary", "ytd_pay", "annual_leave_remaining"}
+	for _, k := range keys {
+		en := c.Get(LocaleEnglish, k)
+		am := c.Get(LocaleAmharic, k)
+		if en == "" || en == k {
+			t.Errorf("%s: missing English translation", k)
+		}
+		if am == "" || am == k || am == en {
+			t.Errorf("%s: missing distinct Amharic translation (en=%q am=%q)", k, en, am)
+		}
+	}
+}
