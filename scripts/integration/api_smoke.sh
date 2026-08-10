@@ -319,4 +319,32 @@ test "$(curl -s -o /tmp/exp_approve.json -w '%{http_code}' -X POST "$API/v1/payr
 test "$(curl -s -o /tmp/exp_tb.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/accounting/trial-balance")" = "200"
 grep -q 'liability:payable' /tmp/exp_tb.json
 
+# ---- 27. Language preference: per-user English/Amharic + localized messages. ----
+# Default language is English on /auth/me.
+test "$(curl -s -o /tmp/lang_me.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/auth/me")" = "200"
+grep -q '"language_preference":"en"' /tmp/lang_me.json
+# Set the preference to Amharic (200).
+test "$(curl -s -o /tmp/lang_set.json -w '%{http_code}' -X PUT "$API/v1/auth/language" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"language_preference":"am"}')" = "200"
+grep -q '"language_preference":"am"' /tmp/lang_set.json
+# An invalid preference is rejected (400).
+test "$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$API/v1/auth/language" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"language_preference":"fr"}')" = "400"
+# A claim created+approved while the user's preference is Amharic returns an Amharic message
+# (no EN+AM "•" concatenation). Use the API key with an X-Lang header for header-driven locale.
+test "$(curl -s -o /tmp/lang_claim.json -w '%{http_code}' -X POST "$API/v1/payroll/claims" \
+  -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' \
+  -d '{"employee_id":"emp_smoke","claim_type":"medical","amount":"500.00","description":"x"}' )" = "201"
+LANG_CLAIM=$(sed -n 's/.*"ID":"\([^"]*\)".*/\1/p' /tmp/lang_claim.json | head -1)
+curl -s -o /dev/null -X POST "$API/v1/payroll/claims/$LANG_CLAIM/approve/manager" -H "Authorization: Bearer $KEY" >/dev/null
+test "$(curl -s -o /tmp/lang_approve.json -w '%{http_code}' -X POST "$API/v1/payroll/claims/$LANG_CLAIM/approve/finance" \
+  -H "Authorization: Bearer $KEY" -H 'X-Lang: am')" = "200"
+# The finance-approval message is now a single language (contains the Amharic finance message, no "•").
+grep -q 'ፋይናንስ' /tmp/lang_approve.json
+if grep -q '•' /tmp/lang_approve.json; then echo "ERROR: mixed bullet language still present"; exit 1; fi
+# Reset preference back to English for idempotency.
+curl -s -o /dev/null -X PUT "$API/v1/auth/language" -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' -d '{"language_preference":"en"}'
+
 echo 'Docker API smoke suite passed'

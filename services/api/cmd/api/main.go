@@ -195,6 +195,13 @@ func main() {
 		}
 		return sess.UserID, sess.MerchantID, sess.Role, true
 	})
+	// Locale resolution: header-driven (X-Lang / Accept-Language) at the API level, with the
+	// authenticated user's saved language_preference applied on session-authenticated routes.
+	localeMw := mw.NewLocale(pool).Handler
+	// Combined middleware: authenticate the session, then resolve the user's language.
+	sessionLocaleMw := func(next http.Handler) http.Handler {
+		return sessionAuthMw(localeMw(next))
+	}
 	checkoutHandler := checkout.NewHandler(linkRepo, paymentSvc)
 	bankVerificationHandler := bankverification.NewHandler(pool)
 
@@ -224,6 +231,8 @@ func main() {
 	r.Handle("/metrics", promhttp.Handler())
 
 	r.Route("/v1", func(r chi.Router) {
+		// Resolve the caller's language (header-driven) for the whole API surface.
+		r.Use(localeMw)
 		// Public: banks + checkout token public (no auth)
 		r.Get("/banks", func(w http.ResponseWriter, r *http.Request) {
 			rows, _ := pool.Query(r.Context(), `SELECT code, name, name_am FROM banks WHERE is_active=true ORDER BY name ASC`)
@@ -258,12 +267,14 @@ func main() {
 				r.Use(sessionAuthMw)
 				r.Post("/logout", authHandler.Logout)
 				r.Get("/me", authHandler.Me)
+				r.Get("/language", authHandler.GetLanguage)
+				r.Put("/language", authHandler.SetLanguage)
 			})
 		})
 
 		// Real TOTP 2FA (RFC 6238 via pquerna/otp) — enrollment + verification.
 		r.Route("/2fa", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			r.Post("/enroll", func(w http.ResponseWriter, r *http.Request) {
 				var req struct {
 					Account string `json:"account"`
@@ -289,115 +300,115 @@ func main() {
 
 		// Dashboard banking modules (session-authenticated, like the dashboard pages).
 		r.Route("/banking", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			bankingHandler.Routes(r)
 		})
 
 		// Workforce OS (HRIS) — session-authenticated dashboard module.
 		r.Route("/hris", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			hrisHandler.Routes(r)
 		})
 
 		// Risk & Fraud Engine — session-authenticated.
 		r.Route("/risk", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			riskHandler.Routes(r)
 		})
 
 		// Tax schedules & GL tax liability (session-authenticated).
 		r.Route("/tax", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			taxHandler.Routes(r)
 		})
 
 		// Multi-currency FX revaluation (session-authenticated).
 		r.Route("/fx/revalue", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			fxrevalHandler.Routes(r)
 		})
 
 		// Treasury & Cash Management — session-authenticated.
 		r.Route("/treasury", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			treasuryHandler.Routes(r)
 		})
 
 		// Invoicing & Receivables — session-authenticated.
 		r.Route("/invoices", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			invoicingHandler.Routes(r)
 		})
 
 		// Team (multi-user roles) + approvals inbox — session-authenticated.
 		r.Route("/team", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			teamHandler.Routes(r)
 		})
 
 		// Compliance console (session-authenticated dashboard module).
 		r.Route("/compliance-console", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			complianceHandler.Routes(r)
 		})
 
 		// Notification preferences (session-authenticated).
 		r.Route("/notifications/preferences", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			notifyHandler.Routes(r)
 		})
 
 		// Fixed assets & depreciation (session-authenticated).
 		r.Route("/fixed-assets", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			fixedAssetHandler.Routes(r)
 		})
 
 		// Analytics & cohort (session-authenticated).
 		r.Route("/analytics", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			analyticsHandler.Routes(r)
 		})
 
 		// Accounting & Bookkeeping (session-authenticated).
 		r.Route("/accounting", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			accountingHandler.Routes(r)
 		})
 
 		// Apex Assistant (session-authenticated) — chat + thread history, read-only, role-scoped.
 		r.Route("/assistant", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			assistantHandler.Routes(r)
 		})
 
 		// Procurement & Accounts Payable (session-authenticated): vendors, POs, receipts, AP.
 		r.Route("/procurement", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			procurementHandler.Routes(r)
 		})
 
 		// Inventory & Sales (software POS) — session-authenticated.
 		r.Route("/inventory", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			inventoryHandler.Routes(r)
 		})
 
 		// Disputes & Chargebacks — session-authenticated.
 		r.Route("/disputes", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			disputeHandler.Routes(r)
 		})
 
 		// Loyalty & Cashback — session-authenticated.
 		r.Route("/loyalty", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			loyaltyHandler.Routes(r)
 		})
 
 		// Lending / micro-loans — session-authenticated.
 		r.Route("/lending", func(r chi.Router) {
-			r.Use(sessionAuthMw)
+			r.Use(sessionLocaleMw)
 			lendingHandler.Routes(r)
 		})
 

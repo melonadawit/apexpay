@@ -60,9 +60,21 @@ func (s *Service) Login(ctx context.Context, email, password, userAgent, ip stri
 	return &LoginResult{
 		Token:     token,
 		ExpiresAt: expiresAt.UTC().Format(time.RFC3339),
-		User:      User{ID: u.ID, Email: u.Email, Name: u.Name, Status: u.Status},
+		User:      User{ID: u.ID, Email: u.Email, Name: u.Name, Status: u.Status, LanguagePreference: u.LanguagePreference},
 		Merchant:  members[0],
 	}, nil
+}
+
+// SetLanguagePreference persists the caller's language and returns the updated user.
+func (s *Service) SetLanguagePreference(ctx context.Context, userID, locale string) (*User, error) {
+	if err := s.repo.setLanguagePreference(ctx, userID, locale); err != nil {
+		return nil, err
+	}
+	u, err := s.repo.findUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &User{ID: u.ID, Email: u.Email, Name: u.Name, Status: u.Status, LanguagePreference: u.LanguagePreference}, nil
 }
 
 // Validate resolves a session from its raw token. Returns ErrNotFound if invalid/expired.
@@ -94,7 +106,7 @@ func (s *Service) Me(ctx context.Context, userID string) (*SessionResult, error)
 	if err != nil {
 		return nil, err
 	}
-	res.User = User{ID: u.ID, Email: u.Email, Name: u.Name, Status: u.Status}
+	res.User = User{ID: u.ID, Email: u.Email, Name: u.Name, Status: u.Status, LanguagePreference: u.LanguagePreference}
 	// Reuse memberships for the merchant list.
 	all, err := s.repo.memberships(ctx, userID)
 	if err != nil {

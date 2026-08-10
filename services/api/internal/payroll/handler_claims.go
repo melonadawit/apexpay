@@ -2,6 +2,7 @@
 package payroll
 
 import (
+	"apexpay/internal/i18n"
 	"apexpay/internal/id"
 	pkghttp "apexpay/internal/platform/http"
 	mw "apexpay/internal/platform/middleware"
@@ -10,6 +11,10 @@ import (
 	"github.com/shopspring/decimal"
 	"net/http"
 )
+
+// cat is the shared message catalog used to localize claim responses into the caller's
+// language (English or Amharic) instead of concatenating both with "•".
+var cat = i18n.New()
 
 func (h *Handler) CreateClaim(w http.ResponseWriter, r *http.Request) {
 	merchantID := mw.MerchantID(r.Context())
@@ -67,7 +72,11 @@ func (h *Handler) ApproveClaimManager(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteError(w, r, err)
 		return
 	}
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": claimID, "status": "approved_by_manager", "approved_by_manager": userID, "message": "Manager approved • Next finance approval • Status approved_by_manager • Receipt MinIO presigned 15m • Hash integrity • Encrypted SSE-S3 • 7y retention NBE"})
+	locale := mw.LocaleFromContext(r.Context())
+	pkghttp.WriteJSON(w, r, 200, map[string]string{
+		"id": claimID, "status": "approved_by_manager", "approved_by_manager": userID,
+		"message": cat.Get(locale, "claim_manager_approved"),
+	})
 }
 func (h *Handler) ApproveClaimFinance(w http.ResponseWriter, r *http.Request) {
 	claimID := chi.URLParam(r, "id")
@@ -76,5 +85,9 @@ func (h *Handler) ApproveClaimFinance(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteError(w, r, err)
 		return
 	}
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": claimID, "status": "approved", "approved_by_finance": userID, "message": "Finance approved • Status approved • Paid via next payroll run • Reimbursement non-taxable added after tax • Payroll item other_allowances reimbursement non-taxable • Outstanding"})
+	locale := mw.LocaleFromContext(r.Context())
+	pkghttp.WriteJSON(w, r, 200, map[string]string{
+		"id": claimID, "status": "approved", "approved_by_finance": userID,
+		"message": cat.Get(locale, "claim_finance_approved"),
+	})
 }

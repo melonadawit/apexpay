@@ -29,19 +29,20 @@ type Repository struct {
 func NewRepository(pool *pgxpool.Pool) *Repository { return &Repository{pool: pool} }
 
 type userRow struct {
-	ID           string
-	Email        string
-	Name         string
-	Status       string
-	PasswordHash string
+	ID                 string
+	Email              string
+	Name               string
+	Status             string
+	PasswordHash       string
+	LanguagePreference string
 }
 
 // findUserByEmail returns the user row (including password hash for verification).
 func (r *Repository) findUserByEmail(ctx context.Context, email string) (*userRow, error) {
 	var u userRow
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, email, name, status, COALESCE(password_hash,'') FROM users WHERE lower(email)=lower($1)`,
-		email).Scan(&u.ID, &u.Email, &u.Name, &u.Status, &u.PasswordHash)
+		`SELECT id, email, name, status, COALESCE(password_hash,''), COALESCE(language_preference,'en') FROM users WHERE lower(email)=lower($1)`,
+		email).Scan(&u.ID, &u.Email, &u.Name, &u.Status, &u.PasswordHash, &u.LanguagePreference)
 	if err == pgx.ErrNoRows {
 		return nil, ErrNotFound
 	}
@@ -49,6 +50,12 @@ func (r *Repository) findUserByEmail(ctx context.Context, email string) (*userRo
 		return nil, err
 	}
 	return &u, nil
+}
+
+// setLanguagePreference updates a user's language preference.
+func (r *Repository) setLanguagePreference(ctx context.Context, userID, locale string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE users SET language_preference=$1, updated_at=now() WHERE id=$2`, locale, userID)
+	return err
 }
 
 // memberships returns all merchants a user belongs to, with roles.
@@ -142,8 +149,8 @@ func hashToken(token string) string {
 // findUserByID returns a user row by id (for /auth/me).
 func (r *Repository) findUserByID(ctx context.Context, userID string) (*userRow, error) {
 	var u userRow
-	err := r.pool.QueryRow(ctx, `SELECT id, email, name, status, COALESCE(password_hash,'') FROM users WHERE id=$1`, userID).
-		Scan(&u.ID, &u.Email, &u.Name, &u.Status, &u.PasswordHash)
+	err := r.pool.QueryRow(ctx, `SELECT id, email, name, status, COALESCE(password_hash,''), COALESCE(language_preference,'en') FROM users WHERE id=$1`, userID).
+		Scan(&u.ID, &u.Email, &u.Name, &u.Status, &u.PasswordHash, &u.LanguagePreference)
 	if err == pgx.ErrNoRows {
 		return nil, ErrNotFound
 	}

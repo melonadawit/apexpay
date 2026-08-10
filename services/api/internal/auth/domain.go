@@ -4,10 +4,11 @@ package auth
 
 // User is a dashboard user (owners/admin/finance/etc.), PII-safe in responses.
 type User struct {
-	ID     string `json:"id"`
-	Email  string `json:"email"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
+	ID                 string `json:"id"`
+	Email              string `json:"email"`
+	Name               string `json:"name"`
+	Status             string `json:"status"`
+	LanguagePreference string `json:"language_preference"`
 }
 
 // MerchantContext is the active merchant + role for a session.

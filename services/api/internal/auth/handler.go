@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"apexpay/internal/i18n"
 	pkghttp "apexpay/internal/platform/http"
 	"apexpay/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
@@ -22,6 +23,51 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Post("/login", h.Login)
 	r.Post("/logout", h.Logout)
 	r.Get("/me", h.Me)
+	r.Get("/language", h.GetLanguage)
+	r.Put("/language", h.SetLanguage)
+}
+
+// GetLanguage returns the caller's language preference.
+func (h *Handler) GetLanguage(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserID(r.Context())
+	if userID == "" {
+		pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, "unauthorized", "no session")
+		return
+	}
+	u, err := h.svc.repo.findUserByID(r.Context(), userID)
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, map[string]string{
+		"language_preference": u.LanguagePreference,
+	})
+}
+
+// SetLanguage updates the caller's language preference to 'en' or 'am'.
+func (h *Handler) SetLanguage(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserID(r.Context())
+	if userID == "" {
+		pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, "unauthorized", "no session")
+		return
+	}
+	var req struct {
+		LanguagePreference string `json:"language_preference"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		pkghttp.WriteErrorWithBody(w, r, http.StatusBadRequest, "validation_error", "invalid json")
+		return
+	}
+	if !i18n.IsValid(req.LanguagePreference) {
+		pkghttp.WriteErrorWithBody(w, r, http.StatusBadRequest, "validation_error", i18n.New().Get(i18n.DefaultLocale, "language_preference_required"))
+		return
+	}
+	u, err := h.svc.SetLanguagePreference(r.Context(), userID, req.LanguagePreference)
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, u)
 }
 
 func bearerToken(r *http.Request) string {
