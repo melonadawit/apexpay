@@ -353,4 +353,27 @@ test "$(curl -s -o /tmp/clean_reg.json -w '%{http_code}' -H "Authorization: Bear
 if grep -q '•' /tmp/clean_reg.json; then echo "ERROR: bullet noise in payroll register message"; exit 1; fi
 grep -q 'payroll run' /tmp/clean_reg.json
 
+# ---- 29. Budgeting/FP&A + self-service portals. ----
+# Set a budget (201), then get variance (200).
+PERIOD=$(date +%Y-%m)
+test "$(curl -s -o /tmp/bud_set.json -w '%{http_code}' -X POST "$API/v1/budget/budgets" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d "{\"period\":\"$PERIOD\",\"category\":\"expense\",\"budget_amount\":\"200000\"}")" = "201"
+grep -q '"id"' /tmp/bud_set.json
+test "$(curl -s -o /tmp/bud_var.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/budget/variance?period=$PERIOD")" = "200"
+grep -q '"budget_amount"' /tmp/bud_var.json
+# List budgets (200).
+test "$(curl -s -o /tmp/bud_list.json -w '%{http_code}' -H "Authorization: Bearer $SESSION_TOKEN" "$API/v1/budget/budgets?period=$PERIOD")" = "200"
+
+# Vendor self-service portal: issue a token for the seeded vendor, then read the portal.
+test "$(curl -s -o /tmp/prt_vendor.json -w '%{http_code}' -X POST "$API/v1/portal/token" \
+  -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"portal_type":"vendor","entity_id":"vend_smoke","entity_name":"Smoke Supplies Co"}')" = "201"
+PRT_TOK=$(sed -n 's/.*"token":"\([^"]*\)".*/\1/p' /tmp/prt_vendor.json | head -1)
+test -n "$PRT_TOK"
+test "$(curl -s -o /tmp/prt_me.json -w '%{http_code}' -H "X-Portal-Token: $PRT_TOK" "$API/v1/portal/me")" = "200"
+grep -q '"portal_type":"vendor"' /tmp/prt_me.json
+# Portal without a token is rejected (401).
+test "$(curl -s -o /dev/null -w '%{http_code}' "$API/v1/portal/me")" = "401"
+
 echo 'Docker API smoke suite passed'

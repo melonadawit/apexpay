@@ -75,6 +75,11 @@ VALUES
   ('la_docker_ap_payable', 'book_docker_smoke', 'liability:payable', 'Accounts Payable', 'credit')
 ON CONFLICT (book_id, code) DO NOTHING;
 
+-- Vendor so the vendor self-service portal can be smoke-tested.
+INSERT INTO vendors (id, merchant_id, name, email, phone, tin, payment_terms_days, status)
+VALUES ('vend_smoke', 'mer_docker_smoke', 'Smoke Supplies Co', 'vendor@example.et', '+251911000000', 'ET-100000', 30, 'active')
+ON CONFLICT (id) DO NOTHING;
+
 -- Employee so the expense-claim -> GL reimbursement flow can be smoke-tested.
 INSERT INTO employees (id, merchant_id, employee_code, name, base_salary, employment_date, employment_type, status, metadata)
 VALUES ('emp_smoke', 'mer_docker_smoke', 'E-SMOKE', 'Smoke Employee', 50000, current_date - interval '365 days', 'permanent', 'active', '{}'::jsonb)

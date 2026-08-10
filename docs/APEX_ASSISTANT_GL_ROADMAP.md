@@ -3,7 +3,8 @@
 > **Status:** Part A (P1, read-only assistant) ✅ · Part B (real GL: journal entries + period
 > close + depreciation + inventory COGS + tax schedules + multi-currency revaluation) ✅
 > · Part C (1) Procurement/AP ✅ · Part C (2) Expenses ✅ (payroll claims + **GL
-> reimbursement posting on finance approval**). All roadmap items complete.
+> reimbursement posting on finance approval**) · **Budgeting/FP&A** ✅ · **Self-service
+> portals (vendor + customer)** ✅. All roadmap items complete.
 >
 > Senior Engineering Manager view — grounded in what already exists in the codebase.
 > Goal: deliver the *Apex Assistant* (role-scoped conversational agents for merchants,

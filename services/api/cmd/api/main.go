@@ -36,6 +36,7 @@ import (
 	"apexpay/internal/auth"
 	"apexpay/internal/banking"
 	"apexpay/internal/bankverification"
+	"apexpay/internal/budget"
 	"apexpay/internal/checkout"
 	"apexpay/internal/compliance"
 	"apexpay/internal/connector"
@@ -56,6 +57,7 @@ import (
 	"apexpay/internal/payout"
 	"apexpay/internal/payroll"
 	"apexpay/internal/platform/twofa"
+	"apexpay/internal/portal"
 	"apexpay/internal/procurement"
 	"apexpay/internal/reconciliation"
 	"apexpay/internal/refund"
@@ -159,6 +161,8 @@ func main() {
 	hrisHandler := hris.NewHandler(hris.NewRepository(pool))
 	riskHandler := risk.NewHandler(risk.NewService(risk.NewRepository(pool), risk.NewEngine()))
 	treasuryHandler := treasury.NewHandler(treasury.NewService(treasury.NewRepository(pool)))
+	budgetHandler := budget.NewHandler(budget.NewService(budget.NewRepository(pool)))
+	portalHandler := portal.NewHandler(portal.NewRepository(pool))
 	teamHandler := team.NewHandler(team.NewRepository(pool))
 	complianceHandler := compliance.NewHandler(compliance.NewRepository(pool))
 	notifyHandler := notify.NewHandler(notify.NewRepository(pool))
@@ -374,6 +378,23 @@ func main() {
 		r.Route("/accounting", func(r chi.Router) {
 			r.Use(sessionLocaleMw)
 			accountingHandler.Routes(r)
+		})
+
+		// Budgeting & FP&A (session-authenticated).
+		r.Route("/budget", func(r chi.Router) {
+			r.Use(sessionLocaleMw)
+			budgetHandler.Routes(r)
+		})
+
+		// Self-service portals: token issuance is admin/session-gated; the portal "me"
+		// endpoint is token-gated (no dashboard session).
+		r.Route("/portal", func(r chi.Router) {
+			r.Group(func(r chi.Router) {
+				r.Use(sessionLocaleMw)
+				r.Post("/token", portalHandler.Create)
+			})
+			// Token-gated self-service (no dashboard session): X-Portal-Token header.
+			r.Get("/me", portalHandler.Me)
 		})
 
 		// Apex Assistant (session-authenticated) — chat + thread history, read-only, role-scoped.
