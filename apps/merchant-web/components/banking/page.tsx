@@ -4,6 +4,7 @@ import { api } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { useLanguage } from "@/components/providers/language-provider"
+import { LoadingState, EmptyState, ErrorState } from "@/components/ui/states"
 
 // Shared banking page scaffold: enforces a dashboard session, loads data from a given
 // loader, and renders a title + a table-ish list. Keeps banking pages consistent and
@@ -32,12 +33,12 @@ export function BankingPage<T extends { id: string }>({
 }) {
   const { checking } = useRequireAuth()
   const { t } = useLanguage()
-  const { data, loading } = useData(loader, [])
+  const { data, loading, error, refetch } = useData(loader, [])
 
   if (checking) {
     return (
       <Centered>
-        <p className="text-sm text-muted-foreground">Checking session…</p>
+        <LoadingState label="Checking session…" />
       </Centered>
     )
   }
@@ -59,9 +60,10 @@ export function BankingPage<T extends { id: string }>({
               <span key={String(c.key)}>{c.label}</span>
             ))}
           </div>
-          {loading && <p className="p-4 text-sm text-muted-foreground">Loading…</p>}
-          {!loading && (data ?? []).length === 0 && (
-            <p className="p-4 text-sm text-muted-foreground">No records yet.</p>
+          {loading && <LoadingState />}
+          {error && <ErrorState message={error} onRetry={refetch} />}
+          {!loading && !error && (data ?? []).length === 0 && (
+            <EmptyState title={t("No records yet", "እስካሁን ምንም መዝገብ የለም")} />
           )}
           {(data ?? []).map((row) => (
             <div key={row.id} className="grid gap-2 p-3 border-t text-xs hover:bg-muted/50"
