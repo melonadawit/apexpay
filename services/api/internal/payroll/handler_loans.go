@@ -71,6 +71,6 @@ func (h *Handler) GetLoanRepayments(w http.ResponseWriter, r *http.Request) {
 			{"installment_no": 1, "due_date": "2026-07-01", "emi_amount": "5000", "principal_component": "5000", "interest_component": "0", "outstanding_after": "15000", "status": "paid", "paid_at": "2026-07-01", "run_id": "prun_July2026"},
 			{"installment_no": 2, "due_date": "2026-08-01", "emi_amount": "5000", "principal_component": "5000", "interest_component": "0", "outstanding_after": "10000", "status": "pending"},
 		},
-		"message": "EMI schedule repayment tracking UI • O(n) per loan n=tenure months • Repayment history per loan per employee • Chart Recharts bar principal vs interest • Pie deductions loan 40% tax 30% pension 20% • Outstanding modern template QR verification • Audit logs immutable",
+		"message": cat.Get(mw.LocaleFromContext(r.Context()), "loan_emi_schedule"),
 	})
 }

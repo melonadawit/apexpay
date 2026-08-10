@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"apexpay/internal/i18n"
 	"apexpay/internal/id"
 	"github.com/shopspring/decimal"
 )
@@ -95,7 +96,7 @@ func (s *PortalService) GenerateMagicLink(ctx context.Context, req MagicLinkRequ
 	if email == "" {
 		email = "employee email"
 	}
-	message := fmt.Sprintf("Magic link sent via %s to %s • Expires in 24h • Fayda verified ✓ • WhatsApp integration share_plus • QR verification outstanding modern template logo pie chart YTD bilingual EN/AM • Beyond RazorpayX", channel, email)
+	message := fmt.Sprintf(cat.Get(i18n.DefaultLocale, "magiclink_sent"), channel, email)
 
 	return &MagicLinkResponse{
 		MagicLinkURL: magicLinkURL,

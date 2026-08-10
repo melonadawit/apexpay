@@ -347,4 +347,10 @@ if grep -q '•' /tmp/lang_approve.json; then echo "ERROR: mixed bullet language
 # Reset preference back to English for idempotency.
 curl -s -o /dev/null -X PUT "$API/v1/auth/language" -H "Authorization: Bearer $SESSION_TOKEN" -H 'Content-Type: application/json' -d '{"language_preference":"en"}'
 
+# ---- 28. Clean user-facing copy: payroll report messages no longer leak internals/marketing. ----
+# Payroll register without a run id returns a clean, single-language message (no "•" noise).
+test "$(curl -s -o /tmp/clean_reg.json -w '%{http_code}' -H "Authorization: Bearer $KEY" "$API/v1/payroll/payroll_reports/payroll_register")" = "200"
+if grep -q '•' /tmp/clean_reg.json; then echo "ERROR: bullet noise in payroll register message"; exit 1; fi
+grep -q 'payroll run' /tmp/clean_reg.json
+
 echo 'Docker API smoke suite passed'

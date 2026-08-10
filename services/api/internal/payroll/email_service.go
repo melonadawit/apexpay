@@ -6,6 +6,7 @@ import (
 	"net/smtp"
 	"time"
 
+	"apexpay/internal/i18n"
 	"github.com/shopspring/decimal"
 )
 
@@ -45,6 +46,7 @@ type ComplianceEmailRequest struct {
 	FileKey     string
 	FileBytes   []byte
 	Metadata    map[string]interface{}
+	Language    string // en, am
 }
 
 type MagicLinkEmailRequest struct {
@@ -54,6 +56,7 @@ type MagicLinkEmailRequest struct {
 	MagicLinkURL string
 	QRCodeData   string
 	ExpiresAt    time.Time
+	Language     string // en, am
 }
 
 // NewEmailService creates service from env config
@@ -79,7 +82,7 @@ func (e *EmailService) SendPayslipEmail(req PayslipEmailRequest) error {
 		return nil
 	}
 
-	subject := fmt.Sprintf("Payslip %s — %s • ደሞዝ %s — %s", req.Period, req.EmployeeCode, req.Period, req.EmployeeCode)
+	subject := fmt.Sprintf(cat.Get(i18n.Normalize(req.Language), "email_payslip_subject"), req.EmployeeCode)
 	// HTML body outstanding modern template
 	body := fmt.Sprintf(`From: %s <%s>
 To: %s <%s>
@@ -143,7 +146,7 @@ func (e *EmailService) SendComplianceReportEmail(req ComplianceEmailRequest) err
 			req.ReportType, req.PeriodYear, req.PeriodMonth, req.ToEmail, req.FileKey, len(req.FileBytes), req.Metadata)
 		return nil
 	}
-	subject := fmt.Sprintf("Compliance Report %s — %02d/%d • ተገዢነት ሪፖርት", req.ReportType, req.PeriodMonth, req.PeriodYear)
+	subject := fmt.Sprintf(cat.Get(i18n.Normalize(req.Language), "email_compliance_subject"), req.PeriodMonth, req.PeriodYear)
 	body := fmt.Sprintf(`From: %s <%s>
 To: %s <%s>
 Subject: %s
@@ -172,7 +175,7 @@ func (e *EmailService) SendMagicLinkEmail(req MagicLinkEmailRequest) error {
 			req.ToEmail, req.ToName, req.EmployeeCode, req.MagicLinkURL, req.QRCodeData, req.ExpiresAt.Format(time.RFC3339))
 		return nil
 	}
-	subject := fmt.Sprintf("Your Employee Portal Magic Link — 24h • የሰራተኛ መግቢያ • %s", req.EmployeeCode)
+	subject := cat.Get(i18n.Normalize(req.Language), "email_magiclink_subject")
 	body := fmt.Sprintf(`From: %s <%s>
 To: %s <%s>
 Subject: %s

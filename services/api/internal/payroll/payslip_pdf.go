@@ -91,7 +91,7 @@ func GeneratePayslipPDFGo(data PayslipPDFData) ([]byte, error) {
 	pdf.Rect(15, y, 180, 22, "D")
 	pdf.SetXY(17, y+2)
 	pdf.SetFont("Helvetica", "B", 10)
-	pdf.CellFormat(0, 5, fmt.Sprintf("Employee: %s %s (%s) • %s • Fayda ****-%s ✓ face %.2f • Bank %s %s • Verified ✓ Levenshtein <3", data.EmployeeName, data.EmployeeNameAM, data.EmployeeCode, data.Designation, data.FaydaLast4, data.FaceScore, data.BankCode, data.BankMasked), "", 0, "", false, 0, "")
+	pdf.CellFormat(0, 5, fmt.Sprintf("Employee: %s %s (%s) • %s • Fayda ****-%s • Bank %s %s", data.EmployeeName, data.EmployeeNameAM, data.EmployeeCode, data.Designation, data.FaydaLast4, data.BankCode, data.BankMasked), "", 0, "", false, 0, "")
 
 	pdf.SetXY(17, y+8)
 	pdf.SetFont("Helvetica", "", 9)

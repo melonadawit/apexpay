@@ -179,7 +179,7 @@ func (h *Handler) GetAnnualTaxCertificate(w http.ResponseWriter, r *http.Request
 			"pdf": fmt.Sprintf("/v1/payroll/payroll_reports/annual_tax_certificate?employee_id=%s&year=%d&format=pdf", employeeID, year),
 			"csv": fmt.Sprintf("/v1/payroll/payroll_reports/annual_tax_certificate?employee_id=%s&year=%d&format=csv", employeeID, year),
 		},
-		"message": "Annual Income Tax Certificate • ERCA annual Form16 equivalent • YTD Gross Taxable Tax Net Pension 7%/11% Employer Cost Cost Center Allocation • Binary Search O(log n) 7 brackets • Pension 7%/11% • Ledger M4 per run book • Outstanding modern template QR verification signed JWT HMAC SHA256 expiry 24h • Bilingual EN/AM • Password protected DOB DDMM+last4 • Digitally signed • MinIO presigned 15m • 7y retention NBE • Beyond RazorpayX",
+		"message": cat.Get(mw.LocaleFromContext(r.Context()), "tax_cert_generated"),
 	})
 }
 func (h *Handler) GetPayrollRegister(w http.ResponseWriter, r *http.Request) {
@@ -190,7 +190,7 @@ func (h *Handler) GetPayrollRegister(w http.ResponseWriter, r *http.Request) {
 	if runID == "" {
 		// Try get latest run for merchant? For demo return mock empty
 		pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
-			"message":         "payroll register 30 cols employee_code name department grade cost_center ctc_monthly gross ot_hours ot_amount commission bonus other_allowances taxable income_tax pension 7% 11% other_deductions net paid lop proration_factor is_on_hold hold_reason earnings_breakdown_json deductions_breakdown_json employer_contributions_json ytd_gross tax net period run_ref status • 10 employees • 500 <2s p99 • Specify ?run_id=prun_xxx&format=csv to download",
+			"message":         cat.Get(mw.LocaleFromContext(r.Context()), "payroll_register_need_run"),
 			"run_id_required": true,
 		})
 		return
@@ -247,7 +247,7 @@ func (h *Handler) GetPayrollRegister(w http.ResponseWriter, r *http.Request) {
 		"files": map[string]string{
 			"csv": fmt.Sprintf("/v1/payroll/payroll_reports/payroll_register?run_id=%s&format=csv", runID),
 		},
-		"message": "payroll register 30 cols • 10 employees • 500 <2s p99 • earnings_breakdown deductions_breakdown employer_contributions YTD paid lop proration_factor is_on_hold",
+		"message": cat.Get(mw.LocaleFromContext(r.Context()), "payroll_register_ready"),
 	})
 }
 func (h *Handler) GetVarianceReport(w http.ResponseWriter, r *http.Request) {
@@ -290,6 +290,6 @@ func (h *Handler) GetVarianceReport(w http.ResponseWriter, r *http.Request) {
 		"files": map[string]string{
 			"csv": fmt.Sprintf("/v1/payroll/payroll_reports/variance?year=%d&month=%d&format=csv", year, month),
 		},
-		"message": "Variance report vs last month +5.2% vs Jun OT increase + bonus Sales Q2 + new hires 2 • total_gross total_net total_tax • Recharts AreaChart trend Feb 160k Mar 170k Apr 180k May 185k Jun 190k Jul 200k +5.2% • Cost center breakdown Engineering 100k Sales 100k • Paid 280/300 LOP 20 • Proration avg 0.93 • Outstanding",
+		"message": cat.Get(mw.LocaleFromContext(r.Context()), "variance_report_ready"),
 	})
 }

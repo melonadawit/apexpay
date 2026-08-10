@@ -83,6 +83,21 @@ var enMessages = map[string]string{
 	"current_account_opened": "Current account opened",
 	"invoice_sent":           "Invoice sent",
 
+	// Payroll — clean, professional API success copy (no internals/marketing).
+	"calendar_locked":           "Payroll calendar locked.",
+	"calendar_unlocked":         "Payroll calendar unlocked.",
+	"leave_approved":            "Leave request approved.",
+	"leave_rejected":            "Leave request rejected.",
+	"loan_emi_schedule":         "Loan repayment schedule generated.",
+	"tax_cert_generated":        "Annual income tax certificate generated.",
+	"payroll_register_ready":    "Payroll register is ready.",
+	"payroll_register_need_run": "Select a payroll run to view the payroll register.",
+	"variance_report_ready":     "Payroll variance report is ready.",
+	"email_payslip_subject":     "Your payslip for %s",
+	"email_compliance_subject":  "Compliance report for %02d/%d",
+	"email_magiclink_subject":   "Your employee portal access link",
+	"magiclink_sent":            "Access link sent via %s to %s.",
+
 	// Generic
 	"ok":      "OK",
 	"success": "Success",
@@ -104,6 +119,20 @@ var amMessages = map[string]string{
 
 	"current_account_opened": "የገንዘብ ሒሳብ ተከፍቷል",
 	"invoice_sent":           "ደረሰኝ ተልኳል",
+
+	"calendar_locked":           "የደመወዝ ካሌንደር ተቆልፏል።",
+	"calendar_unlocked":         "የደመወዝ ካሌንደር ተከፍቷል።",
+	"leave_approved":            "የፈቃድ ጥያቄ ጸድቋል።",
+	"leave_rejected":            "የፈቃድ ጥያቄ ውድቅ ተደርጓል።",
+	"loan_emi_schedule":         "የብድር ክፍያ መርሃ ግብር ተዘጋጅቷል።",
+	"tax_cert_generated":        "የዓመታዊ የገቢ ግብር ሰርቲፊኬት ተዘጋጅቷል።",
+	"payroll_register_ready":    "የደመወዝ መዝገብ ዝግጁ ነው።",
+	"payroll_register_need_run": "እባክዎ የደመወዝ መዝገቡን ለማየት የደመወዝ ዙር ይምረጡ።",
+	"variance_report_ready":     "የደመወዝ ልዩነት ሪፖርት ዝግጁ ነው።",
+	"email_payslip_subject":     "የደመወዝ ደረሰኝዎ ለ%s",
+	"email_compliance_subject":  "የተገዢነት ሪፖርት ለ%02d/%d",
+	"email_magiclink_subject":   "የሰራተኛ መግቢያ አገናኝዎ",
+	"magiclink_sent":            "የመግቢያ አገናኝ በ%s ወደ %s ተልኳል።",
 
 	"ok":      "እሺ",
 	"success": "ተሳክቷል",

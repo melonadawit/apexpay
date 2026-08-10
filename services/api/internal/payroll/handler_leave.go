@@ -130,7 +130,8 @@ func (h *Handler) ApproveLeaveRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	// After approval, deduct from balance Used+=Requested Remaining=Entitled-Used floor zero
 	// For outstanding, we would also update leave balance here
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": reqID, "status": string(LeaveApproved), "approved_by": userID, "message": "Approved • Deduct from balance Used+=Requested Remaining=Entitled-Used floor zero • Art 77/82/86 • Outstanding"})
+	locale := mw.LocaleFromContext(r.Context())
+	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": reqID, "status": string(LeaveApproved), "approved_by": userID, "message": cat.Get(locale, "leave_approved")})
 }
 func (h *Handler) RejectLeaveRequest(w http.ResponseWriter, r *http.Request) {
 	reqID := chi.URLParam(r, "id")

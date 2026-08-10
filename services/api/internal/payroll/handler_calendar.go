@@ -121,7 +121,8 @@ func (h *Handler) LockCalendar(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteError(w, r, err)
 		return
 	}
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": calID, "is_locked": "true", "locked_by": userID, "message": "Locked after disbursal per Ethiopia business practice • Prevents re-run amendment unless unlocked by admin with audit log payroll_audit_logs actor admin action unlock_calendar details locked_by IP inet request_id immutable"})
+	locale := mw.LocaleFromContext(r.Context())
+	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": calID, "is_locked": "true", "locked_by": userID, "message": cat.Get(locale, "calendar_locked")})
 }
 func (h *Handler) UnlockCalendar(w http.ResponseWriter, r *http.Request) {
 	merchantID := mw.MerchantID(r.Context())
@@ -130,5 +131,6 @@ func (h *Handler) UnlockCalendar(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteError(w, r, err)
 		return
 	}
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": calID, "is_locked": "false", "message": "Unlocked by admin with audit log payroll_audit_logs actor admin action unlock_calendar"})
+	locale := mw.LocaleFromContext(r.Context())
+	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": calID, "is_locked": "false", "message": cat.Get(locale, "calendar_unlocked")})
 }
