@@ -27,7 +27,6 @@ export default function CheckoutTokenPage({ params }: { params: { token: string 
   const [init, setInit] = React.useState<InitResult | null>(null)
   const [otp, setOtp] = React.useState("")
   const [error, setError] = React.useState("")
-  const [polls, setPolls] = React.useState(0)
 
   // Load the payment link from the real public API.
   React.useEffect(() => {
@@ -81,7 +80,7 @@ export default function CheckoutTokenPage({ params }: { params: { token: string 
     const interval = setInterval(async () => {
       try {
         const s = await fetchStatus(token, txRef)
-        setPolls((n) => n + 1)
+
         if (s.status === "succeeded") {
           clearInterval(interval)
           setPhase("success")
@@ -109,8 +108,7 @@ export default function CheckoutTokenPage({ params }: { params: { token: string 
     return (
       <Centered>
         <div className="mx-auto h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-        <p className="mt-4 font-semibold">Processing payment… • ክፍያ በመፈጸም ላይ</p>
-        <p className="mt-1 text-xs text-muted-foreground">Polling status every 2s • poll {polls}</p>
+        <p className="mt-4 font-semibold">Processing payment…</p>
       </Centered>
     )
   }
@@ -120,13 +118,13 @@ export default function CheckoutTokenPage({ params }: { params: { token: string 
       <Centered>
         <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-soft p-8 text-center space-y-4">
           <div className="mx-auto h-20 w-20 rounded-full bg-green-100 flex items-center justify-center text-4xl">✓</div>
-          <h2 className="text-2xl font-bold">Payment Successful • ክፍያ ተሳክቷል</h2>
+          <h2 className="text-2xl font-bold">Payment Successful</h2>
           <p className="text-sm text-muted-foreground">
             {init ? `${init.amount} ${init.currency} • Ref ${init.tx_ref}` : "Receipt sent to your email"}
           </p>
           <div className="flex gap-2">
             <button className="flex-1 rounded-xl border h-12 text-sm" onClick={() => window.print()}>Download PDF</button>
-            <button className="flex-1 rounded-xl bg-primary text-white h-12 text-sm">Done • ጨርስ</button>
+            <button className="flex-1 rounded-xl bg-primary text-white h-12 text-sm">Done</button>
           </div>
         </div>
       </Centered>
@@ -142,12 +140,12 @@ export default function CheckoutTokenPage({ params }: { params: { token: string 
           <div className="text-center">
             <div className="mx-auto h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary">A</div>
             <h1 className="mt-3 font-bold">{link?.description || "Secure Checkout"}</h1>
-            <p className="text-sm text-muted-foreground">NBE Licensed Gateway • 🔒</p>
+            <p className="text-sm text-muted-foreground">🔒 Secure checkout</p>
             <p className="text-3xl font-bold mt-3">ETB {amount}</p>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold">Payment Method • የክፍያ ዘዴ</p>
+            <p className="text-sm font-semibold">Payment Method</p>
             {METHODS.map((m) => (
               <button
                 key={m.id}
@@ -167,7 +165,7 @@ export default function CheckoutTokenPage({ params }: { params: { token: string 
 
           {phase === "2fa" && (
             <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-2">
-              <p className="text-sm font-semibold">2FA Required &gt;5000 ETB per ONPS/10/2025</p>
+              <p className="text-sm font-semibold">Enter the 6-digit code sent to your phone</p>
               <input
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
@@ -177,7 +175,7 @@ export default function CheckoutTokenPage({ params }: { params: { token: string 
                 className="w-full rounded-xl border h-12 px-3"
               />
               <button onClick={submit2FA} className="w-full rounded-xl bg-amber-600 text-white h-10 text-sm">
-                Verify • ያረጋግጡ
+                Verify
               </button>
             </div>
           )}
@@ -189,12 +187,10 @@ export default function CheckoutTokenPage({ params }: { params: { token: string 
             disabled={phase === "failed"}
             className="w-full h-14 rounded-xl bg-primary text-white font-semibold shadow-soft hover:shadow-medium active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            Pay ETB {amount} • ክፍያ
+            Pay ETB {amount}
           </button>
 
-          <p className="text-[11px] text-center text-muted-foreground">
-            🔒 Secure by ApexPay • FIN never logged • Encrypted • NBE compliant
-          </p>
+          <p className="text-[11px] text-center text-muted-foreground">🔒 Secure checkout by ApexPay</p>
         </div>
       </div>
     </Centered>
