@@ -4,7 +4,10 @@
 > close + depreciation + inventory COGS + tax schedules + multi-currency revaluation) ✅
 > · Part C (1) Procurement/AP ✅ · Part C (2) Expenses ✅ (payroll claims + **GL
 > reimbursement posting on finance approval**) · **Budgeting/FP&A** ✅ · **Self-service
-> portals (vendor + customer)** ✅. All roadmap items complete.
+> portals (vendor + customer)** ✅ · **UI/UX Phase 1: language-aware dashboard titles**
+> ✅ (merchant-web now builds, titles driven by EN/Amharic preference).
+> All roadmap items complete; further UI polish (design system, checkout-web, admin-web)
+> tracked separately.
 >
 > Senior Engineering Manager view — grounded in what already exists in the codebase.
 > Goal: deliver the *Apex Assistant* (role-scoped conversational agents for merchants,
