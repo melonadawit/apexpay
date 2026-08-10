@@ -31,7 +31,7 @@ const columns: Column<CorporateCard>[] = [
 export default function CorporateCardsPage() {
   return (
     <BankingPage
-      title="Corporate Cards • የኩባንያ ካርዶች"
+      titleEn="Corporate Cards" titleAm="የኩባንያ ካርዶች"
       subtitle="Virtual + physical corporate cards with spending controls and forex markup."
       columns={columns}
       loader={() => api.banking.corporateCards()}

@@ -1,11 +1,13 @@
 "use client"
 import * as React from "react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function RefundsPage() {
+  const { t } = useLanguage()
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="max-w-6xl mx-auto space-y-4">
-        <h1 className="text-2xl font-bold">Refunds • ተመላሽ ክፍያ — FULL M2 Ledger</h1>
+        <h1 className="text-2xl font-bold">{t("Refunds","ተመላሽ ክፍያ")}</h1>
         <div className="grid grid-cols-3 gap-4">
           <div className="rounded-2xl border bg-card p-6 space-y-3">
             <h3 className="font-semibold">Create Refund • Outstanding Bottom Sheet</h3>

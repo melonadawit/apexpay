@@ -17,7 +17,7 @@ const columns: Column<Notification>[] = [
 export default function NotificationsPage() {
   return (
     <BankingPage
-      title="Notifications • ማሳወቂያዎች"
+      titleEn="Notifications" titleAm="ማሳወቂያዎች"
       subtitle="Bulk payouts, payroll approvals, escrow, forex alerts and more."
       columns={columns}
       loader={() => api.banking.notifications()}

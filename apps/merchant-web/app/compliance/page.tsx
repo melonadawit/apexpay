@@ -1,8 +1,10 @@
 "use client"
 import * as React from "react"
 import { motion } from "framer-motion"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function CompliancePage() {
+  const { t } = useLanguage()
   const [query, setQuery] = React.useState("")
   const [answer, setAnswer] = React.useState("")
   const [citations, setCitations] = React.useState<any[]>([])

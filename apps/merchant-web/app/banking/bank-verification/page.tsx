@@ -31,7 +31,7 @@ const columns: Column<BankVerification>[] = [
 export default function BankVerificationPage() {
   return (
     <BankingPage
-      title="Bank Account Verification • ባንክ ሂሳብ ማረጋገጫ"
+      titleEn="Bank Account Verification" titleAm="ባንክ ሂሳብ ማረጋገጫ"
       subtitle="Penny testing / fund account validation — 1 ETB deposit returns validated bank details."
       columns={columns}
       loader={() => api.banking.bankVerifications()}

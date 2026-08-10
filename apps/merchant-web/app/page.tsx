@@ -3,8 +3,10 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, GlassCard } from "@/components/ui/card"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function Home() {
+  const { t } = useLanguage()
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50">
       <header className="sticky top-0 z-20 glass border-b">
@@ -18,7 +20,7 @@ export default function Home() {
 
       <main className="max-w-6xl mx-auto px-6 py-12 space-y-12">
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center space-y-6">
-          <h1 className="text-5xl font-bold tracking-tight">AI-native payment gateway for Ethiopia • ለኢትዮጵያ</h1>
+          <h1 className="text-5xl font-bold tracking-tight">{t("AI-native payment gateway for Ethiopia","ለኢትዮጵያ")}</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">Collect via Telebirr, CBE Birr, Bank IPS, EthSwitch QR, Cards — with Fayda ID verification front/back + OTP, NBE-grade onboarding, smart routing, payouts, payroll ET tax, RAG compliance, Swarm AI.</p>
           <div className="flex justify-center gap-3">
             <Link href="/onboarding"><Button size="lg">Outstanding Onboarding Wizard • ጀምር</Button></Link>

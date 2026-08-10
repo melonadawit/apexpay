@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -20,6 +21,7 @@ const mockRequests = [
 ]
 
 export default function LeaveManagementPage() {
+  const { t } = useLanguage()
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">

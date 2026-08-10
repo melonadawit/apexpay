@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -17,6 +18,7 @@ const mockFnF = [
 ]
 
 export default function FinalSettlementPage() {
+  const { t } = useLanguage()
   const [selected, setSelected] = React.useState(mockFnF[0])
   const [checklist, setChecklist] = React.useState(selected.clearance)
 

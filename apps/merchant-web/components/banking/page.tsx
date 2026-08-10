@@ -3,6 +3,7 @@ import * as React from "react"
 import { api } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
 import { useRequireAuth } from "@/lib/api/require-auth"
+import { useLanguage } from "@/components/providers/language-provider"
 
 // Shared banking page scaffold: enforces a dashboard session, loads data from a given
 // loader, and renders a title + a table-ish list. Keeps banking pages consistent and
@@ -16,16 +17,21 @@ export type Column<T> = {
 
 export function BankingPage<T extends { id: string }>({
   title,
+  titleEn,
+  titleAm,
   subtitle,
   columns,
   loader,
 }: {
-  title: string
+  title?: string
+  titleEn?: string
+  titleAm?: string
   subtitle?: string
   columns: Column<T>[]
   loader: () => Promise<T[]>
 }) {
   const { checking } = useRequireAuth()
+  const { t } = useLanguage()
   const { data, loading } = useData(loader, [])
 
   if (checking) {
@@ -36,11 +42,13 @@ export function BankingPage<T extends { id: string }>({
     )
   }
 
+  const heading = titleEn ? t(titleEn, titleAm || titleEn) : title
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">{title}</h1>
+          <h1 className="text-3xl font-bold">{heading}</h1>
           {subtitle && <p className="text-sm text-muted-foreground mt-2">{subtitle}</p>}
         </div>
 

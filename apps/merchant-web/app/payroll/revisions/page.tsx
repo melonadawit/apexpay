@@ -1,6 +1,7 @@
 "use client"
 import * as React from "react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -14,6 +15,7 @@ const mockRevisions = [
 ]
 
 export default function SalaryRevisionPage() {
+  const { t } = useLanguage()
   const [selected, setSelected] = React.useState(mockRevisions[0])
   const [newBase, setNewBase] = React.useState("25000")
   const [oldBase, setOldBase] = React.useState("20000")

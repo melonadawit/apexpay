@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type ForexRate, type ForexRequest } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function ForexPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: rates, loading: ratesLoading } = useData(() => api.banking.forexRates(), [])
   const { data: requests, loading: reqLoading } = useData(() => api.banking.forexRequests(), [])
@@ -21,7 +23,7 @@ export default function ForexPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Forex • ውጭ ምንዛሪ</h1>
+          <h1 className="text-3xl font-bold">{t("Forex","ውጭ ምንዛሪ")}</h1>
           <p className="text-sm text-muted-foreground mt-2">
             FDI transfers, 2.5% markup, NBE approval required. Rates cached 60s via Redis.
           </p>

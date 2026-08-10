@@ -1,6 +1,7 @@
 "use client"
 import * as React from "react"
 import { DocumentViewerOCR } from "@/components/payroll/DocumentViewerOCR"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -15,6 +16,7 @@ const mockClaims = [
 ]
 
 export default function ClaimsPage() {
+  const { t } = useLanguage()
   const [dragOver, setDragOver] = React.useState(false)
   const [receiptPreview, setReceiptPreview] = React.useState<string | null>(null)
 

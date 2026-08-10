@@ -1,5 +1,6 @@
 "use client"
 import Link from "next/link"
+import { useLanguage } from "@/components/providers/language-provider"
 
 const modules = [
   { href: "/banking/current-accounts", title: "Current Accounts", desc: "Partner-bank accounts & balances" },
@@ -17,10 +18,11 @@ const modules = [
 ]
 
 export default function BankingIndexPage() {
+  const { t } = useLanguage()
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-5xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Banking • ባንክ</h1>
+        <h1 className="text-3xl font-bold">{t("Banking","ባንክ")}</h1>
         <p className="text-sm text-muted-foreground">Business banking modules.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {modules.map((m) => (

@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type FixedAsset } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function FixedAssetsPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data, refetch } = useData(() => api.fixedAssets.list(), [])
 
@@ -33,7 +35,7 @@ export default function FixedAssetsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Fixed Assets & Depreciation • ቋሚ ንብረቶች</h1>
+        <h1 className="text-3xl font-bold">{t("Fixed Assets & Depreciation","ቋሚ ንብረቶች")}</h1>
         <p className="text-sm text-muted-foreground">Straight-line and declining-balance depreciation for tax.</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

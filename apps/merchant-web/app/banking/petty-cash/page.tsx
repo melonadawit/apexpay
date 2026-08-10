@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type PettyCashBudget, type PettyCashExpense } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function PettyCashPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: budgets, refetch: refetchBudgets } = useData(() => api.banking.pettyCashBudgets(), [])
   const { data: expenses, refetch: refetchExpenses } = useData(() => api.banking.pettyCashExpenses(), [])
@@ -42,7 +44,7 @@ export default function PettyCashPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Petty Cash • አነስተኛ ገንዘብ</h1>
+          <h1 className="text-3xl font-bold">{t("Petty Cash","አነስተኛ ገንዘብ")}</h1>
           <p className="text-sm text-muted-foreground mt-2">Track petty cash budgets and expenses with receipts.</p>
         </div>
 

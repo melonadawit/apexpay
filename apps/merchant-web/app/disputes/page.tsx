@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type Dispute } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function DisputesPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data, refetch } = useData(() => api.disputes.list(), [])
 
@@ -27,7 +29,7 @@ export default function DisputesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Disputes & Chargebacks • ክርክር</h1>
+        <h1 className="text-3xl font-bold">{t("Disputes & Chargebacks","ክርክር")}</h1>
         <p className="text-sm text-muted-foreground">File disputes, submit evidence, and resolve chargebacks.</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -1,8 +1,10 @@
 "use client"
 import * as React from "react"
 import { parseBulkCSV, levenshtein, BulkRow } from "@/lib/papaparse-bulk"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function PayoutsPage() {
+  const { t } = useLanguage()
   const [rows, setRows] = React.useState<BulkRow[]>([
     { name: "Abebe", account_no: "1000123456789", bank_code: "CBE", bank_name: "Commercial Bank of Ethiopia", amount: "10000", payout_ref: "pout_ref_01", status: "valid", errors: [] },
     { name: "Almaz", account_no: "1000123456790", bank_code: "AWASH", bank_name: "Awash Bank", amount: "5000", payout_ref: "pout_ref_02", status: "valid", errors: [] },
@@ -30,7 +32,7 @@ export default function PayoutsPage() {
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold">Payouts • ክፍያዎች ለአቅራቢዎች — Papaparse Bulk Real + Levenshtein Fuzzy</h1>
+        <h1 className="text-2xl font-bold">{t("Payouts","ክፍያዎች ለአቅራቢዎች")}</h1>
 
         <div className="grid grid-cols-3 gap-6">
           <div className="rounded-2xl border bg-card p-6 space-y-3">

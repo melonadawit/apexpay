@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type RiskRule } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function RiskPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: rules, refetch } = useData(() => api.risk.rules(), [])
   const { data: flags } = useData(() => api.risk.flags(), [])
@@ -32,7 +34,7 @@ export default function RiskPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Risk & Fraud • አደጋ</h1>
+        <h1 className="text-3xl font-bold">{t("Risk & Fraud","አደጋ")}</h1>
         <p className="text-sm text-muted-foreground">Transaction monitoring, velocity checks, and review flags.</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

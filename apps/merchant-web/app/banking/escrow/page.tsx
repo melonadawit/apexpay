@@ -34,7 +34,7 @@ const columns: Column<EscrowAccount>[] = [
 export default function EscrowPage() {
   return (
     <BankingPage
-      title="Escrow • ኢስክሮ"
+      titleEn="Escrow" titleAm="ኢስክሮ"
       subtitle="Automated marketplace escrow that holds and releases funds under defined conditions."
       columns={columns}
       loader={() => api.banking.escrow()}

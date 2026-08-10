@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type ComplianceStatus } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function ComplianceConsolePage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: status } = useData(() => api.compliance.status(), [])
   const { data: checks } = useData(() => api.compliance.checks(), [])
@@ -27,7 +29,7 @@ export default function ComplianceConsolePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Compliance Console • ተገዢነት</h1>
+        <h1 className="text-3xl font-bold">{t("Compliance Console","ተገዢነት")}</h1>
         <p className="text-sm text-muted-foreground">KYC, license, tax, pension and AML obligations with expiry tracking.</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

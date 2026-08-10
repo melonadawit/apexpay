@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type PayoutLink } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function PayoutLinksPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data, loading, refetch } = useData(() => api.banking.payoutLinks(), [])
 
@@ -36,7 +38,7 @@ export default function PayoutLinksPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Payout Links • የክፍያ ሊንኮች</h1>
+          <h1 className="text-3xl font-bold">{t("Payout Links","የክፍያ ሊንኮች")}</h1>
           <p className="text-sm text-muted-foreground mt-2">
             QR + public links — recipients claim without entering bank details; escrow-backed.
           </p>

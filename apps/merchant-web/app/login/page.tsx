@@ -2,8 +2,10 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { login } from "@/lib/api/auth"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function LoginPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -30,7 +32,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-2xl border border-black/10 bg-white shadow-soft p-8 space-y-6">
         <div className="text-center">
           <div className="mx-auto h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center font-bold text-primary text-xl">A</div>
-          <h1 className="mt-4 text-2xl font-bold">Sign in • ይግቡ</h1>
+          <h1 className="mt-4 text-2xl font-bold">{t("Sign in","ይግቡ")}</h1>
           <p className="text-sm text-muted-foreground">ApexPay Merchant Dashboard</p>
         </div>
 

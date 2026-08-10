@@ -3,14 +3,16 @@ import * as React from "react"
 import Link from "next/link"
 import { api } from "@/lib/api/client"
 import { useData, formatETB } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function PaymentsPage() {
+  const { t } = useLanguage()
   const { data: payments, loading } = useData(() => api.payments(50), [])
 
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="max-w-6xl mx-auto space-y-4">
-        <h1 className="text-2xl font-bold">Payments • ክፍያዎች</h1>
+        <h1 className="text-2xl font-bold">{t("Payments","ክፍያዎች")}</h1>
         <div className="rounded-2xl border bg-card overflow-hidden">
           <div className="grid grid-cols-7 gap-4 p-4 bg-muted text-xs font-semibold text-muted-foreground">
             <span>Tx Ref</span><span>Amount</span><span>Method</span><span>Status</span><span>Connector</span><span>2FA</span><span>Action</span>

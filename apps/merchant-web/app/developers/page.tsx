@@ -1,12 +1,14 @@
 "use client"
 import * as React from "react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function DevelopersPage() {
+  const { t } = useLanguage()
   const [showSecret, setShowSecret] = React.useState(false)
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold">Developers • ገንቢዎች — API Keys + Webhooks + Bank List + Methods Health</h1>
+        <h1 className="text-2xl font-bold">{t("Developers","ገንቢዎች")}</h1>
 
         <div className="grid grid-cols-2 gap-6">
           <div className="rounded-2xl border bg-card p-6 space-y-4">
@@ -27,6 +29,7 @@ export default function DevelopersPage() {
               <p className="font-semibold">Quickstart 6 lines copy-paste like Chapa "simple as copy and paste":</p>
               <pre className="mt-2 bg-background text-foreground rounded-lg p-3 overflow-auto text-[11px]">{`npm install apexpay-js
 import ApexPay from 'apexpay-js'
+import { useLanguage } from "@/components/providers/language-provider"
 const apexpay = new ApexPay('sk_test_...')
 apexpay.initialize({ tx_ref: 'txr_01', amount: '500', currency: 'ETB', method: 'telebirr' })
   .then(res => console.log(res.checkout_url))

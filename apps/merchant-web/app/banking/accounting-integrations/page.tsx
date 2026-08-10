@@ -2,8 +2,10 @@
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function AccountingIntegrationsPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data, loading } = useData(() => api.banking.accountingIntegrations(), [])
 
@@ -12,7 +14,7 @@ export default function AccountingIntegrationsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Accounting Integrations • የሂሳብ ውህደት</h1>
+        <h1 className="text-3xl font-bold">{t("Accounting Integrations","የሂሳብ ውህደት")}</h1>
         <p className="text-sm text-muted-foreground">Tally • Zoho • QuickBooks — two-way sync with CA access controls.</p>
 
         <div className="rounded-2xl border bg-card overflow-hidden">

@@ -1,6 +1,7 @@
 "use client"
 import * as React from "react"
 import { motion } from "framer-motion"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Badge({ children, variant = "default" }: any) {
   const map: any = { default: "bg-neutral-100", success: "bg-green-500/15 text-green-700 border", warning: "bg-amber-500/15 text-amber-700 border" }
@@ -10,6 +11,7 @@ function Card({ children, className = "" }: any) { return <div className={`round
 function GlassCard({ children, className = "" }: any) { return <div className={`rounded-2xl border border-white/50 bg-white/70 backdrop-blur-xl shadow-glass ${className}`}>{children}</div> }
 
 export default function EmployeePortalPage() {
+  const { t } = useLanguage()
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50/20 p-6">
       <div className="max-w-6xl mx-auto space-y-6">

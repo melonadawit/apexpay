@@ -3,10 +3,12 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type TaxPayment } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 const TAX_TYPES = ["vat", "tot", "withholding", "paye", "pension"]
 
 export default function TaxPaymentsPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data, loading, refetch } = useData(() => api.banking.taxPayments(), [])
   const [taxType, setTaxType] = React.useState("vat")
@@ -45,7 +47,7 @@ export default function TaxPaymentsPage() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Tax Payments • የግብር ክፍያዎች</h1>
+          <h1 className="text-3xl font-bold">{t("Tax Payments","የግብር ክፍያዎች")}</h1>
           <p className="text-sm text-muted-foreground mt-2">
             VAT 15% • TOT 2%/10% • Withholding 2% • PAYE • Pension — automated pre-filled forms.
           </p>

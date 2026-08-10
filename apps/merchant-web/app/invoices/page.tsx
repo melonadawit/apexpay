@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type Invoice, type AgingBucket } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function InvoicesPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: invoices, refetch } = useData(() => api.invoices.list(), [])
   const { data: aging } = useData(() => api.invoices.aging(), [])

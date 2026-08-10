@@ -39,7 +39,7 @@ const columns: Column<CreditLine>[] = [
 export default function CreditLinesPage() {
   return (
     <BankingPage
-      title="Credit Lines • የብድር መስመሮች"
+      titleEn="Credit Lines" titleAm="የብድር መስመሮች"
       subtitle="Collateral-free credit lines based on TPV / payroll scoring, 18% p.a."
       columns={columns}
       loader={() => api.banking.creditLines()}

@@ -2,8 +2,10 @@
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function RelationshipManagersPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data, loading } = useData(() => api.banking.relationshipManagers(), [])
 
@@ -12,7 +14,7 @@ export default function RelationshipManagersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Relationship Managers • የግንኙነት አስተዳዳሪዎች</h1>
+        <h1 className="text-3xl font-bold">{t("Relationship Managers","የግንኙነት አስተዳዳሪዎች")}</h1>
         <div className="rounded-2xl border bg-card overflow-hidden">
           <div className="grid grid-cols-4 gap-2 bg-muted p-3 text-[11px] font-semibold">
             <span>ID</span><span>RM User</span><span>Status</span><span>Assigned</span>

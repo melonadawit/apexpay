@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type TreasuryPosition, type Forecast } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function TreasuryPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: position, refetch: refetchPos } = useData(() => api.treasury.position(), [])
   const { data: transfers, refetch: refetchXfer } = useData(() => api.treasury.transfers(), [])

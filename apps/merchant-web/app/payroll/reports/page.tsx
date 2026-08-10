@@ -1,6 +1,7 @@
 "use client"
 import * as React from "react"
 import { motion } from "framer-motion"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -9,6 +10,7 @@ function Badge({ children, variant = "default" }: any) {
 }
 
 export default function PayrollReportsPage() {
+  const { t } = useLanguage()
   const costCenterData = [
     { cc: "CC-100 Engineering", gross: 100000, net: 75000, tax: 10000, pension: 18000, employer_cost: 118000, headcount: 5, paid: 140, lop: 10, variance: "+3.2%" },
     { cc: "CC-200 Sales", gross: 100000, net: 75000, tax: 10000, pension: 18000, employer_cost: 118000, headcount: 5, paid: 140, lop: 10, variance: "+7.2%"},

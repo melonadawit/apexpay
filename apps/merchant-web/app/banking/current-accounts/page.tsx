@@ -31,7 +31,7 @@ const columns: Column<CurrentAccount>[] = [
 export default function CurrentAccountsPage() {
   return (
     <BankingPage
-      title="Current Accounts • የአሁኑ ሂሳቦች"
+      titleEn="Current Accounts" titleAm="የአሁኑ ሂሳቦች"
       subtitle="Real partner-bank current accounts (CBE/Awash/Dashen) with balances and card/cheque status."
       columns={columns}
       loader={() => api.banking.currentAccounts()}

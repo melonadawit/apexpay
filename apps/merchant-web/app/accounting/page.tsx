@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function AccountingPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: accounts } = useData(() => api.accounting.accounts(), [])
   const { data: trial } = useData(() => api.accounting.trialBalance(), [])
@@ -17,7 +19,7 @@ export default function AccountingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Accounting & Bookkeeping • የሂሳብ አያያዝ</h1>
+        <h1 className="text-3xl font-bold">{t("Accounting & Bookkeeping","የሂሳብ አያያዝ")}</h1>
         <p className="text-sm text-muted-foreground">Chart of accounts, trial balance, P&L, balance sheet and cash flow — derived from the ledger.</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

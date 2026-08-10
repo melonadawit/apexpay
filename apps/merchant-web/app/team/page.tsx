@@ -3,10 +3,12 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type Member, type Approval } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 const ROLES = ["owner", "admin", "developer", "finance", "support", "ops", "compliance", "viewer"]
 
 export default function TeamPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: members, refetch: refetchMembers } = useData(() => api.team.members(), [])
   const { data: approvals, refetch: refetchApprovals } = useData(() => api.team.approvals(), [])
@@ -32,7 +34,7 @@ export default function TeamPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Team & Approvals • ቡድን</h1>
+        <h1 className="text-3xl font-bold">{t("Team & Approvals","ቡድን")}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="rounded-2xl border bg-card p-6 space-y-3">

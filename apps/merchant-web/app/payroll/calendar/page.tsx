@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { gregorianToEthiopian, formatEthiopianDate, ethiopianPublicHolidays } from "@/lib/ethiopian-calendar"
 import { EthiopianCalendarGrid } from "@/components/payroll/EthiopianCalendarGrid"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -28,6 +29,7 @@ const payrollTrend = [
 ]
 
 export default function PayrollCalendarPage() {
+  const { t } = useLanguage()
   const [selected, setSelected] = React.useState(mockCalendars[0])
   const [showCreate, setShowCreate] = React.useState(false)
   const ethDate = gregorianToEthiopian(new Date())

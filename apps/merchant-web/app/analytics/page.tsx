@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function AnalyticsPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: revenue } = useData(() => api.analytics.revenue(), [])
   const { data: methods } = useData(() => api.analytics.methods(), [])
@@ -19,7 +21,7 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Analytics & Cohort • ትንታኔ</h1>
+        <h1 className="text-3xl font-bold">{t("Analytics & Cohort","ትንታኔ")}</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card label="Revenue (30d)" value={`ETB ${totalRev.toLocaleString()}`} />

@@ -1,10 +1,12 @@
 "use client"
 import * as React from "react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) { const map: any = { default: "bg-neutral-100", success: "bg-green-500/15 text-green-700 border", warning: "bg-amber-500/15 text-amber-700 border" }; return <span className={`px-2 py-0.5 rounded-full text-[11px] border ${map[variant]}`}>{children}</span> }
 
 export default function PayrollSettingsPage() {
+  const { t } = useLanguage()
   const [brackets, setBrackets] = React.useState([
     { id: "brack_600", min: 0, max: 600, rate: 0, deduction: 0, effective_from: "2024-01-01" },
     { id: "brack_1650", min: 601, max: 1650, rate: 10, deduction: 60, effective_from: "2024-01-01" },

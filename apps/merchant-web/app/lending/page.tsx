@@ -3,8 +3,10 @@ import * as React from "react"
 import { useRequireAuth } from "@/lib/api/require-auth"
 import { api, type Loan } from "@/lib/api/client"
 import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function LendingPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data, refetch } = useData(() => api.lending.loans(), [])
 
@@ -25,7 +27,7 @@ export default function LendingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Lending & Micro-loans • ብድር</h1>
+        <h1 className="text-3xl font-bold">{t("Lending & Micro-loans","ብድር")}</h1>
         <p className="text-sm text-muted-foreground">Collateral-free loans from your credit line, scored on TPV and payroll.</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

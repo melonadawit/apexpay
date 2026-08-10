@@ -1,11 +1,13 @@
 "use client"
 import * as React from "react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function SubscriptionsPage() {
+  const { t } = useLanguage()
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold">Subscriptions • ደንበኝነት ምዝገባ — Recurring + Dunning 1d/3d/5d</h1>
+        <h1 className="text-2xl font-bold">{t("Subscriptions","ደንበኝነት ምዝገባ")}</h1>
 
         <div className="grid grid-cols-4 gap-4">
           <div className="rounded-2xl border bg-card p-4"><p className="text-sm text-muted-foreground">MRR • ወርሃዊ</p><p className="text-2xl font-bold">ETB 25,000</p><p className="text-xs">12 active • 2 trialing • 1 past_due</p></div>

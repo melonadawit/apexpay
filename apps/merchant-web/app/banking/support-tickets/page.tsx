@@ -26,7 +26,7 @@ const columns: Column<SupportTicket>[] = [
 export default function SupportTicketsPage() {
   return (
     <BankingPage
-      title="Support Tickets • የድጋፍ ጥያቄዎች"
+      titleEn="Support Tickets" titleAm="የድጋፍ ጥያቄዎች"
       subtitle="Priority support with SLA and dedicated relationship manager."
       columns={columns}
       loader={() => api.banking.supportTickets()}

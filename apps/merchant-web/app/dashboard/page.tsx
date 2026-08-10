@@ -7,8 +7,10 @@ import { TPVRecharts, HealthRecharts } from "./recharts"
 import { api } from "@/lib/api/client"
 import { useData, formatETB } from "@/lib/api/use-data"
 import { useRequireAuth } from "@/lib/api/require-auth"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function DashboardPage() {
+  const { t } = useLanguage()
   const { checking } = useRequireAuth()
   const { data: summary, loading: summaryLoading } = useData(() => api.summary(), [])
   const { data: payments } = useData(() => api.payments(5), [])
@@ -27,7 +29,7 @@ export default function DashboardPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard • ዳሽቦርድ</h1>
+            <h1 className="text-3xl font-bold">{t("Dashboard","ዳሽቦርድ")}</h1>
             <p className="text-sm text-muted-foreground">Welcome • live from ApexPay API</p>
           </div>
           <DonutProgress value={summary ? Math.round(successRateAsNum(summary)) : 78} />

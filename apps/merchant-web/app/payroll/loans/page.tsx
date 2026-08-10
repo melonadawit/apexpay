@@ -1,6 +1,7 @@
 "use client"
 import * as React from "react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -22,6 +23,7 @@ const mockLoans = [
 ]
 
 export default function LoansPage() {
+  const { t } = useLanguage()
   const [selected, setSelected] = React.useState(mockLoans[0])
   const chartData = selected.schedule.map((s:any)=>({ name: `#${s.installment_no} ${s.due_date}`, principal: parseInt(s.principal), interest: parseInt(s.interest), outstanding: parseInt(s.outstanding_after) }))
   const pieData = [
