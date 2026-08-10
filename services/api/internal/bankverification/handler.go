@@ -1,6 +1,7 @@
 package bankverification
 
 import (
+	"apexpay/internal/i18n"
 	"apexpay/internal/id"
 	pkghttp "apexpay/internal/platform/http"
 	mw "apexpay/internal/platform/middleware"
@@ -13,6 +14,8 @@ import (
 	"strings"
 	"time"
 )
+
+var cat = i18n.New()
 
 type Handler struct{ pool *pgxpool.Pool }
 
@@ -49,7 +52,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteError(w, r, err)
 		return
 	}
-	pkghttp.WriteJSON(w, r, 201, map[string]string{"id": vid, "status": "pending", "account_number_masked": masked, "message": "verification queued; no bank transfer is initiated until a partner connector is approved"})
+	pkghttp.WriteJSON(w, r, 201, map[string]string{"id": vid, "status": "pending", "account_number_masked": masked, "message": cat.Get(mw.LocaleFromContext(r.Context()), "verification_queued")})
 }
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	merchant := mw.MerchantID(r.Context())

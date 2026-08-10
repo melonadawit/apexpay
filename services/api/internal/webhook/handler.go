@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"net/url"
 
+	"apexpay/internal/i18n"
 	"apexpay/internal/id"
 	platformcrypto "apexpay/internal/platform/crypto"
 	pkghttp "apexpay/internal/platform/http"
 	mw "apexpay/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
 )
+
+var cat = i18n.New()
 
 type Handler struct {
 	repo          *PgRepository
@@ -123,5 +126,5 @@ func (h *Handler) Resend(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteError(w, r, err)
 		return
 	}
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": id, "status": "pending", "message": "resend queued"})
+	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": id, "status": "pending", "message": cat.Get(mw.LocaleFromContext(r.Context()), "resend_queued")})
 }

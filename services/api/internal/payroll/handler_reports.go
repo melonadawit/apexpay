@@ -40,7 +40,7 @@ func (h *Handler) GetBankDisbursalReport(w http.ResponseWriter, r *http.Request)
 	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
 	report, _ := h.svc.repo.GetComplianceReport(r.Context(), merchantID, year, month, ReportBankDisbursalFile)
 	if report == nil {
-		pkghttp.WriteJSON(w, r, 200, map[string]string{"message": "bank disbursal pain.001 file not yet generated"})
+		pkghttp.WriteJSON(w, r, 200, map[string]string{"message": cat.Get(mw.LocaleFromContext(r.Context()), "bank_disbursal_pending")})
 		return
 	}
 	pkghttp.WriteJSON(w, r, 200, report)
@@ -60,7 +60,7 @@ func (h *Handler) GetCostCenterReport(w http.ResponseWriter, r *http.Request) {
 			{"cost_center": "Engineering", "total_gross": "100000", "total_net": "75000", "headcount": 5, "employer_cost": "118000", "paid_days": 140, "lop_days": 10, "proration_avg": "0.93"},
 			{"cost_center": "Sales", "total_gross": "100000", "total_net": "75000", "headcount": 5, "employer_cost": "118000", "paid_days": 140, "lop_days": 10},
 		},
-		"message": "cost center report group by cost_center O(n) map aggregation optimal data structure CC-100 Engineering 100k CC-200 Sales 100k",
+		"message": cat.Get(mw.LocaleFromContext(r.Context()), "cost_center_report"),
 	})
 }
 func (h *Handler) GetAnnualTaxCertificate(w http.ResponseWriter, r *http.Request) {

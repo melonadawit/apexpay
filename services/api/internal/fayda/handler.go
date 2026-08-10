@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"apexpay/internal/i18n"
 	pkghttp "apexpay/internal/platform/http"
 	mw "apexpay/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
 )
+
+var cat = i18n.New()
 
 type Handler struct{ svc *Service }
 
@@ -41,7 +44,7 @@ func (h *Handler) Init(w http.ResponseWriter, r *http.Request) {
 	// Return only last4 per privacy, not plain FIN
 	pkghttp.WriteJSON(w, r, 201, map[string]interface{}{
 		"request_id": resp.RequestID, "fin_last4": resp.FinLast4, "status": resp.Status, "otp_sent": true, "fayda_transaction_id": resp.FaydaTransactionID,
-		"message": "OTP sent to Fayda-registered phone mock 123456",
+		"message": cat.Get(mw.LocaleFromContext(r.Context()), "fayda_otp_sent"),
 	})
 }
 

@@ -98,6 +98,21 @@ var enMessages = map[string]string{
 	"email_magiclink_subject":   "Your employee portal access link",
 	"magiclink_sent":            "Access link sent via %s to %s.",
 
+	// Onboarding / Fayda / verification
+	"fayda_otp_sent":      "One-time password sent to your Fayda-registered phone.",
+	"kyc_submitted":       "KYC submitted for compliance review.",
+	"verification_queued": "Verification queued.",
+	"otp_sent":            "One-time password sent.",
+
+	// Payroll runs / reports (clean copy)
+	"payroll_calculated":     "Payroll calculated.",
+	"payroll_disbursed":      "Payroll disbursed.",
+	"payslip_generated":      "Payslip generated.",
+	"payslips_zip_ready":     "Payslips download ready.",
+	"bank_disbursal_pending": "Bank disbursal file not yet generated.",
+	"cost_center_report":     "Cost center report is ready.",
+	"resend_queued":          "Webhook resend queued.",
+
 	// Generic
 	"ok":      "OK",
 	"success": "Success",
@@ -133,6 +148,19 @@ var amMessages = map[string]string{
 	"email_compliance_subject":  "የተገዢነት ሪፖርት ለ%02d/%d",
 	"email_magiclink_subject":   "የሰራተኛ መግቢያ አገናኝዎ",
 	"magiclink_sent":            "የመግቢያ አገናኝ በ%s ወደ %s ተልኳል።",
+
+	"fayda_otp_sent":      "የአንድ ጊዜ የይለፍ ቃል በFayda የተመዘገበ ስልክዎ ተልኳል።",
+	"kyc_submitted":       "KYC ለተገዢነት ግምገማ ቀርቧል።",
+	"verification_queued": "ማረጋገጫ በመስመር ላይ ተቀምጧል።",
+	"otp_sent":            "የአንድ ጊዜ የይለፍ ቃል ተልኳል።",
+
+	"payroll_calculated":     "ደመወዝ ተሰልቷል።",
+	"payroll_disbursed":      "ደመወዝ ተከፋፍሏል።",
+	"payslip_generated":      "የደመወዝ ደረሰኝ ተዘጋጅቷል።",
+	"payslips_zip_ready":     "የደመወዝ ደረሰኞች ማውረድ ዝግጁ ነው።",
+	"bank_disbursal_pending": "የባንክ ክፍያ ፋይል ገና አልተዘጋጀም።",
+	"cost_center_report":     "የወጪ ማዕከል ሪፖርት ዝግጁ ነው።",
+	"resend_queued":          "የድር ማንቂያ ዳግም መላክ በመስመር ላይ ተቀምጧል።",
 
 	"ok":      "እሺ",
 	"success": "ተሳክቷል",

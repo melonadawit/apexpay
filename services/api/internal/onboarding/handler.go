@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"apexpay/internal/i18n"
 	"apexpay/internal/id"
 	"apexpay/internal/platform/crypto"
 	pkghttp "apexpay/internal/platform/http"
@@ -12,6 +13,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/shopspring/decimal"
 )
+
+var cat = i18n.New()
 
 type Handler struct {
 	svc     *Service
@@ -203,7 +206,7 @@ func (h *Handler) SubmitKYC(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteError(w, r, err)
 		return
 	}
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"status": "submitted", "message": "KYC submitted for compliance review, risk scoring pending"})
+	pkghttp.WriteJSON(w, r, 200, map[string]string{"status": "submitted", "message": cat.Get(mw.LocaleFromContext(r.Context()), "kyc_submitted")})
 }
 
 func (h *Handler) Status(w http.ResponseWriter, r *http.Request) {

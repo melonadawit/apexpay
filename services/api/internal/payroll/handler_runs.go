@@ -184,7 +184,7 @@ func (h *Handler) Calculate(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteError(w, r, err)
 		return
 	}
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"run_id": runID, "status": string(StatusPendingApproval), "message": "calculated V2 formula engine O(n log n) + proration + OT + loans + YTD"})
+	pkghttp.WriteJSON(w, r, 200, map[string]string{"run_id": runID, "status": string(StatusPendingApproval), "message": cat.Get(mw.LocaleFromContext(r.Context()), "payroll_calculated")})
 }
 func (h *Handler) CalculateV2(w http.ResponseWriter, r *http.Request) {
 	h.Calculate(w, r)
@@ -206,7 +206,7 @@ func (h *Handler) Disburse(w http.ResponseWriter, r *http.Request) {
 		pkghttp.WriteError(w, r, err)
 		return
 	}
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"run_id": runID, "status": string(StatusProcessing), "message": "ledger M4 Dr salary Cr payroll_payable Cr tax Cr pension + bank file pain.001 + pension CSV + ERCA CSV generated"})
+	pkghttp.WriteJSON(w, r, 200, map[string]string{"run_id": runID, "status": string(StatusProcessing), "message": cat.Get(mw.LocaleFromContext(r.Context()), "payroll_disbursed")})
 }
 func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 	runID := chi.URLParam(r, "id")
@@ -230,7 +230,7 @@ func (h *Handler) GetPayslipPDF(w http.ResponseWriter, r *http.Request) {
 			"run_id": runID, "employee_id": empID,
 			"pdf_url":             fmt.Sprintf("https://vault.apexpay.et/payroll/%s/payslip_%s.pdf", runID, empID),
 			"qr_verification_url": fmt.Sprintf("https://apexpay.et/verify/payslip/%s/%s", runID, empID),
-			"message":             "payslip PDF outstanding modern template logo QR pie chart YTD bilingual EN/AM (fallback mock, run not found)",
+			"message":             cat.Get(mw.LocaleFromContext(r.Context()), "payslip_generated"),
 		})
 		return
 	}
@@ -276,7 +276,7 @@ func (h *Handler) GetPayslipPDF(w http.ResponseWriter, r *http.Request) {
 			"run_id": runID, "employee_id": empID,
 			"pdf_url":             fmt.Sprintf("https://vault.apexpay.et/payroll/%s/payslip_%s.pdf", runID, empID),
 			"qr_verification_url": fmt.Sprintf("https://apexpay.et/verify/payslip/%s/%s", runID, empID),
-			"message":             "payslip PDF outstanding modern template logo QR pie chart YTD bilingual EN/AM",
+			"message":             cat.Get(mw.LocaleFromContext(r.Context()), "payslip_generated"),
 			"payslip_data":        currentItem,
 			"employee":            emp,
 			"ytd":                 ytd,
@@ -345,7 +345,7 @@ func (h *Handler) GetPayslipsZip(w http.ResponseWriter, r *http.Request) {
 	// For demo, return mock URL + also generate real compliance CSVs for download
 	pkghttp.WriteJSON(w, r, 200, map[string]interface{}{
 		"zip_url":      fmt.Sprintf("https://vault.apexpay.et/payroll/%s/payslips.zip", runID),
-		"message":      "download all ZIP — 10 payslips PDF outstanding modern template QR verification YTD bilingual EN/AM + gofpdf + barcode/qr + password DOB DDMM+last4 + Lottie confetti 3s + haptics + WhatsApp share + Telegram",
+		"message":      cat.Get(mw.LocaleFromContext(r.Context()), "payslips_zip_ready"),
 		"count":        10,
 		"generated_at": timeNow().Format(time.RFC3339),
 		"compliance": map[string]string{
