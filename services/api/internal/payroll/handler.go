@@ -78,6 +78,7 @@ func (h *Handler) Routes(r chi.Router) {
 
 	// Payroll audit
 	r.Get("/payroll_audit_logs", h.ListAuditLogs)
+	r.Get("/tax_brackets", h.GetTaxBracketsHandler)
 
 	// Payroll Calendar — Ethiopia Business Practice Cutoff 25th Disbursal 30th Pay Last Day Lock After Disbursal
 	r.Post("/calendars", h.CreateCalendar)

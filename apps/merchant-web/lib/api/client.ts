@@ -55,6 +55,53 @@ export type PaymentDetail = {
   journals: PaymentJournal[]
 }
 
+export type TaxBracket = {
+  min_amount: string
+  max_amount: string | null
+  rate: string
+  deduction: string
+  effective_from: string
+}
+
+export type SubscriptionDetail = {
+  subscription: {
+    id: string
+    customer_id: string
+    plan_id: string
+    status: string
+    current_period_start: string
+    current_period_end: string
+    trial_end?: string | null
+    cancel_at?: string | null
+    created_at?: string
+  }
+  plan?: {
+    id: string
+    name: string
+    description?: string
+    amount: string
+    currency: string
+    interval_type: string
+    interval_count: number
+    trial_days: number
+  }
+  customer?: {
+    id: string
+    name?: string
+    email?: string
+    phone?: string
+  }
+  invoices?: {
+    id: string
+    amount: string
+    currency: string
+    status: string
+    attempt_count: number
+    payment_id?: string | null
+    due_at: string
+  }[]
+}
+
 export type DashboardSummary = {
   tpv_today: string
   tpv_7_days: string
@@ -548,6 +595,7 @@ export const api = {
     lockCalendar: (id: string) => post<unknown>(`payroll/calendars/${id}/lock`),
     unlockCalendar: (id: string) => post<unknown>(`payroll/calendars/${id}/unlock`),
     finalSettlements: () => get<unknown[]>("payroll/final_settlements"),
+    taxBrackets: () => get<TaxBracket[]>("payroll/tax_brackets"),
     auditLogs: () => get<unknown[]>("payroll/payroll_audit_logs"),
     costCenterReport: (year = 2026, month = 0) => get<unknown>(`payroll/payroll_reports/cost_center?year=${year}${month ? `&month=${month}` : ""}`),
     varianceReport: (year = 2026, month = 0) => get<unknown>(`payroll/payroll_reports/variance?year=${year}${month ? `&month=${month}` : ""}`),
@@ -586,6 +634,7 @@ export const api = {
     plans: () => get<unknown[]>("subscription_plans"),
     subscriptions: () => get<unknown[]>("subscriptions"),
     customers: () => get<unknown[]>("customers"),
+    get: (id: string) => get<SubscriptionDetail>(`subscriptions/${id}`),
   },
 
   // Procurement & AP

@@ -16,21 +16,21 @@ const (
 )
 
 type Refund struct {
-	ID           string
-	MerchantID   string
-	PaymentID    string
-	RefundRef    string // merchant supplied unique
-	Amount       decimal.Decimal
-	Currency     string
-	Status       Status
-	Reason       string
-	FeeReversal  decimal.Decimal // policy: how much of platform fee reversed
-	ConnectorID  string
-	ConnectorRef string
-	FailureCode  string
-	FailureMsg   string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID           string          `json:"id"`
+	MerchantID   string          `json:"merchant_id"`
+	PaymentID    string          `json:"payment_id"`
+	RefundRef    string          `json:"refund_ref"`
+	Amount       decimal.Decimal `json:"amount"`
+	Currency     string          `json:"currency"`
+	Status       Status          `json:"status"`
+	Reason       string          `json:"reason"`
+	FeeReversal  decimal.Decimal `json:"fee_reversal"`
+	ConnectorID  string          `json:"connector_id"`
+	ConnectorRef string          `json:"connector_ref"`
+	FailureCode  string          `json:"failure_code"`
+	FailureMsg   string          `json:"failure_message"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
 }
 
 // Policy: Fee reversal strategy per SAD / DATABASE comment.

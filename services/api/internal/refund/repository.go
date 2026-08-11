@@ -1,9 +1,11 @@
 package refund
 
 import (
-	"apexpay/internal/ledger"
 	"context"
+
+	"apexpay/internal/ledger"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/shopspring/decimal"
 )
 
 type PgRepository struct {
@@ -98,4 +100,22 @@ func (r *PgRepository) CreateRefundTx(ctx context.Context, refund *Refund, journ
 func (r *PgRepository) UpdateRefundStatus(ctx context.Context, id string, status Status, connectorRef string) error {
 	_, err := r.pool.Exec(ctx, `UPDATE refunds SET status=$1, connector_ref=$2, updated_at=now() WHERE id=$3`, status, connectorRef, id)
 	return err
+}
+
+// GetRefundByID returns one refund for the merchant.
+func (r *PgRepository) GetRefundByID(ctx context.Context, merchantID, id string) (*Refund, error) {
+	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, payment_id, refund_ref, amount::text, currency, status,
+		COALESCE(reason,''), COALESCE(fee_reversal::text,'0'), COALESCE(connector_id,''), COALESCE(connector_ref,''),
+		COALESCE(failure_code,''), COALESCE(failure_message,''), created_at, updated_at
+		FROM refunds WHERE merchant_id=$1 AND id=$2`, merchantID, id)
+	var rf Refund
+	var amt, fee string
+	err := row.Scan(&rf.ID, &rf.MerchantID, &rf.PaymentID, &rf.RefundRef, &amt, &rf.Currency, &rf.Status,
+		&rf.Reason, &fee, &rf.ConnectorID, &rf.ConnectorRef, &rf.FailureCode, &rf.FailureMsg, &rf.CreatedAt, &rf.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	rf.Amount, _ = decimal.NewFromString(amt)
+	rf.FeeReversal, _ = decimal.NewFromString(fee)
+	return &rf, nil
 }

@@ -1,21 +1,41 @@
 "use client"
 import * as React from "react"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) { const map: any = { default: "bg-neutral-100", success: "bg-green-500/15 text-green-700 border", warning: "bg-amber-500/15 text-amber-700 border" }; return <span className={`px-2 py-0.5 rounded-full text-[11px] border ${map[variant]}`}>{children}</span> }
 
+const FALLBACK_BRACKETS = [
+  { id: "brack_600", min: 0, max: 600, rate: 0, deduction: 0, effective_from: "2024-01-01" },
+  { id: "brack_1650", min: 601, max: 1650, rate: 10, deduction: 60, effective_from: "2024-01-01" },
+  { id: "brack_3200", min: 1651, max: 3200, rate: 15, deduction: 142.5, effective_from: "2024-01-01" },
+  { id: "brack_5250", min: 3201, max: 5250, rate: 20, deduction: 302.5, effective_from: "2024-01-01" },
+  { id: "brack_7800", min: 5251, max: 7800, rate: 25, deduction: 565, effective_from: "2024-01-01" },
+  { id: "brack_10900", min: 7801, max: 10900, rate: 30, deduction: 955, effective_from: "2024-01-01" },
+  { id: "brack_inf", min: 10901, max: null, rate: 35, deduction: 1500, effective_from: "2024-01-01" },
+]
+
 export default function PayrollSettingsPage() {
   const { t } = useLanguage()
-  const [brackets, setBrackets] = React.useState([
-    { id: "brack_600", min: 0, max: 600, rate: 0, deduction: 0, effective_from: "2024-01-01" },
-    { id: "brack_1650", min: 601, max: 1650, rate: 10, deduction: 60, effective_from: "2024-01-01" },
-    { id: "brack_3200", min: 1651, max: 3200, rate: 15, deduction: 142.5, effective_from: "2024-01-01" },
-    { id: "brack_5250", min: 3201, max: 5250, rate: 20, deduction: 302.5, effective_from: "2024-01-01" },
-    { id: "brack_7800", min: 5251, max: 7800, rate: 25, deduction: 565, effective_from: "2024-01-01" },
-    { id: "brack_10900", min: 7801, max: 10900, rate: 30, deduction: 955, effective_from: "2024-01-01" },
-    { id: "brack_inf", min: 10901, max: null, rate: 35, deduction: 1500, effective_from: "2024-01-01" },
-  ])
+  const { data: tb, loading: tbLoading } = useData(() => api.payroll.taxBrackets(), [])
+  const [brackets, setBrackets] = React.useState<any[]>(FALLBACK_BRACKETS)
+  React.useEffect(() => {
+    const src = (tb ?? []) as any[]
+    if (src && src.length) {
+      setBrackets(
+        src.map((b, i) => ({
+          id: `brack_${i}`,
+          min: Number(b.min_amount),
+          max: b.max_amount != null ? Number(b.max_amount) : null,
+          rate: Number(b.rate) * 100,
+          deduction: Number(b.deduction),
+          effective_from: (b.effective_from || "").slice(0, 10),
+        }))
+      )
+    }
+  }, [tb])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">

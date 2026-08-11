@@ -248,3 +248,36 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO payouts (id, merchant_id, batch_id, beneficiary_id, payout_ref, amount, currency, status, method)
 VALUES ('pout_smoke', 'mer_docker_smoke', 'pbat_smoke', 'ben_smoke', 'POUT-SMOKE-001', 50000, 'ETB', 'succeeded', 'bank')
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- Subscription + refund seed data for the detail pages.
+-- ============================================================
+
+-- A settled payment to anchor the refund (FK to payments).
+INSERT INTO payments (id, merchant_id, tx_ref, amount, currency, status, method, connector_id, connector_ref, fee_amount, net_amount, requires_2fa, two_fa_verified)
+VALUES ('pay_smoke_ref', 'mer_docker_smoke', 'txr_refund_smoke', 250.00, 'ETB', 'succeeded', 'mock', 'mock', 'mock_ref_refund_smoke', 7.25, 242.75, false, false)
+ON CONFLICT (id) DO NOTHING;
+
+-- Subscription customer + plan + subscription + invoice.
+INSERT INTO customers (id, merchant_id, email, phone, name)
+VALUES ('cust_smoke', 'mer_docker_smoke', 'abebe@example.et', '+251911000001', 'Abebe Kebede')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO subscription_plans (id, merchant_id, name, description, amount, currency, interval_type, interval_count, trial_days, status)
+VALUES ('splan_smoke', 'mer_docker_smoke', 'Monthly Coffee', 'Premium coffee subscription', 500, 'ETB', 'month', 1, 7, 'active')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO subscriptions (id, merchant_id, customer_id, plan_id, status, current_period_start, current_period_end, trial_end)
+VALUES ('sub_smoke', 'mer_docker_smoke', 'cust_smoke', 'splan_smoke', 'active', now() - interval '20 days', now() + interval '10 days', now() - interval '13 days')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO subscription_invoices (id, merchant_id, subscription_id, payment_id, amount, currency, status, attempt_count, due_at)
+VALUES
+  ('sinv_smoke_1', 'mer_docker_smoke', 'sub_smoke', 'pay_smoke_ref', 500, 'ETB', 'paid', 0, now() - interval '10 days'),
+  ('sinv_smoke_2', 'mer_docker_smoke', 'sub_smoke', NULL, 500, 'ETB', 'open', 1, now() + interval '10 days')
+ON CONFLICT (id) DO NOTHING;
+
+-- A refund anchored to the payment above.
+INSERT INTO refunds (id, merchant_id, payment_id, refund_ref, amount, currency, status, reason, fee_reversal, connector_id, connector_ref)
+VALUES ('ref_smoke', 'mer_docker_smoke', 'pay_smoke_ref', 'RFD-SMOKE-001', 100.00, 'ETB', 'succeeded', 'customer requested partial refund', 0, 'mock', 'mock_ref_refund_smoke')
+ON CONFLICT (id) DO NOTHING;

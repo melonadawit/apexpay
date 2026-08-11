@@ -484,7 +484,10 @@ func main() {
 			})
 
 			r.Route("/subscriptions", func(r chi.Router) {
-				subHandler.Routes(r)
+				r.Get("/", subHandler.List)
+				r.Get("/{id}", subHandler.GetDetail)
+				r.Post("/", subHandler.CreateSubscription)
+				r.Post("/{id}/cancel", subHandler.Cancel)
 			})
 
 			r.Route("/beneficiaries", func(r chi.Router) {

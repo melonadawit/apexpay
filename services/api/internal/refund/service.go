@@ -24,6 +24,7 @@ type PaymentInfo struct {
 type Repository interface {
 	GetPayment(ctx context.Context, merchantID, paymentID string) (*PaymentInfo, error)
 	GetRefundByRef(ctx context.Context, merchantID, refundRef string) (*Refund, error)
+	GetRefundByID(ctx context.Context, merchantID, id string) (*Refund, error)
 	ListRefundsByPayment(ctx context.Context, paymentID string) ([]Refund, error)
 	CreateRefundTx(ctx context.Context, refund *Refund, journal *ledger.Journal, entries []ledger.Entry) error
 	UpdateRefundStatus(ctx context.Context, id string, status Status, connectorRef string) error

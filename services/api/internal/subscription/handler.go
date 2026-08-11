@@ -20,7 +20,19 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Post("/subscription_plans", h.CreatePlan)
 	r.Post("/subscriptions", h.CreateSubscription)
 	r.Get("/subscriptions", h.List)
+	r.Get("/subscriptions/{id}", h.GetDetail)
 	r.Post("/subscriptions/{id}/cancel", h.Cancel)
+}
+
+// GetDetail returns one subscription with its plan, customer and invoices.
+func (h *Handler) GetDetail(w http.ResponseWriter, r *http.Request) {
+	subID := chi.URLParam(r, "id")
+	detail, err := h.svc.repo.GetSubscriptionDetail(r.Context(), mw.MerchantID(r.Context()), subID)
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, detail)
 }
 
 func (h *Handler) CreateCustomer(w http.ResponseWriter, r *http.Request) {

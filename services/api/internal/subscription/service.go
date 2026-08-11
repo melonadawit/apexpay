@@ -17,6 +17,7 @@ type Repository interface {
 	CreateSubscription(ctx context.Context, s *Subscription) error
 	CreateInvoice(ctx context.Context, inv *Invoice) error
 	ListSubscriptions(ctx context.Context, merchantID string, status *SubscriptionStatus) ([]Subscription, error)
+	GetSubscriptionDetail(ctx context.Context, merchantID, subID string) (*SubscriptionDetail, error)
 	UpdateSubscriptionStatus(ctx context.Context, id string, status SubscriptionStatus) error
 }
 

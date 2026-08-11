@@ -484,11 +484,11 @@ type PayrollItem struct {
 // ==================== Tax Bracket ====================
 
 type TaxBracket struct {
-	Min           decimal.Decimal  // inclusive
-	Max           *decimal.Decimal // exclusive, nil = infinity
-	Rate          decimal.Decimal  // 0.1 = 10%
-	Deduction     decimal.Decimal  // fixed deduction per ET law
-	EffectiveFrom time.Time
+	Min           decimal.Decimal  `json:"min_amount"`
+	Max           *decimal.Decimal `json:"max_amount"` // nil = infinity
+	Rate          decimal.Decimal  `json:"rate"`
+	Deduction     decimal.Decimal  `json:"deduction"`
+	EffectiveFrom time.Time        `json:"effective_from"`
 }
 
 // ==================== Compliance Reports ====================

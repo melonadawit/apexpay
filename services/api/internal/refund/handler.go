@@ -57,8 +57,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	// Simplified: would call repo GetByID
-	pkghttp.WriteJSON(w, r, 200, map[string]string{"id": id, "status": "succeeded"})
+	rf, err := h.svc.repo.GetRefundByID(r.Context(), mw.MerchantID(r.Context()), id)
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, rf)
 }
 
 func (h *Handler) ListByPayment(w http.ResponseWriter, r *http.Request) {
