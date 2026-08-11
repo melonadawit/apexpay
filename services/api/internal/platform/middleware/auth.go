@@ -106,9 +106,7 @@ func (a *AuthMiddleware) APIKeyAuth(next http.Handler) http.Handler {
 // SessionValidator validates an opaque dashboard session token and returns the
 // authenticated tenant context. Implemented by the auth service; kept as an interface
 // here to avoid an import cycle (auth -> middleware).
-type SessionValidator func(ctx context.Context, token string) (userID, merchantID, role string, ok bool)
-
-// SessionAuth authenticates dashboard users via an opaque session token. It populates the
+type SessionValidator func(ctx context.Context, token string) (userID, merchantID, role string, ok bool) // SessionAuth authenticates dashboard users via an opaque session token. It populates the
 // same typed tenant context (merchant_id, user_id, role) as APIKeyAuth, so downstream
 // handlers are identical regardless of which credential presented them.
 func SessionAuth(validate SessionValidator) func(http.Handler) http.Handler {
@@ -184,4 +182,57 @@ func roleFromScopes(scopesJSON string) string {
 		}
 	}
 	return ""
+}
+
+// APIKeyOrSession accepts EITHER a valid API key OR a valid dashboard session.
+// It is used for merchant-data routes so a logged-in owner's session can read
+// their own payments/payroll/etc. (which historically only accepted API keys),
+// while keeping API-key access working for server-to-server integrations.
+func (a *AuthMiddleware) APIKeyOrSession(validate SessionValidator) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			parts := strings.Fields(r.Header.Get("Authorization"))
+			if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || len(parts[1]) < 16 {
+				pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "Bearer required")
+				return
+			}
+			token := parts[1]
+
+			// 1) Try API key (prefix lookup + sha256 of full secret).
+			if len(token) >= 12 {
+				var merchantID, keyID, status, storedHash, scopesJSON string
+				err := a.pool.QueryRow(r.Context(), `SELECT merchant_id, id, status, COALESCE(secret_hash, ''), scopes::text FROM api_keys WHERE key_prefix=$1`, token[:12]).Scan(&merchantID, &keyID, &status, &storedHash, &scopesJSON)
+				if err == nil && status == "active" && storedHash != "" {
+					digest := sha256.Sum256([]byte(token))
+					if subtle.ConstantTimeCompare([]byte(strings.ToLower(storedHash)), []byte(fmtSHA256(digest))) == 1 {
+						ctx := context.WithValue(r.Context(), CtxMerchantID, merchantID)
+						ctx = context.WithValue(ctx, CtxAPIKeyID, keyID)
+						if role := roleFromScopes(scopesJSON); role != "" {
+							ctx = context.WithValue(ctx, CtxRole, role)
+						}
+						ctx = context.WithValue(ctx, "merchant_id", merchantID)
+						go func() {
+							_, _ = a.pool.Exec(context.Background(), `UPDATE api_keys SET last_used_at=now() WHERE id=$1`, keyID)
+						}()
+						next.ServeHTTP(w, r.WithContext(ctx))
+						return
+					}
+				}
+			}
+
+			// 2) Fall back to a dashboard session.
+			if userID, merchantID, role, ok := validate(r.Context(), token); ok {
+				ctx := context.WithValue(r.Context(), CtxUserID, userID)
+				ctx = context.WithValue(ctx, CtxMerchantID, merchantID)
+				if role != "" {
+					ctx = context.WithValue(ctx, CtxRole, role)
+				}
+				ctx = context.WithValue(ctx, "merchant_id", merchantID)
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+
+			pkghttp.WriteErrorWithBody(w, r, http.StatusUnauthorized, string(appErrors.CodeUnauthorized), "invalid API key or session")
+		})
+	}
 }

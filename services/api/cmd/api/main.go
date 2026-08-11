@@ -193,13 +193,14 @@ func main() {
 	assistantHandler := assistant.NewHandler(assistantSvc, assistantRepo)
 
 	twoFAProvider := twofa.New()
-	sessionAuthMw := mw.SessionAuth(func(ctx context.Context, token string) (string, string, string, bool) {
+	sessionValidate := func(ctx context.Context, token string) (string, string, string, bool) {
 		sess, err := authSvc.Validate(ctx, token)
 		if err != nil {
 			return "", "", "", false
 		}
 		return sess.UserID, sess.MerchantID, sess.Role, true
-	})
+	}
+	sessionAuthMw := mw.SessionAuth(sessionValidate)
 	// Locale resolution: header-driven (X-Lang / Accept-Language) at the API level, with the
 	// authenticated user's saved language_preference applied on session-authenticated routes.
 	localeMw := mw.NewLocale(pool).Handler
@@ -455,9 +456,9 @@ func main() {
 			})
 		})
 
-		// Protected — requires Bearer sk_test_/sk_live_
+		// Protected — requires a Bearer sk_test_/sk_live_ OR a logged-in dashboard session.
 		r.Group(func(r chi.Router) {
-			r.Use(authMw.APIKeyAuth)
+			r.Use(authMw.APIKeyOrSession(sessionValidate))
 
 			// paymentHandler.Routes defines the full paths (/transactions/*, /dashboard),
 			// so mount it at the group root (not under an extra /transactions).

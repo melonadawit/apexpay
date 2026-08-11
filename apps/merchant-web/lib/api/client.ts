@@ -161,7 +161,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new Error(detail || `Request failed (${res.status})`)
   }
-  return res.json()
+  const body = await res.json()
+  // The Go API wraps responses as { success, data, request_id }. Unwrap `data`
+  // so typed callers receive the payload directly (arrays/objects), matching the
+  // component expectations (e.g. payments.map(...)). Responses without a `data`
+  // field (rare) are returned as-is.
+  if (body && typeof body === "object" && "data" in body) {
+    return body.data as T
+  }
+  return body as T
 }
 
 function get<T>(path: string): Promise<T> {

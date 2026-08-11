@@ -282,28 +282,50 @@ def build():
     E += chart_page(doc, "User Flow — Payroll Run", img("flow_payroll.png"),
                     "Payroll run: create → attendance/OT → calculate → approve → disburse → ledger + compliance reports.", None)
 
-    # ================================================ 15-18. SCREENSHOTS
-    E.append(Paragraph("App — Merchant Dashboard", h1))
+    # ================================================ 15-23. REAL SCREENSHOTS
+    # Each is a real screenshot of the running merchant-web app wired to the live
+    # seeded API (captured with a headless browser against the running stack).
+    E.append(Paragraph("App — Merchant Dashboard (live)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Image(shot("dashboard.png"), width=170 * mm, height=104 * mm, hAlign="CENTER"))
-    E.append(Paragraph("Merchant dashboard: live KPIs, payment-volume trend, and revenue-by-method — all wired to the real API.", caption))
+    E.append(Paragraph("Real screenshot of the running merchant dashboard — KPI cards, payment-volume trend, revenue by method.", body))
+    E.append(Image(shot("screenshot_dashboard.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    E.append(Paragraph("App — Payments & Transaction Detail", h1))
+    E.append(Paragraph("App — Payments & Transaction Detail (live)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Image(shot("payments.png"), width=170 * mm, height=104 * mm, hAlign="CENTER"))
-    E.append(Paragraph("Payments list + transaction detail with lifecycle timeline and ledger journal — the NBE exam console.", caption))
+    E.append(Paragraph("Real screenshot of the running payments page showing transactions and status badges.", body))
+    E.append(Image(shot("screenshot_payments.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    E.append(Paragraph("App — Developer Portal", h1))
+    E.append(Paragraph("App — Payroll (live)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Image(shot("developer.png"), width=170 * mm, height=104 * mm, hAlign="CENTER"))
-    E.append(Paragraph("Developer portal: real API-key management (secret shown once), scopes, and webhook endpoints.", caption))
+    E.append(Paragraph("Real screenshot of the running payroll dashboard — run summary, tax brackets, compliance controls.", body))
+    E.append(Image(shot("screenshot_payroll.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    E.append(Paragraph("App — Mobile (Flutter)", h1))
+    E.append(Paragraph("App — Subscriptions (live)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Image(shot("mobile.png"), width=80 * mm, height=140 * mm, hAlign="CENTER"))
-    E.append(Paragraph("ApexPay merchant mobile app — balance, quick actions, QR, recent transactions. APK built in CI.", caption))
+    E.append(Paragraph("Real screenshot of the running subscriptions page showing customer, plan, amount, and status.", body))
+    E.append(Image(shot("screenshot_subscriptions.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    # ================================================ 19. ARCHITECTURE
+    E.append(Paragraph("App — Payouts (live)", h1))
+    E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
+    E.append(Paragraph("Real screenshot of the running payouts page showing a payout batch and status.", body))
+    E.append(Image(shot("screenshot_payouts.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
+
+    E.append(Paragraph("App — Current Accounts / Banking (live)", h1))
+    E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
+    E.append(Paragraph("Real screenshot of the running banking page showing current accounts and balances.", body))
+    E.append(Image(shot("screenshot_banking.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
+
+    E.append(Paragraph("App — Lending (live)", h1))
+    E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
+    E.append(Paragraph("Real screenshot of the running embedded-finance lending page.", body))
+    E.append(Image(shot("screenshot_lending.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
+
+    E.append(Paragraph("App — Developer Portal (live)", h1))
+    E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
+    E.append(Paragraph("Real screenshot of the running developer portal — API keys with scopes and status.", body))
+    E.append(Image(shot("screenshot_developer.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
+
+    # ================================================ 24. ARCHITECTURE
     E += chart_page(doc, "System Architecture", img("architecture.png"),
                     "One Go API core, one PostgreSQL ledger, Redis cache, MinIO vault, and background workers — with thin client surfaces.", None)
 
