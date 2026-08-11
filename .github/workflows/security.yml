@@ -164,10 +164,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check audit_logs append-only trigger
+      - name: Check audit_logs append-only trigger (fails if absent)
         run: |
-          grep -R "audit_logs" db/migrations/*.up.sql | grep -i "trigger\|append.only\|immutable" || echo "Add trigger: CREATE TRIGGER audit_no_update BEFORE UPDATE OR DELETE ON audit_logs FOR EACH ROW EXECUTE FUNCTION prevent_update()"
-          echo "Audit append-only check done"
+          grep -q "audit_logs_no_mutation" db/migrations/*.up.sql \
+            || { echo "Audit append-only trigger missing — add db/migrations/0045_audit_append_only.up.sql"; exit 1; }
+          echo "Audit append-only ✓ trigger present in migrations"
 
   lighthouse-axe:
     runs-on: ubuntu-latest
