@@ -5,6 +5,26 @@ import { gregorianToEthiopian, formatEthiopianDate, ethiopianPublicHolidays } fr
 import { EthiopianCalendarGrid } from "@/components/payroll/EthiopianCalendarGrid"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
+
+type Cal = {
+  id: string
+  name: string
+  year: number
+  month?: number | null
+  pay_frequency: string
+  cutoff_day: number
+  disbursal_day: number
+  pay_day: number
+  cutoff_date: string
+  disbursal_date: string
+  pay_date: string
+  is_locked: boolean
+  status?: string
+  total_gross?: string
+  total_net?: string
+}
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -30,7 +50,20 @@ const payrollTrend = [
 
 export default function PayrollCalendarPage() {
   const { t } = useLanguage()
-  const [selected, setSelected] = React.useState(mockCalendars[0])
+  const { data: cals, loading: calLoading } = useData<Cal[]>(() => api.payroll.calendars() as Promise<Cal[]>, [])
+  const calendars: Cal[] =
+    cals && cals.length
+      ? cals.map((c) => ({
+          ...c,
+          status: c.is_locked ? "locked" : c.status || "draft",
+          total_gross: c.total_gross || "",
+          total_net: c.total_net || "",
+        }))
+      : (mockCalendars as unknown as Cal[])
+  const [selected, setSelected] = React.useState<Cal | null>(null)
+  React.useEffect(() => {
+    if (!selected && calendars.length) setSelected(calendars[0])
+  }, [selected, calendars])
   const [showCreate, setShowCreate] = React.useState(false)
   const ethDate = gregorianToEthiopian(new Date())
 
@@ -90,11 +123,11 @@ export default function PayrollCalendarPage() {
           <Card className="p-6">
             <h3 className="font-semibold">Pay Calendars • 2026 • Outstanding Pipeline Visual Stepper</h3>
             <div className="mt-4 space-y-3">
-              {mockCalendars.map(cal => {
+              {calendars.map(cal => {
                 const ethCutoff = gregorianToEthiopian(new Date(cal.cutoff_date))
                 const ethPay = gregorianToEthiopian(new Date(cal.pay_date))
                 return (
-                <button key={cal.id} onClick={()=>setSelected(cal)} className={`w-full text-left rounded-xl border p-4 hover:bg-muted ${selected.id===cal.id ? "bg-primary/10 border-primary/30" : ""}`}>
+                <button key={cal.id} onClick={()=>setSelected(cal)} className={`w-full text-left rounded-xl border p-4 hover:bg-muted ${selected?.id===cal.id ? "bg-primary/10 border-primary/30" : ""}`}>
                   <div className="flex justify-between"><p className="font-medium text-sm">{cal.name}</p><Badge variant={cal.is_locked ? "success" : cal.status==="draft" ? "warning" : "default"}>{cal.is_locked ? "Locked" : cal.status}</Badge></div>
                   <p className="text-[11px] text-muted-foreground">Cutoff {cal.cutoff_date} ({ethCutoff.formattedAm}) → Pay {cal.pay_date} ({ethPay.formattedAm}) • Gross {cal.total_gross || "—"} Net {cal.total_net || "—"}</p>
                 </button>
@@ -102,11 +135,11 @@ export default function PayrollCalendarPage() {
             </div>
           </Card>
           <Card className="p-6 lg:col-span-2">
-            <h3 className="font-semibold">Calendar Detail • {selected.name} • Cutoff 25th Disbursal 30th Pay Last Day • Recharts BarChart cost center • Ethiopian {formatEthiopianDate ? "enriched" : ""}</h3>
+            <h3 className="font-semibold">Calendar Detail • {selected?.name ?? (calLoading ? "Loading…" : "No calendars yet")} • Cutoff 25th Disbursal 30th Pay Last Day • Recharts BarChart cost center • Ethiopian {formatEthiopianDate ? "enriched" : ""}</h3>
             <div className="mt-4 grid grid-cols-3 gap-4">
-              <div className="rounded-xl bg-muted p-4"><p className="text-[11px]">Cutoff 25th • መቁረጥ • {selected.cutoff_date} • Ethiopian {(() => { try { return formatEthiopianDate(new Date(selected.cutoff_date)) } catch { return selected.cutoff_date } })()}</p><p className="font-bold">{selected.cutoff_date}</p></div>
-              <div className="rounded-xl bg-muted p-4"><p className="text-[11px]">Disbursal 30th • ክፍያ • {selected.disbursal_date}</p><p className="font-bold">{selected.disbursal_date}</p></div>
-              <div className="rounded-xl bg-muted p-4"><p className="text-[11px]">Pay Day Last day • የክፍያ ቀን • {selected.pay_date}</p><p className="font-bold">{selected.pay_date}</p></div>
+              <div className="rounded-xl bg-muted p-4"><p className="text-[11px]">Cutoff 25th • መቁረጥ • {selected?.cutoff_date ?? "—"} • Ethiopian {(() => { try { return selected && formatEthiopianDate(new Date(selected.cutoff_date)) } catch { return selected?.cutoff_date ?? "—" } })()}</p><p className="font-bold">{selected?.cutoff_date ?? "—"}</p></div>
+              <div className="rounded-xl bg-muted p-4"><p className="text-[11px]">Disbursal 30th • ክፍያ • {selected?.disbursal_date ?? "—"}</p><p className="font-bold">{selected?.disbursal_date ?? "—"}</p></div>
+              <div className="rounded-xl bg-muted p-4"><p className="text-[11px]">Pay Day Last day • የክፍያ ቀን • {selected?.pay_date ?? "—"}</p><p className="font-bold">{selected?.pay_date ?? "—"}</p></div>
             </div>
             <div className="mt-6 h-32">
               <ResponsiveContainer width="100%" height="100%">

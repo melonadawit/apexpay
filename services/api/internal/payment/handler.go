@@ -22,7 +22,19 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Get("/transactions/verify/{tx_ref}", h.Verify)
 	r.Post("/transactions/{id}/2fa/verify", h.Verify2FA)
 	r.Get("/transactions", h.List)
+	r.Get("/transactions/{id}", h.Get)
 	r.Get("/dashboard", h.Dashboard)
+}
+
+// Get returns a single transaction with its lifecycle journals.
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	detail, err := h.svc.GetDetail(r.Context(), mw.MerchantID(r.Context()), id)
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, detail)
 }
 
 // List returns the merchant's recent payments for the dashboard / payments screen.

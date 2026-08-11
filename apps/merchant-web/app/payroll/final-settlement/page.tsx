@@ -1,6 +1,8 @@
 "use client"
 import * as React from "react"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -19,8 +21,48 @@ const mockFnF = [
 
 export default function FinalSettlementPage() {
   const { t } = useLanguage()
-  const [selected, setSelected] = React.useState(mockFnF[0])
-  const [checklist, setChecklist] = React.useState(selected.clearance)
+  const { data } = useData<unknown[]>(() => api.payroll.finalSettlements(), [])
+  const fnfList: any[] = React.useMemo(() => {
+    const src = (data ?? []) as any[]
+    if (!src.length) return mockFnF
+    return src.map((f: any) => ({
+      id: f.id,
+      employee: f.employee_id,
+      resignation_date: (f.resignation_date || "").slice(0, 10),
+      last_working_date: (f.last_working_date || "").slice(0, 10),
+      notice_period: f.notice_period_days ?? 0,
+      notice_served: f.notice_served_days ?? 0,
+      notice_shortfall: f.notice_shortfall_days ?? 0,
+      leave_encashment_days: f.leave_encashment_days ?? 0,
+      leave_encashment_amount: f.leave_encashment_amount ?? "0",
+      severance_amount: f.severance_amount ?? "0",
+      gratuity: f.gratuity_amount ?? "0",
+      bonus_pro_rata: f.bonus_pro_rata ?? "0",
+      outstanding_loans: f.outstanding_loans ?? "0",
+      outstanding_advances: f.outstanding_advances ?? "0",
+      other_earnings: f.other_earnings ?? "0",
+      other_deductions: f.other_deductions ?? "0",
+      total_payable: f.total_payable ?? "0",
+      total_deductions: f.total_deductions ?? "0",
+      net_payable: f.net_payable ?? "0",
+      status: f.status ?? "draft",
+      clearance:
+        f.clearance_items_detailed && f.clearance_items_detailed.length
+          ? f.clearance_items_detailed
+          : f.clearance_checklist || [],
+      assets_returned: f.assets_returned || [],
+      exit_interview: f.exit_interview || {},
+    }))
+  }, [data])
+  const [selected, setSelected] = React.useState<any>(mockFnF[0])
+  const [checklist, setChecklist] = React.useState<any[]>(mockFnF[0].clearance)
+  React.useEffect(() => {
+    // Once real data arrives, switch to the first live settlement if needed.
+    if (fnfList.length && !fnfList.some((f) => f.id === selected?.id)) {
+      setSelected(fnfList[0])
+      setChecklist(fnfList[0].clearance || [])
+    }
+  }, [fnfList, selected])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
@@ -34,11 +76,11 @@ export default function FinalSettlementPage() {
           <Card className="p-6">
             <h3 className="font-semibold">F&F Requests • Pending Approval • Clearance Checklist • Outstanding Pipeline Visual Stepper</h3>
             <div className="mt-4 space-y-3">
-              {mockFnF.map(fnf => (
-                <button key={fnf.id} onClick={()=>{ setSelected(fnf); setChecklist(fnf.clearance) }} className={`w-full text-left rounded-xl border p-4 hover:bg-muted ${selected.id===fnf.id ? "bg-primary/10 border-primary/30" : ""}`}>
+              {fnfList.map(fnf => (
+                <button key={fnf.id} onClick={()=>{ setSelected(fnf); setChecklist(fnf.clearance || []) }} className={`w-full text-left rounded-xl border p-4 hover:bg-muted ${selected?.id===fnf.id ? "bg-primary/10 border-primary/30" : ""}`}>
                   <div className="flex justify-between"><p className="font-medium text-sm">{fnf.employee}</p><Badge variant={fnf.status==="pending_approval" ? "warning" : "success"}>{fnf.status}</Badge></div>
                   <p className="text-[11px] text-muted-foreground mt-1">Resignation {fnf.resignation_date} • LWD {fnf.last_working_date} • Notice {fnf.notice_period} days Served {fnf.notice_served} Shortfall {fnf.notice_shortfall} • Leave Encashment {fnf.leave_encashment_days} days {fnf.leave_encashment_amount} ETB per_day gross/30 • Severance {fnf.severance_amount} ETB Art 39-44 • Bonus Pro-rata {fnf.bonus_pro_rata} • Outstanding Loans {fnf.outstanding_loans} Advances {fnf.outstanding_advances}</p>
-                  <p className="text-[11px] mt-1">Total Payable {fnf.total_payable} • Total Deductions {fnf.total_deductions} • Net Payable {fnf.net_payable} • Status {fnf.status} • Clearance {fnf.clearance.filter(c=>c.status==="done").length}/{fnf.clearance.length} done • Assets Returned {fnf.assets_returned.filter((a:any)=>a.returned).length}/{fnf.assets_returned.length}</p>
+                  <p className="text-[11px] mt-1">Total Payable {fnf.total_payable} • Total Deductions {fnf.total_deductions} • Net Payable {fnf.net_payable} • Status {fnf.status} • Clearance {fnf.clearance.filter(c=>c.status==="done").length}/{fnf.clearance.length} done • Assets Returned {fnf.assets_returned.length ? `${fnf.assets_returned.filter((a:any)=>a.returned).length}/${fnf.assets_returned.length}` : "0/0"}</p>
                 </button>
               ))}
               <button className="w-full rounded-xl border border-dashed h-12 text-xs">+ Create F&F • Resignation Date LWD Notice Period Served Shortfall Leave Encashment Days per_day gross/30 Amount Severance Art 39-44 Gratuity Bonus Pro-rata Outstanding Loans Advances Other Earnings Other Deductions Total Payable Total Deductions Net Payable Status Clearance Checklist • Outstanding</button>

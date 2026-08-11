@@ -106,6 +106,58 @@ func (r *PgRepository) GetBatch(ctx context.Context, merchantID, batchID string)
 	return &b, nil
 }
 
+// ListBatches returns the merchant's payout batches, newest first, with a
+// payout count per batch.
+func (r *PgRepository) ListBatches(ctx context.Context, merchantID string) ([]PayoutBatch, error) {
+	rows, err := r.pool.Query(ctx, `SELECT pb.id, pb.merchant_id, COALESCE(pb.book_id,''), pb.batch_ref,
+		pb.amount::text, pb.currency, pb.status, COALESCE(pb.approved_by,''), COALESCE(pb.created_at, now()),
+		(SELECT COUNT(*) FROM payouts p WHERE p.batch_id=pb.id)
+		FROM payout_batches pb WHERE pb.merchant_id=$1 ORDER BY pb.created_at DESC`, merchantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []PayoutBatch
+	for rows.Next() {
+		var b PayoutBatch
+		var amt, bookID, approvedBy string
+		var count int
+		if err := rows.Scan(&b.ID, &b.MerchantID, &bookID, &b.BatchRef, &amt, &b.Currency, &b.Status, &approvedBy, &b.CreatedAt, &count); err != nil {
+			return nil, err
+		}
+		if bookID != "" {
+			b.BookID = &bookID
+		}
+		if approvedBy != "" {
+			b.ApprovedBy = &approvedBy
+		}
+		b.Amount, _ = decimal.NewFromString(amt)
+		b.TotalCount = count
+		list = append(list, b)
+	}
+	return list, rows.Err()
+}
+
+// ListBeneficiaries returns the merchant's saved beneficiaries.
+func (r *PgRepository) ListBeneficiaries(ctx context.Context, merchantID string) ([]Beneficiary, error) {
+	rows, err := r.pool.Query(ctx, `SELECT id, merchant_id, name, account_no_masked, bank_code,
+		COALESCE(bank_name,''), COALESCE(type,''), verification_status, created_at
+		FROM beneficiaries WHERE merchant_id=$1 ORDER BY created_at DESC`, merchantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []Beneficiary
+	for rows.Next() {
+		var b Beneficiary
+		if err := rows.Scan(&b.ID, &b.MerchantID, &b.Name, &b.AccountNoMasked, &b.BankCode, &b.BankName, &b.Type, &b.VerificationStatus, &b.CreatedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, b)
+	}
+	return list, rows.Err()
+}
+
 func (r *PgRepository) UpdateBatchStatus(ctx context.Context, batchID, status, approvedBy string) error {
 	_, err := r.pool.Exec(ctx, `UPDATE payout_batches SET status=$1, approved_by=$2 WHERE id=$3`, status, approvedBy, batchID)
 	return err

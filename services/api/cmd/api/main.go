@@ -489,9 +489,7 @@ func main() {
 
 			r.Route("/beneficiaries", func(r chi.Router) {
 				r.Post("/", payoutHandler.CreateBeneficiary)
-				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-					pkghttp.WriteJSON(w, r, 200, []interface{}{})
-				})
+				r.Get("/", payoutHandler.ListBeneficiaries)
 			})
 
 			r.Route("/payouts", func(r chi.Router) {
@@ -499,6 +497,7 @@ func main() {
 			})
 
 			r.Route("/payout_batches", func(r chi.Router) {
+				r.Get("/", payoutHandler.ListBatches)
 				r.Get("/{id}", payoutHandler.GetBatch)
 				r.Post("/{id}/approve", payoutHandler.ApproveBatch)
 			})

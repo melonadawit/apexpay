@@ -59,6 +59,7 @@ type Repository interface {
 
 	// Runs
 	CreateRun(ctx context.Context, r *PayrollRun) error
+	ListRuns(ctx context.Context, merchantID string) ([]PayrollRun, error)
 	GetRun(ctx context.Context, merchantID, runID string) (*PayrollRun, error)
 	UpdateRunStatus(ctx context.Context, runID string, status RunStatus, totals map[string]decimal.Decimal) error
 	UpdateRunStatusWithTotals(ctx context.Context, runID string, status RunStatus, totals map[string]interface{}) error
@@ -88,6 +89,7 @@ type Repository interface {
 
 	// Final Settlement
 	CreateFinalSettlement(ctx context.Context, fs *FinalSettlement) error
+	ListFinalSettlements(ctx context.Context, merchantID string) ([]FinalSettlement, error)
 
 	// Maker-checker approvals
 	CreatePayrollApproval(ctx context.Context, a *PayrollApproval) error

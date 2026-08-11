@@ -48,8 +48,13 @@ func (h *Handler) CreateRun(w http.ResponseWriter, r *http.Request) {
 	pkghttp.WriteJSON(w, r, 201, run)
 }
 func (h *Handler) ListRuns(w http.ResponseWriter, r *http.Request) {
-	// For simplicity return empty — real would query DB
-	pkghttp.WriteJSON(w, r, 200, []PayrollRun{})
+	merchantID := mw.MerchantID(r.Context())
+	list, err := h.svc.repo.ListRuns(r.Context(), merchantID)
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, list)
 }
 func (h *Handler) BulkAttendance(w http.ResponseWriter, r *http.Request) {
 	runID := chi.URLParam(r, "id")

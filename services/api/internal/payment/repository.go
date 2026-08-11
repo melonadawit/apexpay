@@ -264,6 +264,46 @@ func (r *PgRepository) FailIdempotency(ctx context.Context, merchantID, key stri
 	return err
 }
 
+// GetPaymentDetail returns a payment plus its lifecycle ledger journals and
+// entries for the NBE exam console. Real DB-backed, not mocked.
+func (r *PgRepository) GetPaymentDetail(ctx context.Context, merchantID, paymentID string) (*PaymentDetail, error) {
+	p, err := r.getByID(ctx, merchantID, paymentID)
+	if err != nil {
+		return nil, err
+	}
+	journals, err := r.ledgerRepo.ListJournalsByRef(ctx, "payment", paymentID)
+	if err != nil {
+		return nil, err
+	}
+	detail := &PaymentDetail{Payment: p, Journals: []PaymentJournal{}}
+	for _, j := range journals {
+		pj := PaymentJournal{
+			ID:         j.ID,
+			BookID:     j.BookID,
+			PostingKey: j.PostingKey,
+			Memo:       j.Memo,
+			CreatedAt:  j.CreatedAt,
+		}
+		rows, err := r.pool.Query(ctx, `SELECT e.direction, e.amount::text, e.currency, COALESCE(a.code,''), COALESCE(a.name,'')
+			FROM ledger_entries e LEFT JOIN ledger_accounts a ON a.id=e.account_id
+			WHERE e.journal_id=$1 ORDER BY e.created_at, e.id`, j.ID)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			var pe PaymentEntry
+			if err := rows.Scan(&pe.Direction, &pe.Amount, &pe.Currency, &pe.AccountCode, &pe.AccountName); err != nil {
+				rows.Close()
+				return nil, err
+			}
+			pj.Entries = append(pj.Entries, pe)
+		}
+		rows.Close()
+		detail.Journals = append(detail.Journals, pj)
+	}
+	return detail, nil
+}
+
 func (r *PgRepository) getByID(ctx context.Context, merchantID, paymentID string) (*Payment, error) {
 	row := r.pool.QueryRow(ctx, `SELECT id, merchant_id, tx_ref, amount::text, currency, status, connector_id, connector_ref, fee_amount::text, net_amount::text, requires_2fa, two_fa_verified, checkout_url FROM payments WHERE merchant_id=$1 AND id=$2`, merchantID, paymentID)
 	var p Payment

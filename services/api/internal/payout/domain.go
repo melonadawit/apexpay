@@ -19,45 +19,46 @@ const (
 )
 
 type Beneficiary struct {
-	ID                 string
-	MerchantID         string
-	Name               string
-	AccountNoMasked    string
-	AccountNoHash      string
-	BankCode           string
-	BankName           string
-	Type               string // individual, business
-	VerificationStatus string
-	CreatedAt          time.Time
+	ID                 string    `json:"id"`
+	MerchantID         string    `json:"merchant_id"`
+	Name               string    `json:"name"`
+	AccountNoMasked    string    `json:"account_no_masked"`
+	AccountNoHash      string    `json:"account_no_hash"`
+	BankCode           string    `json:"bank_code"`
+	BankName           string    `json:"bank_name"`
+	Type               string    `json:"type"` // individual, business
+	VerificationStatus string    `json:"verification_status"`
+	CreatedAt          time.Time `json:"created_at"`
 }
 
 type PayoutBatch struct {
-	ID         string
-	MerchantID string
-	BookID     *string
-	BatchRef   string
-	Amount     decimal.Decimal
-	Currency   string
-	Status     string
-	ApprovedBy *string
-	CreatedAt  time.Time
-	Payouts    []Payout
+	ID         string          `json:"id"`
+	MerchantID string          `json:"merchant_id"`
+	BookID     *string         `json:"book_id"`
+	BatchRef   string          `json:"batch_ref"`
+	Amount     decimal.Decimal `json:"amount"`
+	Currency   string          `json:"currency"`
+	Status     string          `json:"status"`
+	ApprovedBy *string         `json:"approved_by"`
+	CreatedAt  time.Time       `json:"created_at"`
+	TotalCount int             `json:"total_count"`
+	Payouts    []Payout        `json:"payouts,omitempty"`
 }
 
 type Payout struct {
-	ID            string
-	MerchantID    string
-	BatchID       *string
-	BeneficiaryID string
-	PayoutRef     string
-	Amount        decimal.Decimal
-	Currency      string
-	Status        PayoutStatus
-	Method        string
-	ConnectorID   string
-	ConnectorRef  string
-	FailureCode   string
-	CreatedAt     time.Time
+	ID            string          `json:"id"`
+	MerchantID    string          `json:"merchant_id"`
+	BatchID       *string         `json:"batch_id"`
+	BeneficiaryID string          `json:"beneficiary_id"`
+	PayoutRef     string          `json:"payout_ref"`
+	Amount        decimal.Decimal `json:"amount"`
+	Currency      string          `json:"currency"`
+	Status        PayoutStatus    `json:"status"`
+	Method        string          `json:"method"`
+	ConnectorID   string          `json:"connector_id"`
+	ConnectorRef  string          `json:"connector_ref"`
+	FailureCode   string          `json:"failure_code"`
+	CreatedAt     time.Time       `json:"created_at"`
 }
 
 type CreateBulkRequest struct {

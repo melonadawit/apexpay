@@ -171,3 +171,80 @@ ON CONFLICT (merchant_id) DO NOTHING;
 INSERT INTO fixed_assets (id, merchant_id, asset_name, category, acquisition_date, cost, useful_life_years, depreciation_method, net_book_value)
 VALUES ('fa_smoke', 'mer_docker_smoke', 'Delivery Van', 'vehicle', current_date - interval '365 days', 1200000, 5, 'straight_line', 1200000)
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- Real payroll + payout data so the merchant UI shows live rows
+-- (payroll calendar, salary structure, run + items, final
+-- settlement, payout batch + beneficiary).
+-- ============================================================
+
+-- A few more employees across cost centers so reports have real headcount.
+INSERT INTO employees (id, merchant_id, employee_code, name, base_salary, employment_date, employment_type, cost_center, status, metadata)
+VALUES
+  ('emp_eng_01', 'mer_docker_smoke', 'E-ENG-001', 'Abebe Bekele', 60000, current_date - interval '400 days', 'permanent', 'Engineering', 'active', '{}'::jsonb),
+  ('emp_eng_02', 'mer_docker_smoke', 'E-ENG-002', 'Sara Tesfaye', 45000, current_date - interval '300 days', 'permanent', 'Engineering', 'active', '{}'::jsonb),
+  ('emp_sales_01', 'mer_docker_smoke', 'E-SAL-001', 'Mekdes Ali', 40000, current_date - interval '250 days', 'permanent', 'Sales', 'active', '{}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+UPDATE employees SET cost_center='Engineering' WHERE id='emp_smoke';
+
+-- Salary structure (referenced by payroll settings)
+INSERT INTO payroll_salary_structures (id, merchant_id, name, ctc_annual, ctc_monthly, currency, effective_from, status, is_default)
+VALUES ('ss_smoke', 'mer_docker_smoke', 'Docker Smoke Band G3', 600000, 50000, 'ETB', '2026-01-01', 'active', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Payroll calendar 2026 (Ethiopia business practice: cutoff 25th, disbursal 30th, pay last day).
+INSERT INTO payroll_calendars (id, merchant_id, name, pay_frequency, year, month, cutoff_day, disbursal_day, pay_day, cutoff_date, disbursal_date, pay_date, is_locked, locked_at, locked_by, created_by)
+VALUES
+  ('cal_2026_07', 'mer_docker_smoke', 'Monthly Payroll Calendar 2026-07', 'monthly', 2026, 7, 25, 30, 31, '2026-07-25', '2026-07-30', '2026-07-31', true, '2026-07-30T22:00:00Z', 'user_docker_admin', 'user_docker_admin'),
+  ('cal_2026_08', 'mer_docker_smoke', 'Monthly Payroll Calendar 2026-08', 'monthly', 2026, 8, 25, 30, 31, '2026-08-25', '2026-08-30', '2026-08-31', false, NULL, NULL, 'user_docker_admin')
+ON CONFLICT (id) DO NOTHING;
+
+-- Payroll run 2026-07 (completed) with per-employee items.
+INSERT INTO payroll_runs (id, merchant_id, book_id, run_ref, period_month, period_year, type, status,
+  total_gross, total_deductions, total_net, total_tax, total_pension, employer_total_pension,
+  total_employer_cost, total_count, total_employees_paid, total_employees_failed, created_by)
+VALUES ('run_2026_07', 'mer_docker_smoke', 'book_docker_smoke', 'RUN-2026-07', 7, 2026, 'regular', 'completed',
+  195000, 42500, 152500, 32000, 13650, 21450, 216450, 4, 4, 0, 'user_docker_admin')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO payroll_items (id, run_id, employee_id, gross, ot_hours, ot_amount, commission, bonus, other_allowances,
+  taxable_income, income_tax, pension_employee, pension_employer, other_deductions, net_pay, status)
+VALUES
+  ('pi_1', 'run_2026_07', 'emp_smoke',   50000, 0, 0, 0, 2000, 0, 46500,  9200, 3500, 5500, 3000, 37300, 'paid'),
+  ('pi_2', 'run_2026_07', 'emp_eng_01', 60000, 8, 1500, 0, 0, 0, 54300,  12000, 4200, 6600, 3000, 46800, 'paid'),
+  ('pi_3', 'run_2026_07', 'emp_eng_02', 45000, 0, 0, 0, 0, 0, 41850,  8000,  3150, 4950, 2500, 35850, 'paid'),
+  ('pi_4', 'run_2026_07', 'emp_sales_01', 40000, 0, 0, 1500, 0, 0, 37200, 6500, 2800, 4400, 2000, 32500, 'paid')
+ON CONFLICT (id) DO NOTHING;
+
+-- Stored cost-center compliance report so /payroll_reports/cost_center returns live data.
+INSERT INTO payroll_compliance_reports (id, merchant_id, period_month, period_year, report_type, status, metadata)
+VALUES ('rpt_cc_202607', 'mer_docker_smoke', 7, 2026, 'cost_center_report', 'generated',
+  '{"cost_centers":[{"cost_center":"Engineering","total_gross":"155000","total_net":"119950","headcount":3,"employer_cost":"171050","paid_days":90,"lop_days":0},{"cost_center":"Sales","total_gross":"40000","total_net":"32500","headcount":1,"employer_cost":"44400","paid_days":30,"lop_days":0}]}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+-- Final settlement (F&F) for an existing employee.
+INSERT INTO payroll_final_settlements (id, merchant_id, employee_id, resignation_date, last_working_date,
+  notice_period_days, notice_served_days, notice_shortfall_days, leave_encashment_days, leave_encashment_amount,
+  severance_amount, gratuity_amount, bonus_pro_rata, outstanding_loans, outstanding_advances, other_earnings,
+  other_deductions, total_payable, total_deductions, net_payable, status,
+  clearance_checklist, clearance_items_detailed, assets_returned, exit_interview)
+VALUES ('fnf_smoke', 'mer_docker_smoke', 'emp_smoke', '2026-06-15', '2026-07-15',
+  30, 30, 0, 5, 2500, 15000, 0, 2000, 5000, 0, 0, 0, 19500, 5000, 14500, 'pending_approval',
+  '[{"item":"Laptop","status":"pending","checked_by":"","notes":"MacBook Pro"}]'::jsonb,
+  '[{"item":"Laptop LP001","category":"IT","status":"pending","required":true,"checked_by":"","checked_at":"","notes":"MacBook Pro 14 inch"},{"item":"ID Card ID-EMP007","category":"HR","status":"done","required":true,"checked_by":"HR Manager","checked_at":"2026-07-14","notes":"Returned"}]'::jsonb,
+  '[{"asset_type":"laptop","asset_id":"LP001","returned":false,"condition":"good","returned_at":""}]'::jsonb,
+  '{"conducted":false,"conducted_by":"","date":"","feedback":""}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+-- Payout beneficiary + batch + a payout so the payouts screen shows a live batch.
+INSERT INTO beneficiaries (id, merchant_id, name, account_no_masked, account_no_hash, bank_code, bank_name, type, verification_status)
+VALUES ('ben_smoke', 'mer_docker_smoke', 'Abebe Bekele', '****6789', 'hash_ben_1', 'CBE', 'Commercial Bank of Ethiopia', 'individual', 'verified')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO payout_batches (id, merchant_id, book_id, batch_ref, amount, currency, status, total_count, success_count, failed_count)
+VALUES ('pbat_smoke', 'mer_docker_smoke', 'book_docker_smoke', 'PBATCH-SMOKE-001', 50000, 'ETB', 'completed', 1, 1, 0)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO payouts (id, merchant_id, batch_id, beneficiary_id, payout_ref, amount, currency, status, method)
+VALUES ('pout_smoke', 'mer_docker_smoke', 'pbat_smoke', 'ben_smoke', 'POUT-SMOKE-001', 50000, 'ETB', 'succeeded', 'bank')
+ON CONFLICT (id) DO NOTHING;

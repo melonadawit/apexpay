@@ -415,70 +415,70 @@ type LoanRepayment struct {
 // ==================== Payroll Run Enhanced ====================
 
 type PayrollRun struct {
-	ID                   string
-	MerchantID           string
-	BookID               *string // each run gets own ledger book per DATABASE
-	RunRef               string
-	PeriodMonth          int
-	PeriodYear           int
-	Type                 RunType
-	Status               RunStatus
-	TotalGross           decimal.Decimal
-	TotalDeductions      decimal.Decimal
-	TotalNet             decimal.Decimal
-	TotalTax             decimal.Decimal
-	TotalPension         decimal.Decimal // employee
-	EmployerTotalPension decimal.Decimal // employer 11%
-	TotalEmployerCost    decimal.Decimal // gross + employer pension
-	TotalEmployeesPaid   int
-	TotalEmployeesFailed int
-	TotalCount           int
-	PayCalendarID        *string
-	CutoffDate           *time.Time
-	DisbursalDate        *time.Time
-	PayrollData          map[string]interface{} // {total_paid_days, total_lop}
-	VarianceReport       map[string]interface{} // vs last month %
-	BankFileKey          *string
-	BankFileHash         *string
-	LockedAt             *time.Time
-	ApprovedBy           *string
-	CreatedBy            *string
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
+	ID                   string                 `json:"id"`
+	MerchantID           string                 `json:"merchant_id"`
+	BookID               *string                `json:"book_id"` // each run gets own ledger book per DATABASE
+	RunRef               string                 `json:"run_ref"`
+	PeriodMonth          int                    `json:"period_month"`
+	PeriodYear           int                    `json:"period_year"`
+	Type                 RunType                `json:"type"`
+	Status               RunStatus              `json:"status"`
+	TotalGross           decimal.Decimal        `json:"total_gross"`
+	TotalDeductions      decimal.Decimal        `json:"total_deductions"`
+	TotalNet             decimal.Decimal        `json:"total_net"`
+	TotalTax             decimal.Decimal        `json:"total_tax"`
+	TotalPension         decimal.Decimal        `json:"total_pension"`          // employee
+	EmployerTotalPension decimal.Decimal        `json:"employer_total_pension"` // employer 11%
+	TotalEmployerCost    decimal.Decimal        `json:"total_employer_cost"`    // gross + employer pension
+	TotalEmployeesPaid   int                    `json:"total_employees_paid"`
+	TotalEmployeesFailed int                    `json:"total_employees_failed"`
+	TotalCount           int                    `json:"total_count"`
+	PayCalendarID        *string                `json:"pay_calendar_id"`
+	CutoffDate           *time.Time             `json:"cutoff_date"`
+	DisbursalDate        *time.Time             `json:"disbursal_date"`
+	PayrollData          map[string]interface{} `json:"payroll_data"`    // {total_paid_days, total_lop}
+	VarianceReport       map[string]interface{} `json:"variance_report"` // vs last month %
+	BankFileKey          *string                `json:"bank_file_key"`
+	BankFileHash         *string                `json:"bank_file_hash"`
+	LockedAt             *time.Time             `json:"locked_at"`
+	ApprovedBy           *string                `json:"approved_by"`
+	CreatedBy            *string                `json:"created_by"`
+	CreatedAt            time.Time              `json:"created_at"`
+	UpdatedAt            time.Time              `json:"updated_at"`
 }
 
 // ==================== Payroll Item Enhanced with Breakdowns ====================
 
 type PayrollItem struct {
-	ID                             string
-	RunID                          string
-	EmployeeID                     string
-	Gross                          decimal.Decimal
-	CTCMonthly                     decimal.Decimal
-	OTHours                        decimal.Decimal
-	OTAmount                       decimal.Decimal
-	Commission                     decimal.Decimal
-	Bonus                          decimal.Decimal
-	OtherAllowances                decimal.Decimal
-	TaxableIncome                  decimal.Decimal
-	IncomeTax                      decimal.Decimal
-	PensionEmployee                decimal.Decimal // 7%
-	PensionEmployer                decimal.Decimal // 11%
-	OtherDeductions                decimal.Decimal
-	NetPay                         decimal.Decimal
-	Status                         string
-	FailureReason                  string
+	ID                             string                           `json:"id"`
+	RunID                          string                           `json:"run_id"`
+	EmployeeID                     string                           `json:"employee_id"`
+	Gross                          decimal.Decimal                  `json:"gross"`
+	CTCMonthly                     decimal.Decimal                  `json:"ctc_monthly"`
+	OTHours                        decimal.Decimal                  `json:"ot_hours"`
+	OTAmount                       decimal.Decimal                  `json:"ot_amount"`
+	Commission                     decimal.Decimal                  `json:"commission"`
+	Bonus                          decimal.Decimal                  `json:"bonus"`
+	OtherAllowances                decimal.Decimal                  `json:"other_allowances"`
+	TaxableIncome                  decimal.Decimal                  `json:"taxable_income"`
+	IncomeTax                      decimal.Decimal                  `json:"income_tax"`
+	PensionEmployee                decimal.Decimal                  `json:"pension_employee"` // 7%
+	PensionEmployer                decimal.Decimal                  `json:"pension_employer"` // 11%
+	OtherDeductions                decimal.Decimal                  `json:"other_deductions"`
+	NetPay                         decimal.Decimal                  `json:"net_pay"`
+	Status                         string                           `json:"status"`
+	FailureReason                  string                           `json:"failure_reason"`
 	EarningsBreakdown              []EarningsBreakdown              `json:"earnings_breakdown"`
 	DeductionsBreakdown            []DeductionsBreakdown            `json:"deductions_breakdown"`
 	EmployerContributionsBreakdown []EmployerContributionsBreakdown `json:"employer_contributions_breakdown"`
 	YTD                            map[string]decimal.Decimal       `json:"ytd"` // ytd_gross, ytd_tax, ytd_net
-	PaidDays                       int
-	LOPDays                        int
-	ProrationFactor                decimal.Decimal
-	IsOnHold                       bool
-	HoldReason                     string
-	CreatedAt                      time.Time
-	UpdatedAt                      time.Time
+	PaidDays                       int                              `json:"paid_days"`
+	LOPDays                        int                              `json:"lop_days"`
+	ProrationFactor                decimal.Decimal                  `json:"proration_factor"`
+	IsOnHold                       bool                             `json:"is_on_hold"`
+	HoldReason                     string                           `json:"hold_reason"`
+	CreatedAt                      time.Time                        `json:"created_at"`
+	UpdatedAt                      time.Time                        `json:"updated_at"`
 }
 
 // ==================== Tax Bracket ====================
@@ -494,48 +494,51 @@ type TaxBracket struct {
 // ==================== Compliance Reports ====================
 
 type ComplianceReport struct {
-	ID          string
-	MerchantID  string
-	PeriodMonth int
-	PeriodYear  int
-	ReportType  ReportType
-	FileKey     *string
-	FileHash    *string
-	Status      string // draft, generated, paid, filed, failed
-	Metadata    map[string]interface{}
-	GeneratedBy *string
-	CreatedAt   time.Time
+	ID          string                 `json:"id"`
+	MerchantID  string                 `json:"merchant_id"`
+	PeriodMonth int                    `json:"period_month"`
+	PeriodYear  int                    `json:"period_year"`
+	ReportType  ReportType             `json:"report_type"`
+	FileKey     *string                `json:"file_key"`
+	FileHash    *string                `json:"file_hash"`
+	Status      string                 `json:"status"` // draft, generated, paid, filed, failed
+	Metadata    map[string]interface{} `json:"metadata"`
+	GeneratedBy *string                `json:"generated_by"`
+	CreatedAt   time.Time              `json:"created_at"`
 }
 
 // ==================== Final Settlement F&F ====================
 
 type FinalSettlement struct {
-	ID                    string
-	MerchantID            string
-	EmployeeID            string
-	ResignationDate       time.Time
-	LastWorkingDate       time.Time
-	NoticePeriodDays      int
-	NoticeServedDays      int
-	NoticeShortfallDays   int
-	LeaveEncashmentDays   decimal.Decimal
-	LeaveEncashmentAmount decimal.Decimal
-	SeveranceAmount       decimal.Decimal // per ET labour law Art 39-44
-	GratuityAmount        decimal.Decimal
-	BonusProRata          decimal.Decimal
-	OutstandingLoans      decimal.Decimal
-	OutstandingAdvances   decimal.Decimal
-	OtherEarnings         decimal.Decimal
-	OtherDeductions       decimal.Decimal
-	TotalPayable          decimal.Decimal
-	TotalDeductions       decimal.Decimal
-	NetPayable            decimal.Decimal
-	Status                string // draft, pending_approval, approved, paid, rejected
-	ClearanceChecklist    []ClearanceItem
-	ApprovedBy            *string
-	PaidAt                *time.Time
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
+	ID                    string                   `json:"id"`
+	MerchantID            string                   `json:"merchant_id"`
+	EmployeeID            string                   `json:"employee_id"`
+	ResignationDate       time.Time                `json:"resignation_date"`
+	LastWorkingDate       time.Time                `json:"last_working_date"`
+	NoticePeriodDays      int                      `json:"notice_period_days"`
+	NoticeServedDays      int                      `json:"notice_served_days"`
+	NoticeShortfallDays   int                      `json:"notice_shortfall_days"`
+	LeaveEncashmentDays   decimal.Decimal          `json:"leave_encashment_days"`
+	LeaveEncashmentAmount decimal.Decimal          `json:"leave_encashment_amount"`
+	SeveranceAmount       decimal.Decimal          `json:"severance_amount"` // per ET labour law Art 39-44
+	GratuityAmount        decimal.Decimal          `json:"gratuity_amount"`
+	BonusProRata          decimal.Decimal          `json:"bonus_pro_rata"`
+	OutstandingLoans      decimal.Decimal          `json:"outstanding_loans"`
+	OutstandingAdvances   decimal.Decimal          `json:"outstanding_advances"`
+	OtherEarnings         decimal.Decimal          `json:"other_earnings"`
+	OtherDeductions       decimal.Decimal          `json:"other_deductions"`
+	TotalPayable          decimal.Decimal          `json:"total_payable"`
+	TotalDeductions       decimal.Decimal          `json:"total_deductions"`
+	NetPayable            decimal.Decimal          `json:"net_payable"`
+	Status                string                   `json:"status"` // draft, pending_approval, approved, paid, rejected
+	ClearanceChecklist    []ClearanceItem          `json:"clearance_checklist"`
+	ClearanceDetailed     []map[string]interface{} `json:"clearance_items_detailed"`
+	AssetsReturned        []map[string]interface{} `json:"assets_returned"`
+	ExitInterview         map[string]interface{}   `json:"exit_interview"`
+	ApprovedBy            *string                  `json:"approved_by"`
+	PaidAt                *time.Time               `json:"paid_at"`
+	CreatedAt             time.Time                `json:"created_at"`
+	UpdatedAt             time.Time                `json:"updated_at"`
 }
 
 type ClearanceItem struct {
@@ -588,25 +591,25 @@ const (
 )
 
 type PayrollCalendar struct {
-	ID            string
-	MerchantID    string
-	Name          string // e.g., Monthly Payroll Calendar 2026
-	Description   string
-	PayFrequency  PayFrequency
-	Year          int
-	Month         *int      // null for weekly
-	CutoffDay     int       // Ethiopia business practice cutoff 25th
-	DisbursalDay  int       // disbursal 30th
-	PayDay        int       // pay date last day of month
-	CutoffDate    time.Time // actual cutoff date e.g., 2026-07-25
-	DisbursalDate time.Time // e.g., 2026-07-30
-	PayDate       time.Time // e.g., 2026-07-31
-	IsLocked      bool
-	LockedAt      *time.Time
-	LockedBy      *string
-	CreatedBy     *string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID            string       `json:"id"`
+	MerchantID    string       `json:"merchant_id"`
+	Name          string       `json:"name"` // e.g., Monthly Payroll Calendar 2026
+	Description   string       `json:"description"`
+	PayFrequency  PayFrequency `json:"pay_frequency"`
+	Year          int          `json:"year"`
+	Month         *int         `json:"month"`         // null for weekly
+	CutoffDay     int          `json:"cutoff_day"`    // Ethiopia business practice cutoff 25th
+	DisbursalDay  int          `json:"disbursal_day"` // disbursal 30th
+	PayDay        int          `json:"pay_day"`       // pay date last day of month
+	CutoffDate    time.Time    `json:"cutoff_date"`   // actual cutoff date e.g., 2026-07-25
+	DisbursalDate time.Time    `json:"disbursal_date"`
+	PayDate       time.Time    `json:"pay_date"`
+	IsLocked      bool         `json:"is_locked"`
+	LockedAt      *time.Time   `json:"locked_at"`
+	LockedBy      *string      `json:"locked_by"`
+	CreatedBy     *string      `json:"created_by"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
 }
 
 // ==================== Leave Management — Ethiopia Labour Proclamation 1156/2019 Art 77/82/86 ====================

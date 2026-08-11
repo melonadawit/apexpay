@@ -2,9 +2,13 @@
 import * as React from "react"
 import { parseBulkCSV, levenshtein, BulkRow } from "@/lib/papaparse-bulk"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 export default function PayoutsPage() {
   const { t } = useLanguage()
+  const { data: batches, loading: batchLoading } = useData<unknown[]>(() => api.payouts.batches(), [])
+  const batchList = (batches ?? []) as any[]
   const [rows, setRows] = React.useState<BulkRow[]>([
     { name: "Abebe", account_no: "1000123456789", bank_code: "CBE", bank_name: "Commercial Bank of Ethiopia", amount: "10000", payout_ref: "pout_ref_01", status: "valid", errors: [] },
     { name: "Almaz", account_no: "1000123456790", bank_code: "AWASH", bank_name: "Awash Bank", amount: "5000", payout_ref: "pout_ref_02", status: "valid", errors: [] },
@@ -66,8 +70,28 @@ export default function PayoutsPage() {
         <div className="rounded-2xl border bg-card p-4">
           <h3 className="font-semibold">Payout Batches • Real-time-ish SWR poll 5s + Timeline GitHub Actions</h3>
           <div className="mt-3 space-y-2 text-sm">
-            <div className="flex items-center justify-between rounded-xl border p-3"><span>pbat_01H • ETB 30,000 • 3 payouts • pending_approval • finance submitted admin approve needed • SWR poll 5s</span><span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20">pending_approval</span></div>
-            <div className="flex items-center justify-between rounded-xl border p-3"><span>pbat_02H • ETB 10,000 • 1 payout • approved → processing → succeeded • ledger M3 balanced • Balances updated atomically per Tx • Outbox payout.succeeded + webhook payout.succeeded HMAC</span><span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20">succeeded</span></div>
+            {batchLoading && <p className="text-xs text-muted-foreground">Loading batches…</p>}
+            {!batchLoading && batchList.length === 0 && (
+              <p className="text-xs text-muted-foreground">No payout batches yet. Create one above.</p>
+            )}
+            {batchList.map((b) => (
+              <div key={b.id} className="flex items-center justify-between rounded-xl border p-3">
+                <span>
+                  {b.batch_ref} • ETB {Number(b.amount || 0).toLocaleString()} • {b.total_count ?? 0} payout{(b.total_count ?? 0) === 1 ? "" : "s"} • {b.status}
+                </span>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    b.status === "completed" || b.status === "succeeded"
+                      ? "bg-green-500/20 text-green-700"
+                      : b.status === "pending_approval" || b.status === "draft"
+                      ? "bg-amber-500/20 text-amber-700"
+                      : "bg-blue-500/20"
+                  }`}
+                >
+                  {b.status}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -24,12 +24,35 @@ export type Payment = {
   customer_email?: string
   connector_id: string
   connector_ref?: string
+  checkout_url?: string
   fee_amount?: string
   net_amount?: string
   requires_2fa?: boolean
   two_fa_verified?: boolean
   succeeded_at?: string | null
   created_at?: string
+}
+
+export type PaymentEntry = {
+  direction: string
+  amount: string
+  currency: string
+  account_code: string
+  account_name: string
+}
+
+export type PaymentJournal = {
+  id: string
+  book_id: string
+  posting_key: string
+  memo: string
+  created_at: string
+  entries: PaymentEntry[]
+}
+
+export type PaymentDetail = {
+  payment: Payment
+  journals: PaymentJournal[]
 }
 
 export type DashboardSummary = {
@@ -349,6 +372,7 @@ export const api = {
   // Dashboard
   summary: () => get<DashboardSummary>("dashboard"),
   payments: (limit = 25) => get<Payment[]>(`transactions?limit=${limit}`),
+  payment: (id: string) => get<PaymentDetail>(`transactions/${id}`),
   links: () => get<PaymentLink[]>("payment_links"),
   banks: () => get<Array<{ code: string; name: string; name_am?: string }>>("banks"),
 
@@ -520,6 +544,14 @@ export const api = {
     createEmployee: (p: unknown) => post<unknown>("payroll/employees", p),
     employeeRevisions: (employeeId: string) => get<unknown[]>(`payroll/employees/${employeeId}/revisions`),
     runs: () => get<unknown[]>("payroll/payroll_runs"),
+    calendars: (year = 2026) => get<unknown[]>(`payroll/calendars?year=${year}`),
+    lockCalendar: (id: string) => post<unknown>(`payroll/calendars/${id}/lock`),
+    unlockCalendar: (id: string) => post<unknown>(`payroll/calendars/${id}/unlock`),
+    finalSettlements: () => get<unknown[]>("payroll/final_settlements"),
+    auditLogs: () => get<unknown[]>("payroll/payroll_audit_logs"),
+    costCenterReport: (year = 2026, month = 0) => get<unknown>(`payroll/payroll_reports/cost_center?year=${year}${month ? `&month=${month}` : ""}`),
+    varianceReport: (year = 2026, month = 0) => get<unknown>(`payroll/payroll_reports/variance?year=${year}${month ? `&month=${month}` : ""}`),
+    payrollRegister: (runId = "") => get<unknown>(`payroll/payroll_reports/payroll_register${runId ? `?run_id=${runId}` : ""}`),
     createRun: (p: unknown) => post<unknown>("payroll/payroll_runs", p),
     calculate: (id: string) => post<unknown>(`payroll/payroll_runs/${id}/calculate`),
     approve: (id: string) => post<unknown>(`payroll/payroll_runs/${id}/approve`),

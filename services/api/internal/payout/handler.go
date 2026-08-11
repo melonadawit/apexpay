@@ -18,10 +18,32 @@ func NewHandler(svc *Service) *Handler { return &Handler{svc: svc} }
 
 func (h *Handler) Routes(r chi.Router) {
 	r.Post("/beneficiaries", h.CreateBeneficiary)
+	r.Get("/beneficiaries", h.ListBeneficiaries)
 	r.Post("/", h.CreatePayout)
 	r.Post("/bulk", h.CreateBulk)
 	r.Post("/batches/{id}/approve", h.ApproveBatch)
 	r.Get("/batches/{id}", h.GetBatch)
+	r.Get("/batches", h.ListBatches)
+}
+
+// ListBatches returns the merchant's payout batches (newest first).
+func (h *Handler) ListBatches(w http.ResponseWriter, r *http.Request) {
+	list, err := h.svc.repo.ListBatches(r.Context(), mw.MerchantID(r.Context()))
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, list)
+}
+
+// ListBeneficiaries returns the merchant's saved beneficiaries.
+func (h *Handler) ListBeneficiaries(w http.ResponseWriter, r *http.Request) {
+	list, err := h.svc.repo.ListBeneficiaries(r.Context(), mw.MerchantID(r.Context()))
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, list)
 }
 
 func (h *Handler) CreateBeneficiary(w http.ResponseWriter, r *http.Request) {

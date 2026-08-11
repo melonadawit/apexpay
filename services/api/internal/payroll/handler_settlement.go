@@ -43,5 +43,11 @@ func (h *Handler) CreateFinalSettlement(w http.ResponseWriter, r *http.Request) 
 	pkghttp.WriteJSON(w, r, 201, fs)
 }
 func (h *Handler) ListFinalSettlements(w http.ResponseWriter, r *http.Request) {
-	pkghttp.WriteJSON(w, r, 200, []FinalSettlement{})
+	merchantID := mw.MerchantID(r.Context())
+	list, err := h.svc.repo.ListFinalSettlements(r.Context(), merchantID)
+	if err != nil {
+		pkghttp.WriteError(w, r, err)
+		return
+	}
+	pkghttp.WriteJSON(w, r, 200, list)
 }

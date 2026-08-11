@@ -18,6 +18,8 @@ type Repository interface {
 	CreatePayout(ctx context.Context, p *Payout) error
 	CreateBulkTx(ctx context.Context, batch *PayoutBatch, payouts []Payout, journal *ledger.Journal, entries []ledger.Entry) error
 	GetBatch(ctx context.Context, merchantID, batchID string) (*PayoutBatch, error)
+	ListBatches(ctx context.Context, merchantID string) ([]PayoutBatch, error)
+	ListBeneficiaries(ctx context.Context, merchantID string) ([]Beneficiary, error)
 	UpdateBatchStatus(ctx context.Context, batchID, status, approvedBy string) error
 	UpdatePayoutStatus(ctx context.Context, payoutID string, status PayoutStatus, connectorRef string) error
 	GetMerchantBalance(ctx context.Context, merchantID string) (decimal.Decimal, error)

@@ -2,6 +2,8 @@
 import * as React from "react"
 import { motion } from "framer-motion"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -9,20 +11,55 @@ function Badge({ children, variant = "default" }: any) {
   return <span className={`px-2 py-0.5 rounded-full text-[11px] border ${map[variant]}`}>{children}</span>
 }
 
+const FALLBACK_COST = [
+  { cc: "CC-100 Engineering", gross: 100000, net: 75000, tax: 10000, pension: 18000, employer_cost: 118000, headcount: 5, paid: 140, lop: 10, variance: "+3.2%" },
+  { cc: "CC-200 Sales", gross: 100000, net: 75000, tax: 10000, pension: 18000, employer_cost: 118000, headcount: 5, paid: 140, lop: 10, variance: "+7.2%"},
+]
+const FALLBACK_TREND = [
+  { month: "Feb 2026", gross: 160000, net: 120000, tax: 16000, headcount: 8 },
+  { month: "Mar 2026", gross: 170000, net: 127500, tax: 17000, headcount: 9 },
+  { month: "Apr 2026", gross: 180000, net: 135000, tax: 18000, headcount: 9 },
+  { month: "May 2026", gross: 185000, net: 139000, tax: 18500, headcount: 10 },
+  { month: "Jun 2026", gross: 190000, net: 142500, tax: 19000, headcount: 10 },
+  { month: "Jul 2026", gross: 200000, net: 150000, tax: 20000, headcount: 10 },
+]
+
 export default function PayrollReportsPage() {
   const { t } = useLanguage()
-  const costCenterData = [
-    { cc: "CC-100 Engineering", gross: 100000, net: 75000, tax: 10000, pension: 18000, employer_cost: 118000, headcount: 5, paid: 140, lop: 10, variance: "+3.2%" },
-    { cc: "CC-200 Sales", gross: 100000, net: 75000, tax: 10000, pension: 18000, employer_cost: 118000, headcount: 5, paid: 140, lop: 10, variance: "+7.2%"},
-  ]
-  const payrollTrend = [
-    { month: "Feb 2026", gross: 160000, net: 120000, tax: 16000, headcount: 8 },
-    { month: "Mar 2026", gross: 170000, net: 127500, tax: 17000, headcount: 9 },
-    { month: "Apr 2026", gross: 180000, net: 135000, tax: 18000, headcount: 9 },
-    { month: "May 2026", gross: 185000, net: 139000, tax: 18500, headcount: 10 },
-    { month: "Jun 2026", gross: 190000, net: 142500, tax: 19000, headcount: 10 },
-    { month: "Jul 2026", gross: 200000, net: 150000, tax: 20000, headcount: 10 },
-  ]
+  const { data: ccReport } = useData(() => api.payroll.costCenterReport(2026, 7), [])
+  const { data: runs } = useData(() => api.payroll.runs(), [])
+
+  const costCenterData: any[] = React.useMemo(() => {
+    const anyRep = ccReport as any
+    const cents = anyRep?.cost_centers || anyRep?.metadata?.cost_centers
+    if (!cents || !cents.length) return FALLBACK_COST
+    return cents.map((c: any) => ({
+      cc: c.cost_center,
+      gross: Number(c.total_gross || 0),
+      net: Number(c.total_net || 0),
+      tax: 0,
+      pension: 0,
+      employer_cost: Number(c.employer_cost || 0),
+      headcount: c.headcount || 0,
+      paid: c.paid_days || 0,
+      lop: c.lop_days || 0,
+      variance: c.variance || "+0%",
+    }))
+  }, [ccReport])
+
+  const payrollTrend: any[] = React.useMemo(() => {
+    const rr = (runs ?? []) as any[]
+    if (!rr.length) return FALLBACK_TREND
+    return rr
+      .map((r) => ({
+        month: `${new Date(2026, (r.period_month || 1) - 1, 1).toLocaleString("en", { month: "short" })} ${r.period_year}`,
+        gross: Number(r.total_gross || 0),
+        net: Number(r.total_net || 0),
+        tax: Number(r.total_tax || 0),
+        headcount: r.total_employees_paid || r.total_count || 0,
+      }))
+      .slice(0, 6)
+  }, [runs])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">

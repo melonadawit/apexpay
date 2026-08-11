@@ -39,6 +39,9 @@ func (r *securityTestRepo) ListByMerchant(context.Context, string, int) ([]*Paym
 	return []*Payment{}, nil
 }
 
+func (r *securityTestRepo) GetPaymentDetail(context.Context, string, string) (*PaymentDetail, error) {
+	return nil, nil
+}
 func (r *securityTestRepo) DashboardSummary(context.Context, string) (*Summary, error) {
 	return &Summary{}, nil
 }

@@ -26,6 +26,7 @@ type Repository interface {
 	Mark2FAVerified(ctx context.Context, merchantID, paymentID string) error
 	ListByMerchant(ctx context.Context, merchantID string, limit int) ([]*Payment, error)
 	DashboardSummary(ctx context.Context, merchantID string) (*Summary, error)
+	GetPaymentDetail(ctx context.Context, merchantID, paymentID string) (*PaymentDetail, error)
 }
 
 type Service struct {
@@ -226,4 +227,9 @@ func (s *Service) List(ctx context.Context, merchantID string, limit int) ([]*Pa
 // Summary returns dashboard aggregates for the merchant.
 func (s *Service) Summary(ctx context.Context, merchantID string) (*Summary, error) {
 	return s.repo.DashboardSummary(ctx, merchantID)
+}
+
+// GetDetail returns a single payment with its lifecycle journals for the exam console.
+func (s *Service) GetDetail(ctx context.Context, merchantID, paymentID string) (*PaymentDetail, error) {
+	return s.repo.GetPaymentDetail(ctx, merchantID, paymentID)
 }
