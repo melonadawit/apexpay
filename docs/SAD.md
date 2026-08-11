@@ -161,6 +161,30 @@ recon, notifications, forex cache, credit scoring).
 ### 6.3 CI quality gates (10/10 green)
 `go-build`, `gosec`, `trivy` (SCA), `gitleaks`, `no-float-money-lint`, `fin-privacy-lint`,
 `audit-append-only`, `sql-param-cast-lint`, `lighthouse-axe`, `docker-smoke` (29 e2e sections).
+A mobile job (`android.yml`) builds the merchant Android APK on a large CI runner and uploads it
+as an artifact.
+
+---
+
+## 6bis. Verified Live Data (what is proven end-to-end)
+
+The platform's data path is exercised end-to-end and green at commit `master`. CI runs
+`docker-smoke` (29 sections) against a **real Postgres** seeded by `tests/integration/seed.sql`,
+and the merchant dashboard is wired to those live endpoints rather than static mockups.
+
+| Surface | Live-backed endpoints (verified) |
+|---|---|
+| **Merchant web** | payments list + `GET /transactions/{id}` detail (with lifecycle ledger journals), subscriptions list + `GET /subscriptions/{id}` detail (plan, customer, invoices), refunds + `GET /refunds/{id}`, payouts batches + beneficiaries, payroll runs / calendars / final-settlements / reports / tax-brackets |
+| **Payments lifecycle** | initialize → 2FA → verify posts the double-entry journal in the same transaction (proven in smoke §10) |
+| **Payroll** | a seeded run + items + cost-center report + final settlement + calendar render from the DB; settings reads live ET tax brackets |
+| **Subscriptions** | seeded customer + plan + subscription + invoices render with status/period/dunning fields |
+| **Payouts** | seeded batch + beneficiary render from `payout_batches` / `beneficiaries` |
+
+New read endpoints added to back these surfaces: `GET /transactions/{id}`,
+`GET /payout_batches`, `GET /beneficiaries`, `GET /subscriptions/{id}`, `GET /refunds/{id}`,
+`GET /payroll/tax_brackets`, plus real `ListRuns` / `ListFinalSettlements` DB queries. Seed data
+(calendars, a payroll run, a cost-center report, a final settlement, a payout batch + beneficiary,
+a subscription + invoices, a refund) is idempotent and applies cleanly on a fresh database.
 
 ---
 

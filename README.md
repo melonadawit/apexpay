@@ -104,6 +104,17 @@ See [`docs/SAD.md`](docs/SAD.md) for the full architecture and `docs/SDD.md` for
 
 ---
 
+## Live Data (verified end-to-end)
+
+The merchant dashboard is wired to the **live API**, not static mockups, backed by a seeded real
+Postgres (`tests/integration/seed.sql`). Payments (list + `GET /transactions/{id}` detail with ledger
+journals), subscriptions (+ detail with plan/customer/invoices), refunds (`GET /refunds/{id}`),
+payouts (batches + beneficiaries), and payroll (runs, calendars, final settlements, reports,
+tax brackets) all render real rows. See `docs/SAD.md` §6bis and `docs/SDD.md` §10bis for the
+endpoint table and a mobile `android.yml` job that builds the merchant APK as a CI artifact.
+
+---
+
 ## Quality & Security
 
 10/10 CI gates green:

@@ -208,6 +208,28 @@ all localize user-facing output.
 
 ---
 
+## 10bis. Verified Live-Data Endpoints (recent additions)
+
+The following handlers were previously stubs (returned empty/hardcoded) or missing routes;
+they are now backed by real DB reads and exercised by the merchant dashboard and/or smoke suite.
+
+| Endpoint | Module | What it now returns |
+|---|---|---|
+| `GET /v1/transactions/{id}` | `payment` | payment row + its ledger journals/entries (lifecycle) |
+| `GET /v1/payout_batches`, `GET /v1/beneficiaries` | `payout` | list batches (with payout count) / beneficiaries |
+| `GET /v1/subscriptions`, `GET /v1/subscriptions/{id}` | `subscription` | list; detail enriched with plan, customer, invoices |
+| `GET /v1/refunds/{id}` | `refund` | real refund row (was hardcoded `succeeded`) |
+| `GET /v1/payroll/payroll_runs` | `payroll` | real `ListRuns` DB query (was empty) |
+| `GET /v1/payroll/final_settlements` | `payroll` | real `ListFinalSettlements` DB query (was empty) |
+| `GET /v1/payroll/tax_brackets` | `payroll` | active ET brackets from `payroll_tax_brackets` |
+| `GET /v1/payroll/payroll_reports/cost_center` | `payroll` | stored cost-center report metadata (falls back to mock) |
+
+Related domain types gained snake_case JSON tags (`Payment`, `PayrollRun`/`Item`/`Calendar`/
+`FinalSettlement`, `PayoutBatch`/`Payout`/`Beneficiary`, `Subscription`/`Plan`/`Customer`/
+`Invoice`, `Refund`, `TaxBracket`) so the frontend `lib/api/client.ts` reads them directly.
+
+---
+
 ## 11. Extension Points
 - **New payment connector** — implement the `connector` adapter + register it.
 - **New assistant tool** — add a `Tool` with actor gate and a `Readers` adapter.
