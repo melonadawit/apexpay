@@ -12,6 +12,7 @@ export default function DevelopersPage() {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">{t("Developers","ገንቢዎች")}</h1>
           <div className="flex gap-2">
+            <Link href="/developers/connect" className="rounded-xl border bg-card px-4 h-10 text-xs grid place-items-center font-medium">Connect your store</Link>
             <Link href="/developers/api-keys" className="rounded-xl border bg-card px-4 h-10 text-xs grid place-items-center font-medium">API Keys</Link>
             <Link href="/developers/webhooks" className="rounded-xl border bg-card px-4 h-10 text-xs grid place-items-center font-medium">Webhooks</Link>
           </div>

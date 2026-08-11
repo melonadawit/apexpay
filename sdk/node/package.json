@@ -1,0 +1,29 @@
+{
+  "name": "@apexpay/node",
+  "version": "0.1.0",
+  "description": "Official ApexPay Node.js SDK — payments-only client for merchants who want just the payment gateway (no payroll/HR).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test test/",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "apexpay",
+    "ethiopia",
+    "payments",
+    "gateway",
+    "telebirr",
+    "cbe",
+    "etb"
+  ],
+  "license": "Proprietary",
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0"
+  }
+}
