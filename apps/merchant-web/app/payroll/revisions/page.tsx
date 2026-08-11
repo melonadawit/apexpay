@@ -2,6 +2,8 @@
 import * as React from "react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -16,7 +18,28 @@ const mockRevisions = [
 
 export default function SalaryRevisionPage() {
   const { t } = useLanguage()
-  const [selected, setSelected] = React.useState(mockRevisions[0])
+  const { data: employees = [] } = useData<Array<{ id?: string }>>(() => api.payroll.employees() as Promise<any[]>, [])
+  const firstEmployeeId = (employees ?? [])[0]?.id || ""
+  const { data: revisions = mockRevisions } = useData<any[]>(
+    () => (firstEmployeeId ? (api.payroll.employeeRevisions(firstEmployeeId) as Promise<any[]>) : Promise.resolve(mockRevisions)),
+    [firstEmployeeId]
+  )
+  const revisionList = (revisions ?? []).map((r: any) => ({
+    id: r.id || "—",
+    employee: r.employee || r.employee_name || r.employee_id || "—",
+    old_base: r.old_base ? String(r.old_base) : r.old_base_salary ? String(r.old_base_salary) : "0",
+    new_base: r.new_base ? String(r.new_base) : r.new_base_salary ? String(r.new_base_salary) : "0",
+    old_ctc: r.old_ctc ? String(r.old_ctc) : "0",
+    new_ctc: r.new_ctc ? String(r.new_ctc) : "0",
+    effective_from: r.effective_from ? String(r.effective_from).slice(0, 10) : "—",
+    reason: r.reason || "—",
+    status: r.status || "pending",
+    arrear_amount: r.arrear_amount ? String(r.arrear_amount) : "0",
+    arrear_months: r.arrear_months || 0,
+    approved_by: r.approved_by || "",
+    created_at: r.created_at ? String(r.created_at).slice(0, 10) : "—",
+  }))
+  const [selected, setSelected] = React.useState<any>(revisionList[0] ?? mockRevisions[0])
   const [newBase, setNewBase] = React.useState("25000")
   const [oldBase, setOldBase] = React.useState("20000")
   const [effectiveFrom, setEffectiveFrom] = React.useState("2026-07-01")
@@ -44,7 +67,7 @@ export default function SalaryRevisionPage() {
           <Card className="p-6">
             <h3 className="font-semibold">Revisions • History • Arrears • Outstanding Pipeline Visual Stepper</h3>
             <div className="mt-4 space-y-3">
-              {mockRevisions.map(r => (
+              {revisionList.map(r => (
                 <button key={r.id} onClick={()=>setSelected(r)} className={`w-full text-left rounded-xl border p-4 hover:bg-muted ${selected.id===r.id ? "bg-primary/10 border-primary/30" : ""}`}>
                   <div className="flex justify-between"><p className="font-medium text-sm">{r.employee}</p><Badge variant={r.status==="approved" ? "success" : "warning"}>{r.status}</Badge></div>
                   <p className="text-[11px] text-muted-foreground mt-1">Old Base {r.old_base} → New Base {r.new_base} • Old CTC {r.old_ctc} → New CTC {r.new_ctc} • Effective {r.effective_from} • Reason {r.reason}</p>

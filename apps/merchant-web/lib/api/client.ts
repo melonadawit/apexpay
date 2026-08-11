@@ -518,6 +518,7 @@ export const api = {
   payroll: {
     employees: () => get<unknown[]>("payroll/employees"),
     createEmployee: (p: unknown) => post<unknown>("payroll/employees", p),
+    employeeRevisions: (employeeId: string) => get<unknown[]>(`payroll/employees/${employeeId}/revisions`),
     runs: () => get<unknown[]>("payroll/payroll_runs"),
     createRun: (p: unknown) => post<unknown>("payroll/payroll_runs", p),
     calculate: (id: string) => post<unknown>(`payroll/payroll_runs/${id}/calculate`),

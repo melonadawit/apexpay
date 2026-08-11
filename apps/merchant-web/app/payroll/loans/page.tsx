@@ -2,6 +2,8 @@
 import * as React from "react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -24,7 +26,24 @@ const mockLoans = [
 
 export default function LoansPage() {
   const { t } = useLanguage()
-  const [selected, setSelected] = React.useState(mockLoans[0])
+  const { data: loans = mockLoans } = useData(() => api.payroll.loans() as Promise<any[]>, [])
+  const loanList = (loans ?? []).map((l: any) => ({
+    id: l.id || "—",
+    employee: l.employee || l.employee_name || l.employee_id || "—",
+    type: l.loan_type || l.type || "salary_advance",
+    principal: l.principal ? String(l.principal) : l.amount ? String(l.amount) : "0",
+    interest_rate: l.interest_rate ? String(l.interest_rate) : "0",
+    tenure: l.tenure_months || l.tenure || 0,
+    emi: l.emi_amount ? String(l.emi_amount) : "0",
+    total_paid: l.repaid_amount ? String(l.repaid_amount) : "0",
+    outstanding: l.outstanding_amount ? String(l.outstanding_amount) : "0",
+    status: l.status || "pending",
+    disbursed_at: l.disbursed_at ? String(l.disbursed_at).slice(0, 10) : "—",
+    next_due: l.next_due ? String(l.next_due).slice(0, 10) : "—",
+    reason: l.reason || "—",
+    schedule: l.schedule || [],
+  }))
+  const [selected, setSelected] = React.useState<any>(loanList[0] ?? mockLoans[0])
   const chartData = selected.schedule.map((s:any)=>({ name: `#${s.installment_no} ${s.due_date}`, principal: parseInt(s.principal), interest: parseInt(s.interest), outstanding: parseInt(s.outstanding_after) }))
   const pieData = [
     { name: "Principal", value: parseInt(selected.principal), color: "#0B6E4F" },
@@ -48,7 +67,7 @@ export default function LoansPage() {
           <Card className="p-6">
             <h3 className="font-semibold">Loans • Active • EMI Auto Deduction Per Run • O(k) • Outstanding Pipeline Visual Stepper</h3>
             <div className="mt-4 space-y-3">
-              {mockLoans.map(loan => (
+              {loanList.map(loan => (
                 <button key={loan.id} onClick={()=>setSelected(loan)} className={`w-full text-left rounded-xl border p-4 hover:bg-muted ${selected.id===loan.id ? "bg-primary/10 border-primary/30" : ""}`}>
                   <div className="flex justify-between"><p className="font-medium text-sm">{loan.employee} • {loan.type}</p><Badge variant={loan.status==="active" ? "success" : "warning"}>{loan.status}</Badge></div>
                   <p className="text-[11px] text-muted-foreground mt-1">Principal {loan.principal} ETB • Interest {loan.interest_rate}% • Tenure {loan.tenure}mo • EMI {loan.emi} • Paid {loan.total_paid} • Outstanding {loan.outstanding} • Next due {loan.next_due}</p>
