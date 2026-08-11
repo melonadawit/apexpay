@@ -48,7 +48,7 @@ class EmployeePortalPage extends StatelessWidget {
               leading: const CircleAvatar(backgroundColor: AppColors.warning, child: Icon(Icons.payments, color: Colors.white)),
               title: const Text('Salary Advance ETB 20,000 • EMI 5,000 • Outstanding 15,000'),
               subtitle: const Text('Tenure 4mo • 1/4 paid • Next due Aug 2026 • Auto deduction per payroll run O(k)'),
-              trailing: Chip(label: Text('Active'), backgroundColor: AppColors.success.withOpacity(0.15)),
+              trailing: Chip(label: Text('Active'), backgroundColor: AppColors.success.withValues(alpha: 0.15)),
             ),
           ),
           const SizedBox(height: 20),
@@ -76,7 +76,7 @@ class EmployeePortalPage extends StatelessWidget {
           const SizedBox(height: 20),
 
           Card(
-            color: AppColors.primary.withOpacity(0.05),
+            color: AppColors.primary.withValues(alpha: 0.05),
             child: const Padding(
               padding: EdgeInsets.all(16),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -81,7 +81,7 @@ class _QrScannerPageState extends State<QrScannerPage> with SingleTickerProvider
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.white, width: 3),
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3 * _pulseController.value), blurRadius: 20, spreadRadius: 5)],
+                    boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3 * _pulseController.value), blurRadius: 20, spreadRadius: 5)],
                   ),
                   child: Stack(children: [
                     // Corner brackets L shape 8x8 border-l-4 border-t-4 white rounded-tl-xl animate-pulse per spec
@@ -90,8 +90,8 @@ class _QrScannerPageState extends State<QrScannerPage> with SingleTickerProvider
                     Positioned(bottom:0,left:0,child: Container(width:30,height:30,decoration: BoxDecoration(border: Border(left: BorderSide(color: Colors.greenAccent,width: 4), bottom: BorderSide(color: Colors.greenAccent,width:4)), borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12))))),
                     Positioned(bottom:0,right:0,child: Container(width:30,height:30,decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.greenAccent,width: 4), bottom: BorderSide(color: Colors.greenAccent,width:4)), borderRadius: BorderRadius.only(bottomRight: Radius.circular(12))))),
                     // Center crosshair
-                    Center(child: Container(width: 20, height: 2, color: Colors.white.withOpacity(0.5))),
-                    Center(child: Container(width: 2, height: 20, color: Colors.white.withOpacity(0.5))),
+                    Center(child: Container(width: 20, height: 2, color: Colors.white.withValues(alpha: 0.5))),
+                    Center(child: Container(width: 2, height: 20, color: Colors.white.withValues(alpha: 0.5))),
                   ]),
                 ),
               ),
@@ -102,7 +102,7 @@ class _QrScannerPageState extends State<QrScannerPage> with SingleTickerProvider
           Positioned(
             top: 20, left: 20, right: 20,
             child: Card(
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: 0.7),
               child: Padding(
                 padding: EdgeInsets.all(12),
                 child: Column(children: [
@@ -191,7 +191,7 @@ class Card extends StatelessWidget {
   final Color? color;
   const Card({super.key, required this.child, this.color});
   @override Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(color: color ?? Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)]),
+    decoration: BoxDecoration(color: color ?? Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10)]),
     child: child,
   );
 }

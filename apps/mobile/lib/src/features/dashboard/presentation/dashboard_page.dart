@@ -5,7 +5,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/sync/offline_sync.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/fcm_service.dart';
-import '../../../core/storage/hive_boxes.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -77,7 +76,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               decoration: BoxDecoration(
                 gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0,10))],
+                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0,10))],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +85,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   const SizedBox(height: 8),
                   const Text('ETB 125,430', style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Row(children: [Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: const Text('+12% •  ትናንት', style: TextStyle(color: Colors.white))) ]),
+                  Row(children: [Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)), child: const Text('+12% •  ትናንት', style: TextStyle(color: Colors.white))) ]),
                 ],
               ),
             ),
@@ -101,7 +100,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             const SizedBox(height: 12),
             ...List.generate(5, (i) => Card(
               child: ListTile(
-                leading: CircleAvatar(backgroundColor: AppColors.primaryLight.withOpacity(0.15), child: const Icon(Icons.check, color: AppColors.primary)),
+                leading: CircleAvatar(backgroundColor: AppColors.primaryLight.withValues(alpha: 0.15), child: const Icon(Icons.check, color: AppColors.primary)),
                 title: Text('ETB ${500 + i*100} • tutoring'),
                 subtitle: Text('2 min ago • telebirr • ${i%2==0?'succeeded':'pending'}'),
                 trailing: const Icon(Icons.chevron_right),

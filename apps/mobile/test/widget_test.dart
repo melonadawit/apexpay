@@ -1,30 +1,35 @@
-// This is a basic Flutter widget test.
+// ApexPay merchant app smoke test.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Verifies the design system brand colors and the Material 3 color scheme
+// derived from the ApexPay brand seed. Kept google-font/Hive/Firebase-free so
+// it runs headless in CI without network or platform plugins.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:apexpay_merchant/main.dart';
+import 'package:apexpay_merchant/src/core/theme/app_theme.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('ApexPay brand palette matches the ET green + Abyssinia gold identity', () {
+    expect(AppColors.primary, const Color(0xFF0B6E4F));
+    expect(AppColors.accentGold, const Color(0xFFEAB308));
+    expect(AppColors.success, const Color(0xFF10B981));
+    expect(AppColors.error, const Color(0xFFEF4444));
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  test('light color scheme derives from the brand seed', () {
+    final scheme = ColorScheme.fromSeed(seedColor: AppColors.primary, brightness: Brightness.light);
+    expect(scheme.primary, isNot(Colors.black));
+    expect(scheme.brightness, Brightness.light);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('ApexPay brand primary color renders a MaterialApp', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary)),
+        home: const Scaffold(body: Center(child: Text('ApexPay'))),
+      ),
+    );
+    expect(find.text('ApexPay'), findsOneWidget);
   });
 }

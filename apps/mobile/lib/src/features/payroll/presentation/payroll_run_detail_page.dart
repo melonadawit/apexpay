@@ -11,7 +11,6 @@ class PayrollRunDetailPage extends StatefulWidget {
 }
 
 class _PayrollRunDetailPageState extends State<PayrollRunDetailPage> {
-  bool _showBreakdown = false;
 
   Future<bool> _auth() async {
     final auth = LocalAuthentication();
@@ -109,7 +108,7 @@ class _PayrollRunDetailPageState extends State<PayrollRunDetailPage> {
                   leading: const CircleAvatar(backgroundColor: AppColors.warning, child: Text('F', style: TextStyle(color: Colors.white))),
                   title: const Text('Finance • Pending approval'),
                   subtitle: const Text('Needs 2nd approver >100k • Total net 150k ETB'),
-                  trailing: Chip(label: Text('Pending'), backgroundColor: AppColors.warning.withOpacity(0.15)),
+                  trailing: Chip(label: Text('Pending'), backgroundColor: AppColors.warning.withValues(alpha: 0.15)),
                 ),
                 const Divider(),
                 const Text('Audit log O(1) advisory lock pg_advisory_xact_lock(hashtext(book_id)) • payroll_audit_logs actor finance action approve_run', style: TextStyle(fontSize: 10, color: Colors.grey)),

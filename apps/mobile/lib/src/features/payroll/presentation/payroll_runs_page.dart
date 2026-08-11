@@ -41,7 +41,7 @@ class PayrollRunsPage extends StatelessWidget {
           ...runs.map((r) => Card(
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: r["status"]=="completed" ? AppColors.success.withOpacity(0.15) : AppColors.warning.withOpacity(0.15),
+                backgroundColor: r["status"]=="completed" ? AppColors.success.withValues(alpha: 0.15) : AppColors.warning.withValues(alpha: 0.15),
                 child: Icon(r["status"]=="completed" ? Icons.check : Icons.pending_actions, color: r["status"]=="completed" ? AppColors.success : AppColors.warning),
               ),
               title: Text("${r["ref"]} • ${r["period"]}"),
@@ -62,7 +62,7 @@ class PayrollRunsPage extends StatelessWidget {
           OutlinedButton.icon(onPressed: () {}, icon: const Icon(Icons.picture_as_pdf), label: const Text('Pension CSV + ERCA CSV + Bank pain.001')),
           const SizedBox(height: 24),
           Card(
-            color: AppColors.primary.withOpacity(0.05),
+            color: AppColors.primary.withValues(alpha: 0.05),
             child: const Padding(
               padding: EdgeInsets.all(16),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
