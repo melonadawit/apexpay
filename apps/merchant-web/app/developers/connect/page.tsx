@@ -147,6 +147,32 @@ if ($verified['status'] === 'succeeded') { /* mark order paid */ }
 // 3. Webhook — verify the HMAC before trusting the event
 if (!ApexPay::verifyWebhookSignature($secret, $rawBody, $signature)) { reject(); }`
 
+  const pythonSnippet = `pip install requests
+from apexpay import ApexPay
+
+apexpay = ApexPay("sk_test_...", "https://api.apexpay.et")
+
+# 1. Initialize a payment
+payment = apexpay.initialize(
+    tx_ref="order-1001",
+    amount="2500.00",
+    currency="ETB",
+    method="telebirr",   # telebirr | cbe_birr | bank | card_acquirer | ethswitch
+    callback_url="https://store.example/api/apexpay-webhook",
+)
+# redirect the customer to payment["checkout_url"]
+
+# 2. (On return) verify server-side
+verified = apexpay.verify("order-1001")
+if verified["status"] == "succeeded":
+    # mark order paid
+    pass
+
+# 3. Webhook — verify the HMAC before trusting the event
+from apexpay import verify_webhook_signature
+if not verify_webhook_signature(secret, raw_body, signature):
+    reject()`
+
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="max-w-5xl mx-auto space-y-6">
@@ -219,6 +245,24 @@ if (!ApexPay::verifyWebhookSignature($secret, $rawBody, $signature)) { reject();
           </div>
           <div className="px-5 pb-5">
             <CopyBlock code={phpSnippet} label="PHP SDK" />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border bg-card overflow-hidden">
+          <div className="p-5 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center h-6 w-6 rounded-md bg-primary/10 text-primary">
+                <TerminalSquare className="h-4 w-4" />
+              </span>
+              <h3 className="font-semibold">Python SDK (official)</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              A payments-only Python client (Python 3.8+, <code className="font-mono">requests</code>). Scaffold in{" "}
+              <code className="font-mono">sdk/python</code>.
+            </p>
+          </div>
+          <div className="px-5 pb-5">
+            <CopyBlock code={pythonSnippet} label="Python SDK" />
           </div>
         </div>
 

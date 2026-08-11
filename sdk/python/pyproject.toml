@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apexpay"
+version = "0.1.0"
+description = "Official ApexPay Python SDK — payments-only client for e-commerce merchants (no payroll/HR)."
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ["requests>=2.25"]
+
+[tool.setuptools]
+packages = ["apexpay"]
