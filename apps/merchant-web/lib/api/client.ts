@@ -63,6 +63,32 @@ export type TaxBracket = {
   effective_from: string
 }
 
+export type DeveloperApiKey = {
+  id: string
+  name: string
+  key_type: string
+  key_prefix: string
+  environment: string
+  status: string
+  scopes: string[]
+  last_used_at?: string | null
+  created_at: string
+}
+
+export type WebhookEndpoint = {
+  id: string
+  url: string
+  status: string
+}
+
+export type WebhookDelivery = {
+  id: string
+  event_type: string
+  status: string
+  attempt_count: number
+  last_status_code: number
+}
+
 export type SubscriptionDetail = {
   subscription: {
     id: string
@@ -686,5 +712,17 @@ export const api = {
   portal: {
     createToken: (p: unknown) => post<unknown>("portal/token", p),
     me: () => get<unknown>("portal/me"),
+  },
+
+  // Developer portal
+  developer: {
+    apiKeys: () => get<DeveloperApiKey[]>("developer/api_keys"),
+    createApiKey: (p: { name: string; environment: string; scopes?: string }) =>
+      post<{ secret: string; message: string }>("developer/api_keys", p),
+    revokeApiKey: (id: string) => post<unknown>(`developer/api_keys/${id}/revoke`),
+    webhookEndpoints: () => get<WebhookEndpoint[]>("webhooks/endpoints"),
+    createWebhookEndpoint: (p: unknown) => post<WebhookEndpoint>("webhooks/endpoints", p),
+    webhookDeliveries: () => get<WebhookDelivery[]>("webhooks/deliveries"),
+    resendWebhook: (id: string) => post<unknown>(`webhooks/deliveries/${id}/resend`),
   },
 }

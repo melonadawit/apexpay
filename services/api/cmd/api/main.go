@@ -40,6 +40,7 @@ import (
 	"apexpay/internal/checkout"
 	"apexpay/internal/compliance"
 	"apexpay/internal/connector"
+	"apexpay/internal/developer"
 	"apexpay/internal/dispute"
 	"apexpay/internal/fayda"
 	"apexpay/internal/fixedasset"
@@ -522,6 +523,10 @@ func main() {
 
 			r.Route("/webhooks", func(r chi.Router) {
 				webhookHandler.Routes(r)
+			})
+
+			r.Route("/developer", func(r chi.Router) {
+				developer.NewHandler(pool).Routes(r)
 			})
 
 			r.Route("/compliance", func(r chi.Router) {

@@ -1,5 +1,6 @@
 "use client"
 import * as React from "react"
+import Link from "next/link"
 import { useLanguage } from "@/components/providers/language-provider"
 
 export default function DevelopersPage() {
@@ -8,7 +9,13 @@ export default function DevelopersPage() {
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold">{t("Developers","ገንቢዎች")}</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">{t("Developers","ገንቢዎች")}</h1>
+          <div className="flex gap-2">
+            <Link href="/developers/api-keys" className="rounded-xl border bg-card px-4 h-10 text-xs grid place-items-center font-medium">API Keys</Link>
+            <Link href="/developers/webhooks" className="rounded-xl border bg-card px-4 h-10 text-xs grid place-items-center font-medium">Webhooks</Link>
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 gap-6">
           <div className="rounded-2xl border bg-card p-6 space-y-4">

@@ -1,77 +1,131 @@
 "use client"
 import * as React from "react"
+import { Loader2, Plus, RotateCcw } from "lucide-react"
+import { api, DeveloperApiKey } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function ApiKeysPage() {
-  const [showSecret, setShowSecret] = React.useState(false)
-  const [keys, setKeys] = React.useState([
-    { id:"key_01H", name:"test key", prefix:"sk_test_51Hq", type:"secret", env:"test", status:"active", last_used:"2 min ago", scopes:["payments:read","payments:write"] },
-    { id:"key_02H", name:"live key", prefix:"sk_live_51Hq", type:"secret", env:"live", status:"pending_activation", last_used:"never", scopes:["*"] },
-  ])
+  const { t } = useLanguage()
+  const { data: keys, loading, error, refetch } = useData<DeveloperApiKey[]>(
+    () => api.developer.apiKeys(),
+    []
+  )
+  const [revealedSecret, setRevealedSecret] = React.useState("")
+  const [name, setName] = React.useState("")
+  const [env, setEnv] = React.useState("test")
+  const [creating, setCreating] = React.useState(false)
+  const [busy, setBusy] = React.useState("")
+
+  const createKey = async () => {
+    if (!name.trim()) return
+    setCreating(true)
+    try {
+      const res = await api.developer.createApiKey({ name: name.trim(), environment: env })
+      setRevealedSecret(res.secret)
+      setName("")
+      await refetch()
+    } catch (e) {
+      alert((e as Error).message || "Failed to create key")
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const revoke = async (id: string) => {
+    if (!confirm("Revoke this API key? It will stop working immediately.")) return
+    setBusy(id)
+    try {
+      await api.developer.revokeApiKey(id)
+      await refetch()
+    } catch (e) {
+      alert((e as Error).message || "Failed to revoke")
+    } finally {
+      setBusy("")
+    }
+  }
 
   return (
     <div className="min-h-screen bg-muted p-6">
       <div className="max-w-5xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold">API Keys • Test/Live Separate Scopes Reveal Once — Outstanding</h1>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">{t("API Keys", "የ API ቁልፎች")}</h1>
+            <p className="text-sm text-muted-foreground">Test/Live keys, scoped, hash-at-rest. Secrets shown once.</p>
+          </div>
+          <button onClick={() => refetch()} className="rounded-xl border bg-card px-3 h-9 text-xs flex items-center gap-1">
+            <RotateCcw className="h-3 w-3" /> Refresh
+          </button>
+        </div>
+
+        {revealedSecret && (
+          <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4">
+            <p className="text-sm font-semibold">New key created — copy it now, it will not be shown again.</p>
+            <code className="block mt-2 rounded-lg bg-background border p-3 font-mono text-sm break-all">{revealedSecret}</code>
+          </div>
+        )}
 
         <div className="rounded-2xl border bg-card p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Secret Keys • sk_test_ / sk_live_ — hash at rest per DATABASE</h3>
-            <button className="rounded-xl bg-primary text-foreground px-4 h-9 text-xs">Create New Key • test/live separate live only after KYC active</button>
-          </div>
-
-          <div className="space-y-3">
-            {keys.map(k=>(
-              <div key={k.id} className="rounded-xl border p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center font-mono text-xs">{k.prefix.slice(0,3)}</div>
-                  <div>
-                    <p className="font-medium text-sm">{k.name} • {k.prefix}•••••••• • {k.env} • {k.type}</p>
-                    <p className="text-xs text-muted-foreground">Scopes {k.scopes.join(", ")} • Last used {k.last_used} • Status {k.status} • Prefix unique index api_keys_prefix_uidx O(1) lookup • secret_hash index where not null • scopes jsonb • last_used_at async best effort non-blocking Go routine</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${k.status==="active" ? "bg-green-500/20 text-green-700" : "bg-amber-500/20"}`}>{k.status}</span>
-                  <button onClick={()=> setShowSecret(!showSecret)} className="rounded-lg border px-3 py-1 text-xs">{showSecret ? "Hide" : "Reveal"} • sk_live shown once</button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {showSecret && (
-            <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 font-mono text-sm">
-              sk_test_51Hq...abc123xyz — <span className="text-red-600">shown once per security best practice — copy now!</span> — Stored as hash sha256(salt+secret) or bcrypt/argon2 at rest, prefix visible later for audit who used which key.
+          <h3 className="font-semibold">Create a key</h3>
+          <div className="flex gap-3 flex-wrap items-end">
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-xs text-muted-foreground">Name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. mobile app"
+                className="w-full rounded-xl border h-10 px-3 text-sm mt-1" />
             </div>
-          )}
-
-          <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-3 text-xs">
-            <p className="font-semibold">Security Best Practice:</p>
-            <ul className="list-disc list-inside mt-1 space-y-0.5">
-              <li>Secret shown once — hash at rest per DATABASE + prefix unique index O(1) lookup • secret_hash index where not null • scopes jsonb • last_used_at async best effort non-blocking Go routine</li>
-              <li>Test/Live separation: test keys immediately after registration draft, live keys only after KYC active + dual approval if high risk + pilot 30-60 days analogy NBE</li>
-              <li>Prefix visible later for audit who used which key — audit_logs actor_type api_key actor_id key prefix</li>
-              <li>Scopes: payments:read, payments:write, refunds:write, payouts:write, etc — RBAC map O(1) role check owner/admin/developer/finance</li>
-            </ul>
+            <div>
+              <label className="text-xs text-muted-foreground">Environment</label>
+              <select value={env} onChange={(e) => setEnv(e.target.value)}
+                className="rounded-xl border h-10 px-3 text-sm mt-1">
+                <option value="test">Test</option>
+                <option value="live">Live</option>
+              </select>
+            </div>
+            <button onClick={createKey} disabled={creating || !name.trim()}
+              className="rounded-xl bg-primary text-foreground px-5 h-10 text-sm font-semibold disabled:opacity-50 flex items-center gap-1">
+              <Plus className="h-4 w-4" /> {creating ? "Creating…" : "Create Key"}
+            </button>
           </div>
         </div>
 
         <div className="rounded-2xl border bg-card p-6">
-          <h3 className="font-semibold">Public Keys • pk_test_ / pk_live_ + Embedded SDK checkout.js</h3>
-          <p className="font-mono text-xs mt-2">pk_test_51Hq... + checkout.js embedded SDK `https://checkout.apexpay.et/sdk.js` — no secret, safe for frontend, tokenization only, no PAN storage</p>
-          <div className="mt-3 rounded-xl bg-muted text-foreground p-4 font-mono text-[11px] overflow-auto">
-            {`<script src="https://checkout.apexpay.et/sdk.js"></script>
-<script>
-  const apexpay = new ApexPay('pk_test_51Hq...');
-  apexpay.checkout({
-    amount: '500',
-    currency: 'ETB',
-    tx_ref: 'txr_01H_' + Date.now(),
-    method: 'telebirr',
-    customer_email: 'cust@example.et',
-    return_url: 'https://example.et/return',
-    callback_url: 'https://example.et/callback'
-  });
-</script>`}
+          <h3 className="font-semibold mb-3">Your keys</h3>
+          {loading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {!loading && !error && (keys ?? []).length === 0 && (
+            <p className="text-sm text-muted-foreground">No API keys yet.</p>
+          )}
+          <div className="space-y-3">
+            {(keys ?? []).map((k) => (
+              <div key={k.id} className="rounded-xl border p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm">{k.name} <span className="font-mono text-xs text-muted-foreground">• {k.key_prefix}•••••••• • {k.environment} • {k.key_type}</span></p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Scopes: {k.scopes.join(", ") || "—"}{k.last_used_at ? ` • Last used ${new Date(k.last_used_at).toLocaleString()}` : ""}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${k.status === "active" ? "bg-green-500/20 text-green-700" : "bg-red-100 text-red-700"}`}>{k.status}</span>
+                  {k.status === "active" && (
+                    <button onClick={() => revoke(k.id)} disabled={busy === k.id}
+                      className="rounded-lg border px-3 py-1 text-xs text-red-600 disabled:opacity-50">
+                      {busy === k.id ? "…" : "Revoke"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
+        </div>
+
+        <div className="rounded-2xl border bg-card p-6">
+          <h3 className="font-semibold">Public Key & Embedded SDK</h3>
+          <p className="text-xs text-muted-foreground mt-1">Use the public key with checkout.js — safe for the frontend, no secret.</p>
+          <pre className="mt-3 rounded-xl bg-muted text-foreground p-4 font-mono text-[11px] overflow-auto">{`<script src="https://checkout.apexpay.et/sdk.js"></script>
+<script>
+  const apexpay = new ApexPay('pk_test_...');
+  apexpay.checkout({ amount: '500', currency: 'ETB', tx_ref: 'txr_' + Date.now(),
+    method: 'telebirr', customer_email: 'cust@example.et',
+    return_url: 'https://example.et/return', callback_url: 'https://example.et/callback' });
+</script>`}</pre>
         </div>
       </div>
     </div>
