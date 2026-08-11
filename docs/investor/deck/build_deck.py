@@ -282,50 +282,43 @@ def build():
     E += chart_page(doc, "User Flow — Payroll Run", img("flow_payroll.png"),
                     "Payroll run: create → attendance/OT → calculate → approve → disburse → ledger + compliance reports.", None)
 
-    # ================================================ 15-23. REAL SCREENSHOTS
-    # Each is a real screenshot of the running merchant-web app wired to the live
-    # seeded API (captured with a headless browser against the running stack).
-    E.append(Paragraph("App — Merchant Dashboard (live)", h1))
+    # ================================================ 15-20. REAL SCREENSHOTS
+    # Six real screenshots of the running merchant-web app, each captured from a page
+    # that renders data from the seeded live API (verified via DOM markers such as
+    # txr_refund_smoke, splan_smoke, PBATCH-SMOKE-001, ETB-CBE-7778889990, loan_smoke).
+    # Pages whose UI bakes in static demo content (dashboard, payroll) are deliberately
+    # excluded so every screenshot is genuinely live data.
+    E.append(Paragraph("App — Payments (live data)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Paragraph("Real screenshot of the running merchant dashboard — KPI cards, payment-volume trend, revenue by method.", body))
-    E.append(Image(shot("screenshot_dashboard.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
-
-    E.append(Paragraph("App — Payments & Transaction Detail (live)", h1))
-    E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Paragraph("Real screenshot of the running payments page showing transactions and status badges.", body))
+    E.append(Paragraph("Real screenshot of the running payments page showing transactions with amount, method, connector, 2FA, and status badges.", body))
     E.append(Image(shot("screenshot_payments.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    E.append(Paragraph("App — Payroll (live)", h1))
+    E.append(Paragraph("App — Subscriptions (live data)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Paragraph("Real screenshot of the running payroll dashboard — run summary, tax brackets, compliance controls.", body))
-    E.append(Image(shot("screenshot_payroll.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
-
-    E.append(Paragraph("App — Subscriptions (live)", h1))
-    E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Paragraph("Real screenshot of the running subscriptions page showing customer, plan, amount, and status.", body))
+    E.append(Paragraph("Real screenshot of the running subscriptions page showing customer, plan, amount, status, and period end from the seeded DB.", body))
     E.append(Image(shot("screenshot_subscriptions.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    E.append(Paragraph("App — Payouts (live)", h1))
+    E.append(Paragraph("App — Payouts (live data)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Paragraph("Real screenshot of the running payouts page showing a payout batch and status.", body))
+    E.append(Paragraph("Real screenshot of the running payouts page showing a seeded payout batch (PBATCH-SMOKE-001) and its status.", body))
     E.append(Image(shot("screenshot_payouts.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    E.append(Paragraph("App — Current Accounts / Banking (live)", h1))
+    E.append(Paragraph("App — Banking / Current Accounts (live data)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Paragraph("Real screenshot of the running banking page showing current accounts and balances.", body))
+    E.append(Paragraph("Real screenshot of the running banking page showing current accounts (ETB-CBE-7778889990) and balances from the seeded DB.", body))
     E.append(Image(shot("screenshot_banking.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    E.append(Paragraph("App — Lending (live)", h1))
+    E.append(Paragraph("App — Lending (live data)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Paragraph("Real screenshot of the running embedded-finance lending page.", body))
+    E.append(Paragraph("Real screenshot of the running embedded-finance lending page showing a seeded loan (loan_smoke).", body))
     E.append(Image(shot("screenshot_lending.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    E.append(Paragraph("App — Developer Portal (live)", h1))
+    E.append(Paragraph("App — Developer Portal (live data)", h1))
     E.append(HRFlowable(width="100%", thickness=1.2, color=GREEN, spaceAfter=8))
-    E.append(Paragraph("Real screenshot of the running developer portal — API keys with scopes and status.", body))
+    E.append(Paragraph("Real screenshot of the running developer portal showing API keys with scopes and status.", body))
     E.append(Image(shot("screenshot_developer.jpg"), width=175 * mm, height=110 * mm, hAlign="CENTER"))
 
-    # ================================================ 24. ARCHITECTURE
+    # ================================================ 21. ARCHITECTURE
     E += chart_page(doc, "System Architecture", img("architecture.png"),
                     "One Go API core, one PostgreSQL ledger, Redis cache, MinIO vault, and background workers — with thin client surfaces.", None)
 
