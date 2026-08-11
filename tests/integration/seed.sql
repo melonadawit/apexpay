@@ -281,3 +281,37 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO refunds (id, merchant_id, payment_id, refund_ref, amount, currency, status, reason, fee_reversal, connector_id, connector_ref)
 VALUES ('ref_smoke', 'mer_docker_smoke', 'pay_smoke_ref', 'RFD-SMOKE-001', 100.00, 'ETB', 'succeeded', 'customer requested partial refund', 0, 'mock', 'mock_ref_refund_smoke')
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- Embedded finance seed data: credit line, loan disbursement,
+-- escrow agreement + account, corporate card, virtual account.
+-- ============================================================
+
+-- Credit line (embedded working capital).
+INSERT INTO credit_lines (id, merchant_id, credit_limit, available_credit, utilized_credit, interest_rate, status, credit_score)
+VALUES ('cl_smoke', 'mer_docker_smoke', 2000000, 1500000, 500000, 18.00, 'active', 720)
+ON CONFLICT (id) DO NOTHING;
+
+-- Loan disbursement drawn against the credit line.
+INSERT INTO loan_disbursements (id, credit_line_id, merchant_id, amount, currency, purpose, status, due_date, repaid_amount, outstanding_amount, created_by)
+VALUES ('loan_smoke', 'cl_smoke', 'mer_docker_smoke', 500000, 'ETB', 'inventory', 'disbursed', current_date + interval '90 days', 0, 500000, 'user_docker_admin')
+ON CONFLICT (id) DO NOTHING;
+
+-- Escrow agreement + held account (marketplace sale).
+INSERT INTO escrow_agreements (id, merchant_id, agreement_number, title, buyer_merchant_id, seller_merchant_id, amount, currency, platform_fee_percent, withholding_tax_percent, status)
+VALUES ('escrow_ag_smoke', 'mer_docker_smoke', 'ESC-SMOKE-001', 'High-value marketplace sale', 'mer_docker_smoke', 'mer_docker_smoke', 100000, 'ETB', 10.00, 2.00, 'active')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO escrow_accounts (id, merchant_id, agreement_id, account_number, account_name, amount, currency, status, held_at, buyer_merchant_id, seller_merchant_id, order_id, order_amount, platform_fee, seller_amount, withholding_tax)
+VALUES ('escrow_smoke', 'mer_docker_smoke', 'escrow_ag_smoke', 'ESC-CBE-9990001', 'Escrow: High-value sale', 100000, 'ETB', 'held', now(), 'mer_docker_smoke', 'mer_docker_smoke', 'ord_escrow_01', 100000, 10000, 88000, 2000)
+ON CONFLICT (id) DO NOTHING;
+
+-- Corporate card tied to the seeded current account.
+INSERT INTO corporate_cards (id, merchant_id, current_account_id, card_number_masked, card_number_hash, card_type, card_network, cardholder_name, cardholder_email, status, credit_limit, available_credit, daily_limit, monthly_limit, cashback_percent, forex_markup_percent)
+VALUES ('card_smoke', 'mer_docker_smoke', 'ca_smoke', '****5678', 'hash_card_1', 'virtual', 'visa', 'Docker Smoke PLC', 'finance@example.et', 'active', 500000, 480000, 50000, 500000, 1.00, 2.50)
+ON CONFLICT (id) DO NOTHING;
+
+-- Virtual account for customer collections.
+INSERT INTO virtual_accounts (id, merchant_id, virtual_account_number, customer_id, purpose, status, bank_code)
+VALUES ('va_smoke', 'mer_docker_smoke', 'VA-CBE-1234567890', 'cust_smoke', 'customer collections', 'active', 'CBE')
+ON CONFLICT (id) DO NOTHING;
