@@ -2,6 +2,7 @@
 import * as React from "react"
 import { motion } from "framer-motion"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
 
 export default function CompliancePage() {
   const { t } = useLanguage()
@@ -10,24 +11,46 @@ export default function CompliancePage() {
   const [citations, setCitations] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(false)
 
-  const ask = () => {
-    setLoading(true)
-    setTimeout(()=> {
-      if (query.toLowerCase().includes("2fa") || query.includes("5000")) {
-        setAnswer("Transactions above 5000 ETB require two-factor authentication (PIN, OTP, or biometric) per NBE ONPS/10/2025 Directive §5.2 [1].")
-        setCitations([{ id:"rdoc_nbe_10_2025", title:"NBE ONPS/10/2025", page:3, score:0.92, content:"Transactions exceeding 5,000 Birr must now use two-factor authentication..." }])
-      } else if (query.toLowerCase().includes("refund")) {
-        setAnswer("Merchants must have refund, privacy, and terms pages per PayAtlas ET PSP requirements and NBE guidelines. Refund policy must be accessible via website [2].")
-        setCitations([{ id:"rdoc_refund_policy", title:"Refund Policy", page:1, score:0.88, content:"Refund policy doc required..." }])
-      } else if (query.includes("200")) {
-        setAnswer("All cash deposits or withdrawals exceeding ETB 200,000 must be reported to the Financial Intelligence Center (FIC) per NBE AML directive [3].")
-        setCitations([{ id:"rdoc_aml_200k", title:"FIC AML 200k", page:2, score:0.90, content:"ETB 200k reporting..." }])
-      } else {
-        setAnswer("Not in compliance corpus - no sufficiently relevant policy found")
-        setCitations([])
+  // Local fallback answers used when the compliance RAG service is unreachable.
+  const localAnswer = (q: string): { answer: string; citations: any[] } => {
+    const lower = q.toLowerCase()
+    if (lower.includes("2fa") || q.includes("5000")) {
+      return {
+        answer: "Transactions above 5000 ETB require two-factor authentication (PIN, OTP, or biometric) per NBE ONPS/10/2025 Directive §5.2.",
+        citations: [{ id: "rdoc_nbe_10_2025", title: "NBE ONPS/10/2025", page: 3, score: 0.92 }],
       }
+    }
+    if (lower.includes("refund")) {
+      return {
+        answer: "Merchants must have refund, privacy, and terms pages per NBE guidelines. Refund policy must be accessible via website.",
+        citations: [{ id: "rdoc_refund_policy", title: "Refund Policy", page: 1, score: 0.88 }],
+      }
+    }
+    if (q.includes("200")) {
+      return {
+        answer: "Cash deposits or withdrawals exceeding ETB 200,000 must be reported to the Financial Intelligence Center (FIC) per NBE AML directive.",
+        citations: [{ id: "rdoc_aml_200k", title: "FIC AML 200k", page: 2, score: 0.90 }],
+      }
+    }
+    return { answer: "Not in compliance corpus - no sufficiently relevant policy found", citations: [] }
+  }
+
+  const ask = async () => {
+    if (!query.trim()) return
+    setLoading(true)
+    try {
+      // Try the real compliance RAG API first.
+      const res = await api.compliance.ask(query)
+      setAnswer(res.answer || "No answer.")
+      setCitations(res.citations || [])
+    } catch {
+      // Fall back to local answers when the RAG service is unreachable.
+      const r = localAnswer(query)
+      setAnswer(r.answer)
+      setCitations(r.citations)
+    } finally {
       setLoading(false)
-    }, 800)
+    }
   }
 
   return (

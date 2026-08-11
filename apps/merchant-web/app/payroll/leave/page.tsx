@@ -1,6 +1,8 @@
 "use client"
 import * as React from "react"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -22,6 +24,32 @@ const mockRequests = [
 
 export default function LeaveManagementPage() {
   const { t } = useLanguage()
+  const { data: balances = mockBalances } = useData(() => api.payroll.leaveBalances() as Promise<any[]>, [])
+  const { data: requests = mockRequests } = useData(() => api.payroll.leaveRequests() as Promise<any[]>, [])
+
+  const balanceList = (balances ?? []).map((b: any) => ({
+    employee: b.employee || b.employee_name || b.employee_id || "—",
+    leave_type: b.leave_type || b.type || "annual",
+    year: b.year || new Date().getFullYear(),
+    entitled: b.entitled_days ? Number(b.entitled_days) : 0,
+    used: b.used_days ? Number(b.used_days) : 0,
+    remaining: b.remaining_days ? Number(b.remaining_days) : 0,
+    carry_forward: b.carry_forward_days ? Number(b.carry_forward_days) : 0,
+    status: b.status || "active",
+  }))
+  const requestList = (requests ?? []).map((r: any) => ({
+    id: r.id || "—",
+    employee: r.employee || r.employee_name || r.employee_id || "—",
+    leave_type: r.leave_type || r.type || "annual",
+    start_date: r.start_date || "—",
+    end_date: r.end_date || "—",
+    days_requested: r.days_requested ? Number(r.days_requested) : 0,
+    reason: r.reason || "—",
+    status: r.status || "pending",
+    approved_by: r.approved_by || "",
+    approved_at: r.approved_at ? String(r.approved_at).slice(0, 10) : "",
+    medical_file: r.medical_certificate_file_key || "",
+  }))
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-primary-50/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -34,7 +62,7 @@ export default function LeaveManagementPage() {
           <Card className="p-6">
             <h3 className="font-semibold">Leave Balances • Entitled / Used / Remaining • Per Employee Per Year Per Type • Outstanding</h3>
             <div className="mt-4 space-y-3">
-              {mockBalances.map((b, i) => (
+              {balanceList.map((b, i) => (
                 <div key={i} className="rounded-xl border p-3 hover:bg-muted/50">
                   <div className="flex justify-between"><p className="font-medium text-xs">{b.employee} • {b.leave_type} • {b.year}</p><Badge variant={b.leave_type==="annual" ? "success" : b.leave_type==="sick" ? "warning" : "default"}>{b.leave_type}</Badge></div>
                   <div className="mt-2 grid grid-cols-4 gap-2 text-[11px]"><span>Entitled {b.entitled}</span><span>Used {b.used}</span><span>Remaining {b.remaining}</span><span>Carry {b.carry_forward}</span></div>
@@ -50,7 +78,7 @@ export default function LeaveManagementPage() {
             <div className="flex justify-between items-center"><h3 className="font-semibold">Leave Requests • Start Date End Date Days Requested 0.5 Half Day • Status Pending/Approved/Rejected • Outstanding Pipeline Visual Stepper</h3><button className="rounded-xl bg-primary text-white h-9 px-4 text-xs">+ Request Leave • Annual Sick Maternity Paternity Marriage Mourning Unpaid Comp Off Study</button></div>
             <div className="mt-4 rounded-xl border overflow-hidden">
               <div className="grid grid-cols-7 gap-2 bg-muted p-3 text-[11px] font-semibold"><span>Employee</span><span>Type</span><span>Start → End</span><span>Days</span><span>Reason</span><span>Status</span><span>Action</span></div>
-              {mockRequests.map(r => (
+              {requestList.map(r => (
                 <div key={r.id} className="grid grid-cols-7 gap-2 p-3 border-t text-xs hover:bg-muted/50">
                   <span>{r.employee}</span>
                   <span><Badge variant={r.leave_type==="annual" ? "success" : r.leave_type==="maternity" ? "default" : "warning"}>{r.leave_type}</Badge></span>

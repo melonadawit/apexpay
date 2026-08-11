@@ -2,6 +2,8 @@
 import * as React from "react"
 import { DocumentViewerOCR } from "@/components/payroll/DocumentViewerOCR"
 import { useLanguage } from "@/components/providers/language-provider"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
 
 function Card({ children, className = "" }: any) { return <div className={`rounded-2xl border bg-card shadow-soft ${className}`}>{children}</div> }
 function Badge({ children, variant = "default" }: any) {
@@ -19,6 +21,27 @@ export default function ClaimsPage() {
   const { t } = useLanguage()
   const [dragOver, setDragOver] = React.useState(false)
   const [receiptPreview, setReceiptPreview] = React.useState<string | null>(null)
+  const { data: claims = mockClaims } = useData(() => api.payroll.claims() as Promise<any[]>, [])
+
+  const claimsList = (claims ?? []).map((c: any) => ({
+    id: c.id || "—",
+    employee: c.employee || c.employee_name || c.employee_id || "—",
+    type: c.claim_type || c.type || "expense",
+    amount: c.amount ? String(c.amount) : "0",
+    description: c.description || "—",
+    receipt: c.receipt_file_key || "—",
+    status: c.status || "pending",
+    is_taxable: !!c.is_taxable,
+    is_pensionable: !!c.is_pensionable,
+    created_at: c.created_at ? String(c.created_at).slice(0, 10) : "—",
+    receipt_hash: c.receipt_file_hash || "—",
+    manager: c.approved_by_manager || "—",
+    finance: c.approved_by_finance || "—",
+    manager_approved: c.manager_approved_at ? String(c.manager_approved_at).slice(0, 10) : "",
+    finance_approved: c.finance_approved_at ? String(c.finance_approved_at).slice(0, 10) : "",
+    finance_pending: !c.finance_approved_at,
+    paid_via_payroll: c.run_id || c.paid_via_payroll || "",
+  }))
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -52,7 +75,7 @@ export default function ClaimsPage() {
             <h3 className="font-semibold">Claims • Receipt MinIO &lt;5MB pdf/jpg/png • File Key Hash Integrity • Approval Manager→Finance • Receipt Preview Thumbs • Outstanding Pipeline Visual Stepper</h3>
             <div className="mt-4 rounded-xl border overflow-hidden">
               <div className="grid grid-cols-9 gap-2 bg-muted p-3 text-[11px] font-semibold"><span>Employee</span><span>Type</span><span>Amount</span><span>Description</span><span>Receipt • MinIO • Thumb Preview</span><span>Status</span><span>Approval Flow</span><span>Action</span><span></span></div>
-              {mockClaims.map(c => (
+              {claimsList.map(c => (
                 <div key={c.id} className="grid grid-cols-9 gap-2 p-3 border-t text-xs hover:bg-muted/50">
                   <span>{c.employee}</span>
                   <span><Badge variant={c.type==="travel" ? "default" : c.type==="medical" ? "warning" : "success"}>{c.type}</Badge><span className="block text-[10px]">Taxable {c.is_taxable ? "Yes" : "No"} Pensionable {c.is_pensionable ? "Yes" : "No"}</span></span>

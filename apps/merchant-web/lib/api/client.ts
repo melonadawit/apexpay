@@ -440,6 +440,7 @@ export const api = {
     status: () => get<ComplianceStatus>("compliance-console/status"),
     checks: () => get<ComplianceCheck[]>("compliance-console/checks"),
     addCheck: (p: unknown) => post<unknown>("compliance-console/checks", p),
+    ask: (query: string) => post<{ answer?: string; citations?: unknown[] }>("compliance/ask", { query }),
   },
 
   // Notification preferences
@@ -524,6 +525,7 @@ export const api = {
     disburse: (id: string) => post<unknown>(`payroll/payroll_runs/${id}/disburse`),
     runItems: (id: string) => get<unknown[]>(`payroll/payroll_runs/${id}/items`),
     leaveRequests: () => get<unknown[]>("payroll/leave_requests"),
+    leaveBalances: () => get<unknown[]>("payroll/leave_balances"),
     claims: () => get<unknown[]>("payroll/claims"),
     loans: () => get<unknown[]>("payroll/loans"),
     departments: () => get<unknown[]>("payroll/departments"),
