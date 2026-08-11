@@ -1,5 +1,5 @@
 -- 0015_current_accounts_escrow_corporate_cards: P0 Business Banking Core — Current Accounts Real Partner Bank (CBE/Awash/Dashen) + Cheque Book + Debit Card + Lite Interim Account + Multiple Accounts Balance Snapshot + Escrow Automated Marketplace + Corporate Cards Virtual + Physical + Payout Links QR Scan & Pay
--- Senior Engineer design: clean arch, decimal precise, ULID, optimal data structures, quality indexes per Ethiopia business practice + NBE ONPS/02/2020 09/2023 10/2025 + RazorpayX parity
+-- Senior Engineer design: clean arch, decimal precise, ULID, optimal data structures, quality indexes per Ethiopia business practice + NBE ONPS/02/2020 09/2023 10/2025 + industry parity
 
 -- Current Accounts Real — Issued by partner banks CBE/Awash/Dashen + cheque book + debit card + unlimited deposits/withdrawals + lite interim + multiple accounts
 create table current_accounts (
@@ -10,13 +10,13 @@ create table current_accounts (
   account_type        text not null check (account_type in ('current','saving','virtual','escrow','reserve')) default 'current',
   currency            char(3) not null default 'ETB',
   bank_code           text not null, -- CBE, AWASH, DASHEN, ABYSSINIA, etc.
-  partner_bank_name   text not null, -- Commercial Bank of Ethiopia, Awash Bank, Dashen Bank, etc. — Ethiopia equivalent of ICICI/Axis/RBL/YES in RazorpayX India
+  partner_bank_name   text not null, -- Commercial Bank of Ethiopia, Awash Bank, Dashen Bank, etc. — Ethiopia equivalent of ICICI/Axis/RBL/YES in India
   status              text not null check (status in ('draft','pending_kyc','pending_approval','active','suspended','closed','frozen')) default 'draft',
   balance             numeric(20,8) not null default 0,
   available_balance   numeric(20,8) not null default 0,
   overdraft_limit     numeric(20,8) not null default 0,
   is_primary          boolean not null default false, -- primary settlement account
-  is_lite             boolean not null default false, -- lite interim account until current account active per RazorpayX Lite concept
+  is_lite             boolean not null default false, -- lite interim account until current account active per lite account concept
   is_virtual          boolean not null default false, -- virtual account for collections smart collect
   cheque_book_issued  boolean not null default false,
   debit_card_issued   boolean not null default false,
@@ -34,7 +34,7 @@ create index current_accounts_merchant_primary_idx on current_accounts (merchant
 create index current_accounts_bank_code_idx on current_accounts (bank_code, status);
 create index current_accounts_balance_idx on current_accounts (balance) where status='active';
 
--- Current Account Opening Requests — Online <24h paperless per RazorpayX, with NBE approval flow
+-- Current Account Opening Requests — Online <24h paperless per ApexPay, with NBE approval flow
 create table current_account_opening_requests (
   id                  text primary key,
   merchant_id         text not null references merchants(id) on delete cascade,
@@ -160,13 +160,13 @@ create table corporate_cards (
   cardholder_name     text not null,
   cardholder_email    text,
   status              text not null check (status in ('ordered','active','blocked','expired','cancelled','suspended')) default 'ordered',
-  credit_limit        numeric(20,8) not null default 2000000, -- up to 2Cr ETB equivalent (20L-2Cr INR in RazorpayX India)
+  credit_limit        numeric(20,8) not null default 2000000, -- up to 2Cr ETB equivalent (20L-2Cr INR in India)
   available_credit    numeric(20,8) not null default 2000000,
   daily_limit         numeric(20,8) not null default 50000,
   monthly_limit       numeric(20,8) not null default 500000,
   category_restrictions jsonb not null default '[]'::jsonb, -- ["SaaS", "Cloud", "Marketing"] etc.
   spending_controls   jsonb not null default '{}'::jsonb, -- {daily_limit: 50000, monthly_limit: 500000, allowed_categories: ["SaaS", "Cloud"], blocked_merchants: []}
-  cashback_percent    numeric(5,2) not null default 1.00, -- flat 1% cashback per RazorpayX
+  cashback_percent    numeric(5,2) not null default 1.00, -- flat 1% cashback per ApexPay
   forex_markup_percent numeric(5,2) not null default 2.50, -- 2.5% forex markup
   interest_free_days  int not null default 45, -- up to 45-50 day interest-free period
   is_addon            boolean not null default false, -- addon card unlimited
@@ -381,7 +381,7 @@ create table virtual_account_transactions (
 create index virtual_account_transactions_virtual_account_idx on virtual_account_transactions (virtual_account_id, status, created_at desc);
 create index virtual_account_transactions_merchant_idx on virtual_account_transactions (merchant_id, status);
 
-comment on table current_accounts is 'Current Accounts Real Partner Bank (CBE/Awash/Dashen) + Cheque Book + Debit Card + Unlimited Deposits/Withdrawals + Lite Interim Account + Multiple Accounts Balance Snapshot per RazorpayX Current Account free online <24h paperless no min balance issued by partner banks RBL/ICICI/Axis/YES equivalent for Ethiopia CBE/Awash/Dashen';
+comment on table current_accounts is 'Current Accounts Real Partner Bank (CBE/Awash/Dashen) + Cheque Book + Debit Card + Unlimited Deposits/Withdrawals + Lite Interim Account + Multiple Accounts Balance Snapshot per Current Account <24h paperless no min balance issued by partner banks RBL/ICICI/Axis/YES equivalent for Ethiopia CBE/Awash/Dashen';
 comment on table cheque_books is 'Cheque Books Issuance Tracking per current account: start_cheque_number end_cheque_number total_cheques used_cheques status ordered/issued/active/used_up/blocked/cancelled issued_at issued_by';
 comment on table debit_cards is 'Debit Cards Virtual + Physical Issuance Tracking: card_number_masked ****1234 card_number_hash sha256 hash last4 card_type virtual/physical/both card_network visa/mastercard/verve/ethswitch status ordered/active/blocked/expired/cancelled daily_limit monthly_limit cardholder_name expiry_month year cvv_hash is_contactless';
 comment on table escrow_accounts is 'Escrow Accounts Automated Marketplace P2P Hold & Release Funds Under Defined Conditions reduces legal overhead: buyer_merchant_id seller_merchant_id order_id order_amount platform_fee 10% seller_amount 90% withholding_tax 2% ledger_book_id per agreement book_type escrow auto_release_after_days 7';
@@ -391,5 +391,5 @@ comment on table corporate_card_transactions is 'Corporate Card Transactions rea
 comment on table payout_links_enhanced is 'Payout Links Enhanced QR + Scan & Pay + SMS/Email/WhatsApp No Bank Details Needed Recipient Enters Account Details Bank Account or UPI ID Instant Payout QR Based Payouts View Attached Vendor Invoices: amount currency public_token unique QR preview share Telegram/WhatsApp purpose refund/cashback/reward/vendor payment status active/claimed/expired/cancelled recipient_name phone email expires_at claimed_at beneficiary_id once claimed escrow book until claimed ledger per agreement book_type escrow';
 comment on table vendor_invoices is 'Vendor Invoices OCR-enabled Invoice Capture Multi-layer Approval Workflows Automated TDS Calculation and Filing to NSDL Integrated Payouts: invoice_number invoice_date due_date amount currency tax_amount VAT 15% TOT 2%/10% withholding_tax_amount 2% for services per Ethiopia Income Tax Proclamation total_amount status draft/pending_approval/approved/paid/rejected/cancelled ocr_raw JSON extracted_text confidence vendor_name tin invoice_number amount tax withholding file_key MinIO file_key file_hash';
 comment on table tax_payments is 'Tax Payments Automated Pre-filled Forms Challans Inbox Accountant Collaboration VAT 15% TOT 2%/10% Withholding 2% PAYE Pension 7%/11%: tax_type vat/tot/withholding/paye/pension/corporate_tax/excise/other amount currency period_month year due_date status draft/pending_approval/pending/paid/failed/cancelled challan_file_key file_hash payment_reference paid_at created_by approved_by';
-comment on table bank_account_verifications is 'Bank Account Verification Penny Testing Fund Account Validation 1 ETB Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name per RazorpayX Penny Testing: bank_code account_number_masked hash account_name verification_method penny_test/micro_deposit/bank_letter/manual amount 1 ETB connector_id bank_ips telebirr status pending/processing/verified/failed/expired verification_response JSON beneficiary_name_returned match_score fuzzy Levenshtein <3 verified_at expires_at';
+comment on table bank_account_verifications is 'Bank Account Verification Penny Testing Fund Account Validation 1 ETB Deposit Single Rupee Returns Validated Bank Details + Beneficiary Name per Penny Testing: bank_code account_number_masked hash account_name verification_method penny_test/micro_deposit/bank_letter/manual amount 1 ETB connector_id bank_ips telebirr status pending/processing/verified/failed/expired verification_response JSON beneficiary_name_returned match_score fuzzy Levenshtein <3 verified_at expires_at';
 comment on table virtual_accounts is 'Collections Smart Collect Virtual Accounts Automatically Reconcile Incoming NEFT RTGS IMPS UPI Payments Using Virtual Accounts & UPI-IDs: virtual_account_number customer_id purpose status active/inactive/closed bank_code';

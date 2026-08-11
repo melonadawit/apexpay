@@ -22,7 +22,7 @@ export default function PayrollSettingsPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold">Payroll Settings • ቅንብሮች • Tax Brackets • OT Rates • Pension 7%/11% • Pay Calendar • Compliance • Beyond RazorpayX</h1>
+            <h1 className="text-3xl font-bold">Payroll Settings • ቅንብሮች • Tax Brackets • OT Rates • Pension 7%/11% • Pay Calendar • Compliance • Beyond ApexPay</h1>
             <p className="text-sm text-muted-foreground mt-2">Versioned effective_from/to, binary search O(log n) tax calculation, formula engine secure O(n) tokenization + shunting-yard, OT map O(1) 1.25/1.5/2.0/1.3 per ET Labour Law 1156/2019, pension 7% employee 11% employer Private Org Employees Social Security Agency, pay calendar cutoff disbursal lock after disbursal, compliance pension ERCA bank file • Outstanding modern UI glassmorphic</p>
           </div>
           <button className="rounded-xl bg-primary text-white h-10 px-6 text-xs">Save Settings • Versioned • Audit log</button>

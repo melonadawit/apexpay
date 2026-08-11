@@ -79,7 +79,7 @@ func TestOnboardingFaydaPaymentLedgerWebhookChain(t *testing.T) {
 		LegalName: "Apex Trading PLC Test", TradeName: "ApexPay Test",
 		BusinessType: onboarding.BusinessTypePLC, RegistrationNumber: "MT/AA/123456",
 		TINNumber: "0023456789", Industry: onboarding.IndustryEcommerce,
-		Description: "E-commerce test per PayAtlas + Chapa onboarding requires TIN + business license + address",
+		Description: "E-commerce test per PayAtlas + ApexPay onboarding requires TIN + business license + address",
 		Region:      "Addis Ababa", City: "Addis Ababa", SubCity: "Bole", Woreda: "03",
 		AddressFull: "Bole, Woreda 03, House 123", ContactPersonName: "Abebe Kebede", ContactPersonRole: "owner",
 		ContactEmail: "abebe@example.et", ContactPhone: "0911111111",

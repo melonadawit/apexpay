@@ -83,7 +83,7 @@ export default function PayrollPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
               Payroll OS • ደሞዝ
-              <Badge variant="success">RazorpayX-grade • Comprehensive</Badge>
+              <Badge variant="success">enterprise-grade • Comprehensive</Badge>
             </h1>
             <p className="text-sm text-muted-foreground mt-2">Workforce Money OS — CTC templates, LOP proration, OT 1.25/1.5/2.0/1.3, Loans EMI auto, Pension 7%/11%, ERCA CSV, Bank pain.001, Payslip QR, F&F settlement • 500 employees &lt;2s p99 • Ledger M4 per run book</p>
           </div>
@@ -245,7 +245,7 @@ function StructuresTab({ selected, onSelect }: any) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <Card className="p-6">
-        <h3 className="font-semibold">Salary Structures • CTC Templates • RazorpayX-grade</h3>
+        <h3 className="font-semibold">Salary Structures • CTC Templates • enterprise-grade</h3>
         <div className="mt-3 space-y-2">
           {mockStructures.map((s:any) => (
             <button key={s.id} onClick={()=>onSelect(s)} className={`w-full text-left rounded-xl border p-3 hover:bg-muted text-xs ${selected.id===s.id ? "bg-primary/10 border-primary/30" : ""}`}>

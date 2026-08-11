@@ -21,7 +21,7 @@ export function CompliancePreviewStep({ data }: { data: any }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold">Compliance Preview • ተገዢነት ቅድመ-እይታ</h2>
-        <p className="text-sm text-muted-foreground">Automated checks per NBE ONPS + PayAtlas + Chapa model, risk_score weighted sum optimal.</p>
+        <p className="text-sm text-muted-foreground">Automated checks per NBE ONPS + PayAtlas + ApexPay model, risk_score weighted sum optimal.</p>
       </div>
 
       <Card className="p-4 bg-gradient-to-br from-primary-50 to-white">

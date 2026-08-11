@@ -39,7 +39,7 @@ Outstanding UI: glassmorphic nav backdrop-blur-xl bg-white/70 border white/50 sh
 
 ## Developers • ገንቢዎች
 
-- API Keys Test/Live Separate Scopes Reveal Once + Public Keys pk_test_ + Embedded SDK checkout.js outstanding + Quickstart 6 lines copy-paste like Chapa + Webhook Endpoints HMAC + SSRF block + Retry exponential backoff + Bank List GET /v1/banks 14 ET banks + Methods Health GET /v1/methods?amount=1000 ranked score + OpenAPI Swagger Embedded Modern
+- API Keys Test/Live Separate Scopes Reveal Once + Public Keys pk_test_ + Embedded SDK checkout.js outstanding + Quickstart 6 lines copy-paste like ApexPay + Webhook Endpoints HMAC + SSRF block + Retry exponential backoff + Bank List GET /v1/banks 14 ET banks + Methods Health GET /v1/methods?amount=1000 ranked score + OpenAPI Swagger Embedded Modern
 
 ## Tracking Timeline • የጊዜ መስመር
 

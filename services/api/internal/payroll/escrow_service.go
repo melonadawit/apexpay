@@ -10,8 +10,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// EscrowService — Automated Escrow for Marketplaces P2P Hold & Release Funds Under Defined Conditions per RazorpayX Escrow+ 2024
-// Reduces legal and operational overhead of running escrow manually with bank per RazorpayX
+// EscrowService — Automated Escrow for Marketplaces P2P Hold & Release Funds Under Defined Conditions per Escrow+ 2024
+// Reduces legal and operational overhead of running escrow manually with bank per ApexPay
 // Marketplace seller settlement split: Order total 1000 ETB split: Platform fee 10% 100 ETB, Seller 90% 900 ETB, Withholding tax 2% 20 ETB, Hold in escrow until delivery confirmed, then release to seller minus fee and tax
 // Auto-release cron daily 02:00 Africa/Addis_Ababa EAT per spec recon daily 02:00 EAT
 
@@ -43,7 +43,7 @@ func (s *EscrowService) CreateAgreement(ctx context.Context, merchantID string, 
 	if agreement.Status == "" {
 		agreement.Status = "draft"
 	}
-	// Conditions default: delivery_confirmed 7 days, inspection_period 3 days per RazorpayX escrow
+	// Conditions default: delivery_confirmed 7 days, inspection_period 3 days per Escrow
 	if len(agreement.Conditions) == 0 {
 		agreement.Conditions = []EscrowCondition{
 			{Type: "delivery_confirmed", Days: 7},

@@ -29,7 +29,7 @@ export default function PayrollReportsPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold">Payroll Reports • ሪፖርቶች • Recharts Dashboard • Cost Center Allocation • Variance • YTD • Beyond RazorpayX</h1>
+            <h1 className="text-3xl font-bold">Payroll Reports • ሪፖርቶች • Recharts Dashboard • Cost Center Allocation • Variance • YTD • Beyond ApexPay</h1>
             <p className="text-sm text-muted-foreground mt-2">Payroll summary, Employee-wise salary, Deduction summaries, Reimbursement data, Compliance reports, Cost center allocation, Variance report vs last month, Payroll cost analysis, Headcount, Audit trails for finance investor reporting year-end tax • Outstanding modern UI glassmorphic Recharts AreaChart Pie</p>
           </div>
           <div className="flex gap-2">

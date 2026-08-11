@@ -26,7 +26,7 @@ export default function DevelopersPage() {
             </div>
 
             <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-3 text-xs">
-              <p className="font-semibold">Quickstart 6 lines copy-paste like Chapa "simple as copy and paste":</p>
+              <p className="font-semibold">Quickstart 6 lines copy-paste like ApexPay "simple as copy and paste":</p>
               <pre className="mt-2 bg-background text-foreground rounded-lg p-3 overflow-auto text-[11px]">{`npm install apexpay-js
 import ApexPay from 'apexpay-js'
 import { useLanguage } from "@/components/providers/language-provider"

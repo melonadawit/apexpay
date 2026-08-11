@@ -11,7 +11,7 @@ import (
 )
 
 // PayoutLinksService — QR + Scan & Pay + SMS/Email/WhatsApp + Recipient Enters Account Details + OTP Claim + Escrow Book
-// Per RazorpayX Payout Links: shareable payout links for refunds, cashbacks, rewards, vendor payments — no bank details needed
+// Per payout links: shareable payout links for refunds, cashbacks, rewards, vendor payments — no bank details needed
 // Create via dashboard/API, push link to payee via SMS/email/WhatsApp, recipient enters bank account + bank code + account name verification fuzzy Levenshtein <3 + OTP verification → claim via OTP → move escrow->clearing on claim
 
 type PayoutLinksService struct {
@@ -43,7 +43,7 @@ func (s *PayoutLinksService) CreatePayoutLink(ctx context.Context, req CreatePay
 		req.Currency = "ETB"
 	}
 	if req.ExpiresInHours == 0 {
-		req.ExpiresInHours = 168 // 7 days per RazorpayX payout links? For Ethiopia, 7 days
+		req.ExpiresInHours = 168 // 7 days per payout links? For Ethiopia, 7 days
 	}
 
 	publicToken := id.New("plink")[len("plink_"):] // ULID token for QR + public link

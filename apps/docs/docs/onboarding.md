@@ -1,8 +1,8 @@
 # Merchant Onboarding — NBE-Grade 6-Step Wizard Outstanding (Like Mercury + Linear + Stripe Atlas)
 
-Per NBE ONPS/02/2020 Payment System Operator Directive + ONPS/09/2023 + ONPS/10/2025 + PayAtlas ET PSP KYC + Chapa/ArifPay onboarding reference.
+Per NBE ONPS/02/2020 Payment System Operator Directive + ONPS/09/2023 + ONPS/10/2025 + PayAtlas ET PSP KYC + ApexPay/ApexPay onboarding reference.
 
-## Required Docs Checklist Per PayAtlas + Chapa/ArifPay + NBE
+## Required Docs Checklist Per PayAtlas + ApexPay/ApexPay + NBE
 
 | Document | Required For | Notes | NBE Ref |
 |---|---|---|---|
@@ -14,7 +14,7 @@ Per NBE ONPS/02/2020 Payment System Operator Directive + ONPS/09/2023 + ONPS/10/
 | Website URL & Policy Docs | Website Review | Must include refund, privacy, terms & conditions pages per PayAtlas ET PSP | PayAtlas + NBE ONPS/10/2025 refund policy requirement |
 | Local Business License | KYC | Required certain regulated industries education/health | PayAtlas |
 
-Chapa model: Businesses must first pass KYC checks, provide business info like TIN, business licences, address, contact info, receive approval before accepting payments. Simple integration 6 lines copy-paste. [GxCamp](https://gxcamp.com/blog-details/the-first-ethiopias-online-payment-gateway-service--chapa-payment--)
+ApexPay model: Businesses must first pass KYC checks, provide business info like TIN, business licences, address, contact info, receive approval before accepting payments. Simple integration 6 lines copy-paste. [GxCamp](https://gxcamp.com/blog-details/the-first-ethiopias-online-payment-gateway-service--ApexPay-payment--)
 
 ## 6-Step Wizard Outstanding UI/UX (Like Stripe Atlas + Mercury)
 
@@ -68,7 +68,7 @@ Dropzone outstanding:
 
 ### Step 5: Compliance Preview • ተገዢነት ቅድመ-እይታ
 
-Automated checks per NBE ONPS + PayAtlas + Chapa model, risk_score weighted sum optimal:
+Automated checks per NBE ONPS + PayAtlas + ApexPay model, risk_score weighted sum optimal:
 - tin_validation format 10 digits valid
 - business_license_validation not expired
 - bank_account_validation name match Levenshtein 1

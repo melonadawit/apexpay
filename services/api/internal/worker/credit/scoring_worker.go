@@ -8,8 +8,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// ScoringWorker — Instant Loans Digital Lending Collateral-free Credit Lines — RazorpayX Capital Line of Credit
-// Credit scoring based on TPV payroll data etc per RazorpayX Capital Line of Credit Company Registration Current Accounts Vendor Payments Payroll Partners
+// ScoringWorker — Instant Loans Digital Lending Collateral-free Credit Lines — Capital Line of Credit
+// Credit scoring based on TPV payroll data etc per commercial banking suite
 // Outstanding: O(n) where n = number of merchants with TPV data, optimal for hourly cron
 // Per spec: credit_score 300-900 based on TPV payroll data etc, credit_limit up to 2Cr ETB equivalent, available_credit, utilized_credit, interest_rate 18% per annum
 
@@ -96,7 +96,7 @@ func CalculateCreditLimit(metrics MerchantMetrics, creditScore int) decimal.Deci
 
 	limit := tpvComponent.Add(payrollComponent).Add(scoreComponent)
 
-	// Cap to 2Cr = 20,000,000 ETB (20L-2Cr INR in RazorpayX India)
+	// Cap to 2Cr = 20,000,000 ETB (20L-2Cr INR in India)
 	cap := decimal.NewFromInt(20000000)
 	if limit.GreaterThan(cap) {
 		limit = cap

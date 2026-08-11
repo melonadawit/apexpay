@@ -115,7 +115,7 @@ export function SalaryStructureBuilder({ structure, onSave, onPreview }: { struc
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border bg-card p-6">
-        <h3 className="font-semibold">Salary Structure Builder • CTC Template • RazorpayX-grade + Beyond • Formula Engine Secure O(n) Tokenization + Shunting-yard + Decimal Precise</h3>
+        <h3 className="font-semibold">Salary Structure Builder • CTC Template • enterprise-grade + Beyond • Formula Engine Secure O(n) Tokenization + Shunting-yard + Decimal Precise</h3>
         <div className="mt-4 grid grid-cols-3 gap-4 text-xs">
           <div><label className="text-muted-foreground">Structure Name</label><input value={structure.name} className="mt-1 w-full rounded-xl border h-9 px-3" readOnly /></div>
           <div><label className="text-muted-foreground">CTC Annual • አመታዊ</label><input type="number" value={ctcAnnual} onChange={e=>setCtcAnnual(parseFloat(e.target.value)||0)} className="mt-1 w-full rounded-xl border h-9 px-3" /></div>

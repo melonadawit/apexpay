@@ -28,7 +28,7 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Post("/branches", h.CreateBranch)
 	r.Get("/branches", h.ListBranches)
 
-	// Salary structures — CTC template RazorpayX-grade
+	// Salary structures — CTC template enterprise-grade
 	r.Post("/salary_structures", h.CreateSalaryStructure)
 	r.Get("/salary_structures", h.ListSalaryStructures)
 	r.Get("/salary_structures/{id}", h.GetSalaryStructure)
@@ -59,7 +59,7 @@ func (h *Handler) Routes(r chi.Router) {
 	r.Get("/payroll_runs/{id}/payslips/{employee_id}/pdf", h.GetPayslipPDF)
 	r.Get("/payroll_runs/{id}/payslips/bulk/zip", h.GetPayslipsZip)
 
-	// Compliance reports — outstanding beyond RazorpayX
+	// Compliance reports — outstanding Beyond ApexPay
 	r.Get("/payroll_reports/pension", h.GetPensionReport)
 	r.Get("/payroll_reports/erca_withholding", h.GetERCAReport)
 	r.Get("/payroll_reports/bank_disbursal", h.GetBankDisbursalReport)

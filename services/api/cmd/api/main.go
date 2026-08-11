@@ -503,7 +503,7 @@ func main() {
 				r.Post("/{id}/approve", payoutHandler.ApproveBatch)
 			})
 
-			// Payroll comprehensive — RazorpayX-grade full OS Week1-Week4
+			// Payroll comprehensive — enterprise-grade workforce
 			// New unified comprehensive payroll API under /v1/payroll (includes departments, structures, employees, runs, attendance, loans, compliance, F&F, portal)
 			r.Route("/payroll", func(r chi.Router) {
 				payrollHandler.Routes(r)

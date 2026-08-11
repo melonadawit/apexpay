@@ -93,7 +93,7 @@ func main() {
 		_, _ = pool.Exec(ctx, `INSERT INTO payroll_branches (id, merchant_id, name, region, city, is_head) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (merchant_id, name) DO NOTHING`, b.id, merchantID, b.name, b.region, b.city, b.isHead)
 	}
 
-	// 5. Salary Structures — RazorpayX-grade CTC templates
+	// 5. Salary Structures — modern CTC templates
 	structureID1 := newID("sstr")
 	structureID2 := newID("sstr")
 	_, err = pool.Exec(ctx, `INSERT INTO payroll_salary_structures (id, merchant_id, name, description, ctc_annual, ctc_monthly, currency, effective_from, status, is_default) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (merchant_id, name) DO NOTHING`,

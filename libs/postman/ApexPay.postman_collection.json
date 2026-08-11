@@ -15,7 +15,7 @@
             "header": [{"key": "Authorization", "value": "Bearer {{sk_test}}"}, {"key": "Content-Type", "value": "application/json"}],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"merchant_id\": \"mer_01H\",\n  \"legal_name\": \"Apex Trading PLC\",\n  \"business_type\": \"plc\",\n  \"registration_number\": \"MT/AA/123456\",\n  \"tin_number\": \"0023456789\",\n  \"industry_category\": \"e-commerce\",\n  \"business_description\": \"E-commerce test per PayAtlas + Chapa onboarding\",\n  \"region\": \"Addis Ababa\",\n  \"city\": \"Addis Ababa\",\n  \"office_address_full\": \"Bole, Woreda 03, House 123\",\n  \"contact_person_name\": \"Abebe Kebede\",\n  \"contact_person_role\": \"owner\",\n  \"contact_email\": \"abebe@example.et\",\n  \"contact_phone\": \"0911111111\",\n  \"expected_monthly_tpv\": \"500000\"\n}"
+              "raw": "{\n  \"merchant_id\": \"mer_01H\",\n  \"legal_name\": \"Apex Trading PLC\",\n  \"business_type\": \"plc\",\n  \"registration_number\": \"MT/AA/123456\",\n  \"tin_number\": \"0023456789\",\n  \"industry_category\": \"e-commerce\",\n  \"business_description\": \"E-commerce test per PayAtlas + ApexPay onboarding\",\n  \"region\": \"Addis Ababa\",\n  \"city\": \"Addis Ababa\",\n  \"office_address_full\": \"Bole, Woreda 03, House 123\",\n  \"contact_person_name\": \"Abebe Kebede\",\n  \"contact_person_role\": \"owner\",\n  \"contact_email\": \"abebe@example.et\",\n  \"contact_phone\": \"0911111111\",\n  \"expected_monthly_tpv\": \"500000\"\n}"
             },
             "url": {"raw": "{{base_url}}/onboarding/kyc", "host": ["{{base_url}}"], "path": ["onboarding","kyc"]}
           }

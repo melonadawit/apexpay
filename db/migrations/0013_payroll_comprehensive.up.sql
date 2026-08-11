@@ -1,4 +1,4 @@
--- 0013_payroll_comprehensive: RazorpayX-grade full payroll OS beyond basic
+-- 0013_payroll_comprehensive: enterprise-grade payroll
 -- Senior Engineer design: clean arch, decimal precise, ULID, optimal data structures, quality indexes
 -- Goal: Salary Structure Engine, Departments, Grades, Attendance LOP Proration, Variable Inputs, Loans, Compliance Reports, F&F, Self-Service Portal
 
@@ -53,7 +53,7 @@ create table payroll_branches (
   unique (merchant_id, name)
 );
 
--- Salary Structure Template — CTC-based like RazorpayX
+-- Salary Structure Template — CTC-based like ApexPay
 create table payroll_salary_structures (
   id             text primary key,
   merchant_id    text not null references merchants(id) on delete cascade,
@@ -345,7 +345,7 @@ create index payroll_audit_logs_run_idx on payroll_audit_logs (run_id, created_a
 -- Seed default departments, designations, grades for new merchants via function (called in seed script)
 -- Placeholder: Engineering, Sales, HR, Finance, Operations
 
-comment on table payroll_salary_structures is 'RazorpayX-grade CTC template: e.g., Fixed 500k Annual breakdown monthly earnings/deductions/employer contributions with formula engine.';
+comment on table payroll_salary_structures is 'modern CTC template: e.g., Fixed 500k Annual breakdown monthly earnings/deductions/employer contributions with formula engine.';
 comment on table payroll_structure_components is 'Component code BASIC HOUSING TRANSPORT FUEL SPECIAL_ALLOW MEDICAL OVERTIME COMMISSION BONUS etc calculation fixed/percentage/formula taxable proratable pensionable.';
 comment on table payroll_attendance_inputs is 'LOP proration: paid_days/total_days factor. OT hours weekday_weekend_holiday_night for ET labour law 1.25/1.5/2.0/1.3.';
 comment on table payroll_variable_inputs is 'Variable pay per run per employee: commission bonus penalty arrear thirteenth_month etc taxable/pensionable flag.';

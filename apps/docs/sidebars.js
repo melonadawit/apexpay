@@ -1,5 +1,5 @@
 /**
- * Sidebars for ApexPay Docs — Day 6 docs site like Chapa/ArifPay docs.chapa.co
+ * Sidebars for ApexPay Docs — Day 6 docs site like ApexPay/ApexPay docs.ApexPay.co
  * Outstanding modern: 6 lines copy-paste, merchant onboarding NBE + Fayda, bank list, error codes, SDKs
  */
 

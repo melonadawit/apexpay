@@ -14,7 +14,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// Repository interface — comprehensive for RazorpayX-grade payroll
+// Repository interface — comprehensive for enterprise payroll
 type Repository interface {
 	// Org structure
 	CreateDepartment(ctx context.Context, d *Department) error

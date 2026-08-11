@@ -8,9 +8,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// SyncWorker — Accounting Integrations Two-way Sync Tally Zoho QuickBooks CA Access Controls per RazorpayX
+// SyncWorker — Accounting Integrations Two-way Sync Tally Zoho QuickBooks CA Access Controls per ApexPay
 // Outstanding: O(n) where n = number of connected accounting integrations, optimal for hourly sync
-// Per spec: stress-free integrations with Tally, Zoho and QuickBooks to eliminate data entry & reconciliation, two-way sync between RazorpayX payments and accounting software, CA access controls, accounting payouts, create Razorpay readable payout files from accounting software, these files can be imported in dashboard and payouts can be generated, payout result files downloaded from dashboard can directly be uploaded to supported accounting software for reconciliation, generate financial reports in minutes and view real-time financial insights at a glance, real-time cash flow insights
+// Per spec: stress-free integrations with Tally, Zoho and QuickBooks to eliminate data entry & reconciliation, two-way sync between ApexPay payments and accounting software, CA access controls, accounting payouts, create ApexPay readable payout files from accounting software, these files can be imported in dashboard and payouts can be generated, payout result files downloaded from dashboard can directly be uploaded to supported accounting software for reconciliation, generate financial reports in minutes and view real-time financial insights at a glance, real-time cash flow insights
 
 type SyncWorker struct {
 	pool *pgxpool.Pool

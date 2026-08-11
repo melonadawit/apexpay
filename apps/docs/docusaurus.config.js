@@ -1,4 +1,4 @@
-// Docusaurus config — Day 6 docs site like Chapa/ArifPay docs.chapa.co + developer guides outstanding
+// Docusaurus config — Day 6 docs site like ApexPay/ApexPay docs.ApexPay.co + developer guides outstanding
 // Best practice: dark/light, search, i18n AM/EN, OpenAPI Swagger embedded
 
 /** @type {import('@docusaurus/types').Config} */
@@ -74,7 +74,7 @@ const config = {
             items: [
               { label: 'OpenAPI 21 Paths', to: '/docs/api-reference' },
               { label: 'Postman Collection', to: '/docs/postman' },
-              { label: 'Chapa vs ArifPay vs ApexPay', to: '/docs/comparison' },
+              { label: 'ApexPay vs ApexPay vs ApexPay', to: '/docs/comparison' },
             ],
           },
           {

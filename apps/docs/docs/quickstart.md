@@ -1,6 +1,6 @@
-# Quickstart — 6 Lines Copy-Paste Like Chapa "Simple as Copy and Paste"
+# Quickstart — 6 Lines Copy-Paste Like ApexPay "Simple as Copy and Paste"
 
-Chapa says: "By adding six lines of code — which Chapa refers to as 'simple as a copy and paste job' — to their website or app, users can accept payments." [GxCamp](https://gxcamp.com/blog-details/the-first-ethiopias-online-payment-gateway-service--chapa-payment--)
+ApexPay says: "By adding six lines of code — which ApexPay refers to as 'simple as a copy and paste job' — to their website or app, users can accept payments." [GxCamp](https://gxcamp.com/blog-details/the-first-ethiopias-online-payment-gateway-service--ApexPay-payment--)
 
 ApexPay is even more powerful — same DX but with Fayda ID, smart routing, payouts, payroll, RAG, Swarm.
 

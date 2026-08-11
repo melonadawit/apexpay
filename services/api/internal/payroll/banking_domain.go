@@ -6,9 +6,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// Note: This file reuses payroll package for business banking P0 features per RazorpayX parity
+// Note: This file reuses payroll package for business banking P0 features per industry parity
 // Ideally would be in separate banking package, but for rapid P0 implementation we extend payroll package
-// as payroll is part of workforce money OS and current accounts are heart of business finances per RazorpayX App Store description
+// as payroll is part of workforce money OS and current accounts are heart of business finances per product description
 
 // ==================== Current Accounts Real — Partner Bank CBE/Awash/Dashen ====================
 
@@ -20,13 +20,13 @@ type CurrentAccount struct {
 	AccountType      string // current, saving, virtual, escrow, reserve
 	Currency         string
 	BankCode         string // CBE, AWASH, DASHEN, ABYSSINIA, etc.
-	PartnerBankName  string // Commercial Bank of Ethiopia, Awash Bank, Dashen Bank — Ethiopia equivalent of ICICI/Axis/RBL/YES in RazorpayX India
+	PartnerBankName  string // Commercial Bank of Ethiopia, Awash Bank, Dashen Bank — Ethiopia equivalent of ICICI/Axis/RBL/YES in India
 	Status           string // draft, pending_kyc, pending_approval, active, suspended, closed, frozen
 	Balance          decimal.Decimal
 	AvailableBalance decimal.Decimal
 	OverdraftLimit   decimal.Decimal
 	IsPrimary        bool
-	IsLite           bool // lite interim account until current account active per RazorpayX Lite concept
+	IsLite           bool // lite interim account until current account active per lite account concept
 	IsVirtual        bool // virtual account for collections smart collect
 	ChequeBookIssued bool
 	DebitCardIssued  bool
@@ -158,13 +158,13 @@ type CorporateCard struct {
 	CardholderName       string
 	CardholderEmail      string
 	Status               string          // ordered, active, blocked, expired, cancelled, suspended
-	CreditLimit          decimal.Decimal // up to 2Cr ETB equivalent (20L-2Cr INR in RazorpayX India)
+	CreditLimit          decimal.Decimal // up to 2Cr ETB equivalent (20L-2Cr INR in India)
 	AvailableCredit      decimal.Decimal
 	DailyLimit           decimal.Decimal
 	MonthlyLimit         decimal.Decimal
 	CategoryRestrictions []string               // ["SaaS", "Cloud", "Marketing"] etc.
 	SpendingControls     map[string]interface{} // {daily_limit: 50000, monthly_limit: 500000, allowed_categories: ["SaaS", "Cloud"], blocked_merchants: []}
-	CashbackPercent      decimal.Decimal        // flat 1% cashback per RazorpayX
+	CashbackPercent      decimal.Decimal        // flat 1% cashback per ApexPay
 	ForexMarkupPercent   decimal.Decimal        // 2.5% forex markup
 	InterestFreeDays     int                    // up to 45-50 day interest-free period
 	IsAddon              bool

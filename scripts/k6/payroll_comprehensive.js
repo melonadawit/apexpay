@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { check, sleep, group } from 'k6';
 import { Trend, Counter, Rate } from 'k6/metrics';
 
-// Payroll comprehensive — RazorpayX-grade — NFR: 500 employees calc <2s p99, payslip PDF ZIP <5s, compliance CSV <1s, bank pain.001 <2s
+// Payroll comprehensive — enterprise-grade — NFR: 500 employees calc <2s p99, payslip PDF ZIP <5s, compliance CSV <1s, bank pain.001 <2s
 
 const payrollCalcTrend = new Trend('payroll_calc_duration');
 const payrollBulkImportTrend = new Trend('payroll_bulk_import_duration');

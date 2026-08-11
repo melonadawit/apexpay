@@ -1,7 +1,7 @@
--- 0016_forex_accounting_credit_notifications: P0 remaining to surpass RazorpayX — Forex FDI Transfers, Accounting Integrations Two-way Sync Tally Zoho QuickBooks, Instant Loans Digital Lending Collateral-free Credit Lines, Notifications Bulk Payouts Approval Refresh Button, Dedicated RM Priority Support
+-- 0016_forex_accounting_credit_notifications: P0 remaining to surpass ApexPay — Forex FDI Transfers, Accounting Integrations Two-way Sync Tally Zoho QuickBooks, Instant Loans Digital Lending Collateral-free Credit Lines, Notifications Bulk Payouts Approval Refresh Button, Dedicated RM Priority Support
 -- Ethiopia law compliance: Forex highly regulated by NBE, Accounting integrations for ERCA compliance, Credit scoring based on TPV payroll data
 
--- Forex Requests + Rates + Transactions — 2.5% Forex Markup Flat 1% Cashback per RazorpayX Corporate Cards
+-- Forex Requests + Rates + Transactions — 2.5% Forex Markup Flat 1% Cashback per Corporate Cards
 create table forex_rates (
   id                  text primary key,
   from_currency       char(3) not null, -- ETB
@@ -25,7 +25,7 @@ create table forex_requests (
   to_amount           numeric(20,8) not null check (to_amount >0),
   forex_rate_id       text references forex_rates(id),
   rate_used           numeric(20,8) not null,
-  forex_fee_percent   numeric(5,2) not null default 2.50, -- 2.5% forex markup per RazorpayX Corporate Cards
+  forex_fee_percent   numeric(5,2) not null default 2.50, -- 2.5% forex markup per Corporate Cards
   forex_fee_amount    numeric(20,8) not null default 0,
   purpose             text not null, -- import_payment, service_payment, fdi, etc. per NBE
   purpose_description text,
@@ -62,7 +62,7 @@ create index forex_transactions_merchant_idx on forex_transactions (merchant_id,
 create table accounting_integrations (
   id                  text primary key,
   merchant_id         text not null references merchants(id) on delete cascade,
-  provider            text not null check (provider in ('tally','zoho','quickbooks','xero','sage','other')), -- tally, zoho, quickbooks per RazorpayX
+  provider            text not null check (provider in ('tally','zoho','quickbooks','xero','sage','other')), -- tally, zoho, quickbooks per ApexPay
   status              text not null check (status in ('connected','disconnected','error','pending')) default 'pending',
   credentials_encrypted text, -- encrypted via AES-GCM CONNECTOR_ENCRYPTION_KEY
   last_sync_at        timestamptz,
@@ -90,11 +90,11 @@ create table accounting_sync_logs (
 create index accounting_sync_logs_integration_idx on accounting_sync_logs (integration_id, created_at desc);
 create index accounting_sync_logs_merchant_idx on accounting_sync_logs (merchant_id, sync_type, created_at desc);
 
--- Instant Loans Digital Lending Collateral-free Credit Lines — RazorpayX Capital Line of Credit
+-- Instant Loans Digital Lending Collateral-free Credit Lines — Capital Line of Credit
 create table credit_lines (
   id                  text primary key,
   merchant_id         text not null references merchants(id) on delete cascade,
-  credit_limit        numeric(20,8) not null check (credit_limit >0), -- e.g., up to 2Cr ETB equivalent (20L-2Cr INR in RazorpayX India)
+  credit_limit        numeric(20,8) not null check (credit_limit >0), -- e.g., up to 2Cr ETB equivalent (20L-2Cr INR in India)
   available_credit    numeric(20,8) not null,
   utilized_credit     numeric(20,8) not null default 0,
   interest_rate       numeric(5,2) not null default 18.00, -- 18% per annum? Configurable
@@ -131,7 +131,7 @@ create table notifications (
   id                  text primary key,
   merchant_id         text not null references merchants(id) on delete cascade,
   user_id             text references users(id) on delete cascade, -- null for all users in merchant
-  type                text not null check (type in ('bulk_payouts_approval','pending_payout','payout_failed','payroll_run_pending_approval','payroll_run_completed','tax_payment_due','compliance_alert','bank_file_generated','pension_csv_generated','erca_csv_generated','loan_emi_due','leave_request_pending','claim_pending','escrow_held','escrow_released','current_account_opened','corporate_card_transaction','forex_rate_alert','accounting_sync_failed','other')), -- bulk_payouts_approval per RazorpayX
+  type                text not null check (type in ('bulk_payouts_approval','pending_payout','payout_failed','payroll_run_pending_approval','payroll_run_completed','tax_payment_due','compliance_alert','bank_file_generated','pension_csv_generated','erca_csv_generated','loan_emi_due','leave_request_pending','claim_pending','escrow_held','escrow_released','current_account_opened','corporate_card_transaction','forex_rate_alert','accounting_sync_failed','other')), -- bulk_payouts_approval per ApexPay
   title               text not null,
   message             text not null,
   data                jsonb not null default '{}'::jsonb, -- {payout_batch_id, payroll_run_id, amount, etc.}
@@ -174,7 +174,7 @@ create index support_tickets_merchant_idx on support_tickets (merchant_id, statu
 create index support_tickets_assigned_idx on support_tickets (assigned_to, status);
 
 comment on table forex_rates is 'Forex Rates cached 60s via Redis per Ethiopia business practice highly regulated by NBE per Ethiopia law: from_currency ETB to_currency USD EUR GBP etc rate buy_rate sell_rate source nbe commercial_bank black_market? For compliance use NBE official rate last_updated_at';
-comment on table forex_requests is 'Forex Requests + Rates + Transactions — 2.5% Forex Markup Flat 1% Cashback per RazorpayX Corporate Cards: from_currency ETB to_currency USD EUR GBP etc from_amount to_amount forex_rate_id rate_used forex_fee_percent 2.50 forex_fee_amount purpose import_payment service_payment fdi etc per NBE purpose_description status draft/pending_nbe_approval/pending_bank_approval/approved/rejected/processing/completed/failed/cancelled nbe_approval_required true Forex highly regulated by NBE per Ethiopia law nbe_approval_status pending/approved/rejected nbe_reference bank_reference created_by approved_by';
-comment on table accounting_integrations is 'Accounting Integrations Two-way Sync Tally Zoho QuickBooks CA Access Controls per RazorpayX: provider tally/zoho/quickbooks/xero/sage/other status connected/disconnected/error/pending credentials_encrypted via AES-GCM CONNECTOR_ENCRYPTION_KEY last_sync_at last_sync_status success/failed/partial last_sync_error created_by';
-comment on table credit_lines is 'Instant Loans Digital Lending Collateral-free Credit Lines — RazorpayX Capital Line of Credit: credit_limit up to 2Cr ETB equivalent 20L-2Cr INR in RazorpayX India available_credit utilized_credit interest_rate 18% per annum configurable status draft/pending_approval/approved/active/suspended/closed/rejected credit_score 300-900 credit scoring based on TPV payroll data etc approved_by approved_at';
-comment on table notifications is 'Notifications Bulk Payouts Approval Refresh Button Latest Balance Instantly + Pending Payouts Notification per RazorpayX: type bulk_payouts_approval pending_payout payout_failed payroll_run_pending_approval payroll_run_completed tax_payment_due compliance_alert bank_file_generated pension_csv_generated erca_csv_generated loan_emi_due leave_request_pending claim_pending escrow_held escrow_released current_account_opened corporate_card_transaction forex_rate_alert accounting_sync_failed other title message data jsonb payout_batch_id payroll_run_id amount etc is_read read_at action_url /payout_batches/{id} or /payroll/{id}';
+comment on table forex_requests is 'Forex Requests + Rates + Transactions — 2.5% Forex Markup Flat 1% Cashback per Corporate Cards: from_currency ETB to_currency USD EUR GBP etc from_amount to_amount forex_rate_id rate_used forex_fee_percent 2.50 forex_fee_amount purpose import_payment service_payment fdi etc per NBE purpose_description status draft/pending_nbe_approval/pending_bank_approval/approved/rejected/processing/completed/failed/cancelled nbe_approval_required true Forex highly regulated by NBE per Ethiopia law nbe_approval_status pending/approved/rejected nbe_reference bank_reference created_by approved_by';
+comment on table accounting_integrations is 'Accounting Integrations Two-way Sync Tally Zoho QuickBooks CA Access Controls per ApexPay: provider tally/zoho/quickbooks/xero/sage/other status connected/disconnected/error/pending credentials_encrypted via AES-GCM CONNECTOR_ENCRYPTION_KEY last_sync_at last_sync_status success/failed/partial last_sync_error created_by';
+comment on table credit_lines is 'Instant Loans Digital Lending Collateral-free Credit Lines — Capital Line of Credit: credit_limit up to 2Cr ETB equivalent 20L-2Cr INR in available for Ethiopia_credit utilized_credit interest_rate 18% per annum configurable status draft/pending_approval/approved/active/suspended/closed/rejected credit_score 300-900 credit scoring based on TPV payroll data etc approved_by approved_at';
+comment on table notifications is 'Notifications Bulk Payouts Approval Refresh Button Latest Balance Instantly + Pending Payouts Notification per ApexPay: type bulk_payouts_approval pending_payout payout_failed payroll_run_pending_approval payroll_run_completed tax_payment_due compliance_alert bank_file_generated pension_csv_generated erca_csv_generated loan_emi_due leave_request_pending claim_pending escrow_held escrow_released current_account_opened corporate_card_transaction forex_rate_alert accounting_sync_failed other title message data jsonb payout_batch_id payroll_run_id amount etc is_read read_at action_url /payout_batches/{id} or /payroll/{id}';

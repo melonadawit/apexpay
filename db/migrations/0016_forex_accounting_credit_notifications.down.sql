@@ -1,4 +1,4 @@
--- Down migration 0016 P0 remaining to surpass RazorpayX — Forex, Accounting Integrations, Credit Lines, Notifications, RM, Support Tickets
+-- Down migration 0016 P0 remaining to surpass ApexPay — Forex, Accounting Integrations, Credit Lines, Notifications, RM, Support Tickets
 drop table if exists support_tickets;
 drop table if exists relationship_managers;
 drop table if exists notifications;

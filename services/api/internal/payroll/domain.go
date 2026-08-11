@@ -67,7 +67,7 @@ var OTRates = map[OTType]decimal.Decimal{
 	OTNight:   decimal.NewFromFloat(1.3),
 }
 
-// Component types for salary structure — RazorpayX-grade
+// Component types for salary structure — enterprise-grade
 type ComponentType string
 
 const (

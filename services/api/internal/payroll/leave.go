@@ -120,7 +120,7 @@ type LeaveRepository interface {
 	UpdateLeaveRequestStatus(ctx context.Context, requestID string, status LeaveStatus, approvedBy *string, rejectionReason string) error
 }
 
-// Leave Service — comprehensive beyond RazorpayX: annual 14+1 up to 35, sick 6 months (30 days 100% 60 days 50% 90 days unpaid), maternity 120 days (30+90), paternity 3 days, etc.
+// Leave Service — comprehensive ApexPay-native: annual 14+1 up to 35, sick 6 months (30 days 100% 60 days 50% 90 days unpaid), maternity 120 days (30+90), paternity 3 days, etc.
 
 type LeaveService struct {
 	repo LeaveRepository

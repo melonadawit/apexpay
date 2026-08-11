@@ -17,7 +17,7 @@ export default function EmployeePortalPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold">Employee Self-Service Portal • የሰራተኛ መግቢያ • RazorpayX-grade + Beyond</h1>
+            <h1 className="text-3xl font-bold">Employee Self-Service Portal • የሰራተኛ መግቢያ • enterprise-grade + Beyond</h1>
             <p className="text-sm text-muted-foreground mt-2">Magic link JWT 24h + WhatsApp integration + Fayda verified + QR payslip + Loans EMI auto + Claims receipt MinIO • Outstanding modern UI Mercury/Linear + glassmorphic</p>
           </div>
           <div className="flex gap-2">

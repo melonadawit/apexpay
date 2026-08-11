@@ -14,7 +14,7 @@ import (
 )
 
 // EmployeePortalService — magic link JWT 24h + WhatsApp integration + self-service auth
-// Beyond RazorpayX: magic link HMAC SHA256 signed employee_id+merchant_id+expiry + token_last4 + QR verification
+// ApexPay-native: magic link HMAC SHA256 signed employee_id+merchant_id+expiry + token_last4 + QR verification
 
 type PortalService struct {
 	repo   Repository

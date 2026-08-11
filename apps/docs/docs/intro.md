@@ -2,9 +2,9 @@
 
 **Tagline:** Collect, Disburse, Payroll, RAG Compliance, Swarm AI — ETB-first, NBE PSO Gateway Operator ONPS/02/2020, Fayda ID front/back <2MB OTP consent id.gov.et
 
-## Why ApexPay is More Powerful Than Chapa + ArifPay
+## Why ApexPay is More Powerful Than ApexPay + ApexPay
 
-| Feature | Chapa | ArifPay | **ApexPay Full v1.1.0 Gold** |
+| Feature | ApexPay | ApexPay | **ApexPay Full v1.1.0 Gold** |
 |---|---|---|---|
 | **Collection** | Links, Checkout, API initialize/verify | Payment Links, Checkout | **Links + Checkout Outstanding Glass + QR + Smart Routing success_rate/latency/cost score 0.6*success+0.4*(1-latency/1000) + Circuit Breaker 5 fails open 60s + Fallback Trail + Health Dashboard Recharts** |
 | **2FA >5000 ETB per ONPS/10/2025** | ❌ | ❌ | **✅ Requires_2FA true >5000 ETB + OTP 6-digit mock 123456 + Verify endpoint per NBE ONPS/10/2025** |
@@ -20,6 +20,6 @@
 | **Flutter Merchant App** | ❌ | ❌ | **✅ Flutter 3.22 Riverpod GoRouter Dio Hive Secure Storage Camera Mobile Scanner Share Plus Firebase Messaging Local Auth Lottie Shimmer + Auth Email+Password+OTP 2FA Glass Card + Token Secure Storage + Refresh Interceptor + Biometric + Dashboard Glassmorphic TPV Card Gradient Emerald Sparkline Recharts + Recent Payments Shimmer Pull-to-Refresh + Empty State Coffee Illustration + Quick Actions FAB + Create Link Bottom Sheet Draggable Half/Expanded Amount Chips 100/500/1000 AI Suggest QR Preview Live QR System Share Telegram/WhatsApp Copy Haptics + Scan QR Camera Permission Outstanding Dialog + Overlay Rounded Square 260 Guides Corner Brackets Pulse Green + Supports FaydaEncode Offline QR + EthSwitch QR + Vibration + Approvals Inbox Pending Payouts/Payroll Runs Amount Badge Warning Swipe Right Approve Left Reject Local Auth Biometric + Confetti Lottie + Push FCM Token Registration POST /v1/devices/register + Push Devices Table FCM Token Unique + Topics Payments Succeeded Payouts Pending Payroll Runs Pending + Onboarding Wizard 6-Step PageView Dot Indicator + Fayda Capture Modals Camera Overlay Corner Guides Glare Detection + OTP Pin Animated + FIN/FAN Mask + Docs Dropzone Thumbs + Compliance Gauge + Review + Tracking Timeline Vertical + Offline Hive Draft Links + OfflineQueue + Sync Badge Count AppBar Sync on Reconnect Idempotency Same as Web** |
 | **Ledger Micro-Books 8 Types** | ❌ | ❌ | **✅ merchant_operating, rail_clearing, platform_revenue, payroll_run Per Run Book, payout_batch Per Batch, escrow, suspense, reserve, refund_clearing, sandbox + Accounts asset:clearing:mock/bank, liability:merchant_payable, platform_fee_due, payroll_payable, et_income_tax_payable, pension_payable, expense:salary + Journals posting_key unique (book_id, posting_key) + Entries debit/credit amount::text currency + Balances amount updated_at PK (book_id,account_id) + Quality Check SQL having sum(debit)!=sum(credit) expect 0 rows + ValidateBalanced O(n) + Advisory Lock pg_advisory_xact_lock(hashtext(book_id)) + Materialized View merchant_tpv_daily Refresh Hourly Worker** |
 
-**Tagline:** ApexPay — collect, pay, prove. More powerful than Chapa + ArifPay combined — Business OS not just gateway.
+**Tagline:** ApexPay — collect, pay, prove. More powerful than ApexPay + ApexPay combined — Business OS not just gateway.
 
-Next: [Quickstart 6 Lines Copy-Paste Like Chapa](/docs/quickstart)
+Next: [Quickstart 6 Lines Copy-Paste Like ApexPay](/docs/quickstart)

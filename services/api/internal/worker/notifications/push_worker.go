@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// PushWorker — Notifications Bulk Payouts Approval Refresh Button Latest Balance Instantly + Pending Payouts Notification per RazorpayX
+// PushWorker — Notifications Bulk Payouts Approval Refresh Button Latest Balance Instantly + Pending Payouts Notification per ApexPay
 // Type bulk_payouts_approval pending_payout payout_failed payroll_run_pending_approval payroll_run_completed tax_payment_due compliance_alert bank_file_generated pension_csv_generated erca_csv_generated loan_emi_due leave_request_pending claim_pending escrow_held escrow_released current_account_opened corporate_card_transaction forex_rate_alert accounting_sync_failed other
 // Outstanding: O(n) where n = number of unread notifications, optimal for 5s polling + FCM push + in-app inbox + refresh button SWR revalidate
 
@@ -31,7 +31,7 @@ type Notification struct {
 	ActionURL  string
 }
 
-// CreateBulkPayoutsApprovalNotification — bulk payouts approval required 50,000 payouts at once with just one OTP per RazorpayX
+// CreateBulkPayoutsApprovalNotification — bulk payouts approval required 50,000 payouts at once with just one OTP per ApexPay
 // Maker-checker dual approval >50k payout >100k payroll approval count approver != submitter
 func (w *PushWorker) CreateBulkPayoutsApprovalNotification(ctx context.Context, merchantID, payoutBatchID string, amount int, count int) error {
 	title := fmt.Sprintf("Bulk Payouts Approval Required • 50,000 payouts at once with just one OTP • Batch %s", payoutBatchID)
@@ -86,7 +86,7 @@ func (w *PushWorker) MarkAllAsRead(ctx context.Context, merchantID, userID strin
 	return err
 }
 
-// RunTicker — polls for pending notifications and sends FCM push every 5s per RazorpayX refresh button latest balance instantly using refresh button SWR revalidate
+// RunTicker — polls for pending notifications and sends FCM push every 5s per one-click balance refresh
 func (w *PushWorker) RunTicker(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
