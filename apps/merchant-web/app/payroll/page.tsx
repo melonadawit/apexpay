@@ -2,6 +2,9 @@
 import * as React from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
+import { api } from "@/lib/api/client"
+import { useData } from "@/lib/api/use-data"
+import { useRequireAuth } from "@/lib/api/require-auth"
 
 // Outstanding UI components — glassmorphic, Mercury/Linear inspiration
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -60,9 +63,14 @@ const mockCompliance = [
 ]
 
 export default function PayrollPage() {
+  const { checking } = useRequireAuth()
   const [activeTab, setActiveTab] = React.useState("overview")
-  const [selectedStructure, setSelectedStructure] = React.useState(mockStructures[0])
+  const [selectedStructure, setSelectedStructure] = React.useState<any>(mockStructures[0] ?? null)
   const [showOTCalculator, setShowOTCalculator] = React.useState(false)
+
+  if (checking) {
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Checking session…</div>
+  }
 
   const tabs = [
     { id: "overview", label: "Overview • አጠቃላይ", icon: "📊" },
@@ -168,6 +176,77 @@ export default function PayrollPage() {
 }
 
 // ==================== Overview Tab ====================
+// Shared data hook: fetches real payroll data from the API, falling back to the shipped
+// demo data when the API is unreachable. Each tab calls this so it always has data.
+function usePayrollData() {
+  const { data: employees = mockEmployees } = useData(() => api.payroll.employees() as Promise<any[]>, [])
+  const { data: runs = mockRuns } = useData(() => api.payroll.runs() as Promise<any[]>, [])
+  const { data: structures = mockStructures } = useData(() => api.payroll.salaryStructures() as Promise<any[]>, [])
+  const { data: departments = mockDepartments } = useData(() => api.payroll.departments() as Promise<any[]>, [])
+  const { data: loans = mockLoans } = useData(() => api.payroll.loans() as Promise<any[]>, [])
+
+  const empList = (employees ?? []).map((e: any) => ({
+    code: e.employee_code || e.code || e.id || "—",
+    name: e.name || "—",
+    name_am: e.name_am || "",
+    base: e.base_salary ? String(e.base_salary) : e.base || "0",
+    ctc: e.ctc_monthly ? String(e.ctc_monthly) : e.ctc || "0",
+    dept: e.department || e.dept || "—",
+    grade: e.grade || "—",
+    bank: e.bank_account_masked || e.bank || "—",
+    bank_code: e.bank_code || "—",
+    cost: e.cost_center || e.cost || "—",
+    fayda: !!e.fayda_verified || !!e.fayda,
+    face_score: e.face_score || 0,
+    status: e.status || "active",
+    tin: e.tin || "—",
+    pension_no: e.pension_no || "—",
+    structure: e.salary_structure || e.structure || "—",
+  }))
+  const runList = (runs ?? []).map((r: any) => ({
+    id: r.id || "—",
+    ref: r.run_ref || r.ref || r.id || "—",
+    period: r.period || r.period_year || "—",
+    type: r.type || "regular",
+    status: r.status || "draft",
+    total_gross: r.total_gross ? String(r.total_gross) : r.gross ? String(r.gross) : "0",
+    total_tax: r.total_tax ? String(r.total_tax) : "0",
+    total_pension: r.total_pension ? String(r.total_pension) : "0",
+    total_net: r.total_net ? String(r.total_net) : r.net ? String(r.net) : "0",
+    count: r.count || r.employee_count || 0,
+    variance: r.variance || "",
+    paid: r.paid || 0,
+    failed: r.failed || 0,
+  }))
+  const structList = (structures ?? []).map((s: any) => ({
+    id: s.id || "—",
+    name: s.name || "—",
+    ctc_annual: s.ctc_annual ? String(s.ctc_annual) : "0",
+    ctc_monthly: s.ctc_monthly ? String(s.ctc_monthly) : "0",
+    components: s.components || [],
+  }))
+  const deptList = (departments ?? []).map((d: any) => ({
+    id: d.id || "—",
+    name: d.name || "—",
+    code: d.code || "—",
+    cost_center: d.cost_center || "—",
+    headcount: d.headcount || 0,
+  }))
+  const loanList = (loans ?? []).map((l: any) => ({
+    id: l.id || "—",
+    employee: l.employee || l.employee_name || "—",
+    amount: l.amount ? String(l.amount) : "0",
+    outstanding: l.outstanding ? String(l.outstanding) : "0",
+    status: l.status || "—",
+    code: l.employee_code || l.code || "—",
+    type: l.loan_type || l.type || "—",
+    principal: l.principal ? String(l.principal) : "0",
+    emi: l.emi_amount ? String(l.emi_amount) : "0",
+    tenure: l.tenure_months || l.tenure || 0,
+  }))
+  return { empList, runList, structList, deptList, loanList }
+}
+
 function OverviewTab() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -204,6 +283,7 @@ function OverviewTab() {
 
 // ==================== Employees Tab ====================
 function EmployeesTab() {
+  const { empList } = usePayrollData()
   return (
     <Card className="p-6">
       <div className="flex justify-between items-center">
@@ -217,7 +297,7 @@ function EmployeesTab() {
       </div>
       <div className="mt-4 rounded-xl border overflow-hidden">
         <div className="grid grid-cols-10 gap-2 bg-muted p-3 text-[11px] font-semibold"><span>Code</span><span>Name</span><span>Dept/Grade</span><span>CTC Annual</span><span>Base</span><span>Bank</span><span>Fayda</span><span>Structure</span><span>Status</span><span>Action</span></div>
-        {mockEmployees.map(e => (
+        {empList.map(e => (
           <div key={e.code} className="grid grid-cols-10 gap-2 p-3 border-t text-xs hover:bg-muted/50">
             <span className="font-mono font-medium">{e.code}</span>
             <span><span className="font-medium">{e.name}</span><span className="block text-[10px] text-muted-foreground">{e.name_am || e.code} • TIN {e.tin}</span></span>
@@ -242,12 +322,13 @@ function EmployeesTab() {
 
 // ==================== Structures Tab ====================
 function StructuresTab({ selected, onSelect }: any) {
+  const { structList } = usePayrollData()
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <Card className="p-6">
         <h3 className="font-semibold">Salary Structures • CTC Templates • enterprise-grade</h3>
         <div className="mt-3 space-y-2">
-          {mockStructures.map((s:any) => (
+          {structList.map((s:any) => (
             <button key={s.id} onClick={()=>onSelect(s)} className={`w-full text-left rounded-xl border p-3 hover:bg-muted text-xs ${selected.id===s.id ? "bg-primary/10 border-primary/30" : ""}`}>
               <p className="font-medium">{s.name}</p>
               <p className="text-[11px] text-muted-foreground">CTC Annual {s.ctc_annual} • Monthly {s.ctc_monthly} • 4 components • Default ✓</p>
@@ -299,12 +380,13 @@ function StructuresTab({ selected, onSelect }: any) {
 
 // ==================== Runs Tab ====================
 function RunsTab() {
+  const { runList } = usePayrollData()
   return (
     <Card className="p-6">
       <div className="flex justify-between items-center"><h3 className="font-semibold">Payroll Runs • Status pipeline visual stepper • Ledger M4 per run book • 500 emps &lt;2s p99</h3><button className="rounded-xl bg-primary text-white px-4 h-9 text-xs">Create Run Wizard 5 steps</button></div>
       <div className="mt-4 rounded-xl border overflow-hidden">
         <div className="grid grid-cols-9 gap-2 bg-muted p-3 text-[11px] font-semibold"><span>Run Ref</span><span>Period</span><span>Type</span><span>Status</span><span>Total Gross</span><span>Total Net</span><span>Variance</span><span>Paid/Failed</span><span>Action</span></div>
-        {mockRuns.map(r=>(
+        {runList.map(r=>(
           <div key={r.id} className="grid grid-cols-9 gap-2 p-3 border-t text-xs hover:bg-muted/50">
             <span className="font-mono">{r.ref}</span>
             <span>{r.period}</span>
@@ -382,12 +464,13 @@ function AttendanceTab() {
 
 // ==================== Loans Tab ====================
 function LoansTab() {
+  const { loanList } = usePayrollData()
   return (
     <Card className="p-6">
       <div className="flex justify-between items-center"><h3 className="font-semibold">Loans & Advances • Salary Advance • Personal Loan • EMI auto deduction per run</h3><button className="rounded-xl bg-primary text-white h-9 px-4 text-xs">Request Loan • EMI preview</button></div>
       <div className="mt-4 rounded-xl border overflow-hidden">
         <div className="grid grid-cols-8 gap-2 bg-muted p-3 text-[11px] font-semibold"><span>Loan ID</span><span>Employee</span><span>Type</span><span>Principal</span><span>EMI</span><span>Outstanding</span><span>Tenure</span><span>Status</span></div>
-        {mockLoans.map(l=>(
+        {loanList.map(l=>(
           <div key={l.id} className="grid grid-cols-8 gap-2 p-3 border-t text-xs hover:bg-muted/50">
             <span className="font-mono">{l.id}</span>
             <span>{l.employee} • {l.code}</span>
@@ -475,11 +558,12 @@ function ComplianceTab() {
 
 // ==================== Settings Tab ====================
 function SettingsTab() {
+  const { deptList } = usePayrollData()
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <Card className="p-6">
         <h3 className="font-semibold">Departments • Cost Center • 3</h3>
-        <div className="mt-3 space-y-2 text-xs">{mockDepartments.map(d=><div key={d.id} className="flex justify-between border rounded-xl p-2"><span>{d.name} • {d.code} • {d.cost_center}</span><span>{d.headcount} emps</span></div>)}</div>
+        <div className="mt-3 space-y-2 text-xs">{deptList.map(d=><div key={d.id} className="flex justify-between border rounded-xl p-2"><span>{d.name} • {d.code} • {d.cost_center}</span><span>{d.headcount} emps</span></div>)}</div>
         <button className="mt-3 w-full rounded-xl border border-dashed h-10 text-xs">+ Add Department</button>
       </Card>
       <Card className="p-6">

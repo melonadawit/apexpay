@@ -512,4 +512,95 @@ export const api = {
     create: (p: unknown) => post<Loan>("lending", p),
     repay: (id: string, amount: string) => post<unknown>(`lending/${id}/repay`, { amount }),
   },
+
+  // Payroll & Workforce
+  payroll: {
+    employees: () => get<unknown[]>("payroll/employees"),
+    createEmployee: (p: unknown) => post<unknown>("payroll/employees", p),
+    runs: () => get<unknown[]>("payroll/payroll_runs"),
+    createRun: (p: unknown) => post<unknown>("payroll/payroll_runs", p),
+    calculate: (id: string) => post<unknown>(`payroll/payroll_runs/${id}/calculate`),
+    approve: (id: string) => post<unknown>(`payroll/payroll_runs/${id}/approve`),
+    disburse: (id: string) => post<unknown>(`payroll/payroll_runs/${id}/disburse`),
+    runItems: (id: string) => get<unknown[]>(`payroll/payroll_runs/${id}/items`),
+    leaveRequests: () => get<unknown[]>("payroll/leave_requests"),
+    claims: () => get<unknown[]>("payroll/claims"),
+    loans: () => get<unknown[]>("payroll/loans"),
+    departments: () => get<unknown[]>("payroll/departments"),
+    salaryStructures: () => get<unknown[]>("payroll/salary_structures"),
+  },
+
+  // Refunds
+  refunds: {
+    get: (id: string) => get<unknown>(`refunds/${id}`),
+    byPayment: (paymentId: string) => get<unknown[]>(`refunds/payment/${paymentId}`),
+    create: (p: unknown) => post<unknown>("refunds", p),
+  },
+
+  // Payouts
+  payouts: {
+    batches: () => get<unknown[]>("payout_batches"),
+    getBatch: (id: string) => get<unknown>(`payout_batches/${id}`),
+    approveBatch: (id: string) => post<unknown>(`payout_batches/${id}/approve`),
+    beneficiaries: () => get<unknown[]>("beneficiaries"),
+    createBeneficiary: (p: unknown) => post<unknown>("beneficiaries", p),
+  },
+
+  // Subscriptions
+  subscriptions: {
+    plans: () => get<unknown[]>("subscription_plans"),
+    subscriptions: () => get<unknown[]>("subscriptions"),
+    customers: () => get<unknown[]>("customers"),
+  },
+
+  // Procurement & AP
+  procurement: {
+    vendors: () => get<unknown[]>("procurement/vendors"),
+    createVendor: (p: unknown) => post<unknown>("procurement/vendors", p),
+    purchaseOrders: () => get<unknown[]>("procurement/purchase-orders"),
+    createPurchaseOrder: (p: unknown) => post<unknown>("procurement/purchase-orders", p),
+    receive: (id: string) => post<unknown>(`procurement/purchase-orders/${id}/receive`),
+    invoices: () => get<unknown[]>("procurement/invoices"),
+    createInvoice: (p: unknown) => post<unknown>("procurement/invoices", p),
+    aging: () => get<unknown[]>("procurement/aging"),
+  },
+
+  // Budgeting / FP&A
+  budget: {
+    budgets: (period = "") => get<unknown[]>(`budget/budgets${period ? `?period=${period}` : ""}`),
+    setBudget: (p: unknown) => post<unknown>("budget/budgets", p),
+    variance: (period = "") => get<unknown>(`budget/variance${period ? `?period=${period}` : ""}`),
+  },
+
+  // Tax schedules
+  tax: {
+    schedule: () => get<unknown>("tax/schedule"),
+    postToLedger: (period = "") => post<unknown>("tax/schedule/post", { period }),
+  },
+
+  // FX revaluation
+  fx: {
+    revalue: (period = "") => post<unknown>("fx/revalue", { period }),
+  },
+
+  // Accounting GL (journals + periods)
+  gl: {
+    journalEntries: () => get<unknown[]>("accounting/journal-entries"),
+    postJournalEntry: (p: unknown) => post<unknown>("accounting/journal-entries", p),
+    periods: () => get<unknown[]>("accounting/periods"),
+    closePeriod: (period: string) => post<unknown>("accounting/periods/close", { period }),
+    reopenPeriod: (period: string) => post<unknown>("accounting/periods/reopen", { period }),
+  },
+
+  // Assistant
+  assistant: {
+    chat: (message: string) => post<unknown>("assistant/chat", { message }),
+    thread: (id: string) => get<unknown>(`assistant/threads/${id}`),
+  },
+
+  // Portals
+  portal: {
+    createToken: (p: unknown) => post<unknown>("portal/token", p),
+    me: () => get<unknown>("portal/me"),
+  },
 }
