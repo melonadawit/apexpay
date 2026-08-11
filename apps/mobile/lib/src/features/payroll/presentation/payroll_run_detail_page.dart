@@ -143,7 +143,7 @@ class _PayrollRunDetailPageState extends State<PayrollRunDetailPage> {
                     Row(children: [
                       Container(width: 60, height: 60, decoration: BoxDecoration(border: Border.all(style: BorderStyle.solid), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.qr_code)),
                       const SizedBox(width: 12),
-                      const Expanded(child: Text('Pie chart deductions Tax 30% Pension 20% Loan 40% • QR verification https://apexpay.et/verify/payslip/${runId}/EMP001 signed JWT • Password DOB DDMM + last4 • Bilingual EN/AM', style: TextStyle(fontSize: 10))),
+                      const Expanded(child: Text('QR verification via the ApexPay app • Password protected • Bilingual EN/AM', style: TextStyle(fontSize: 10))),
                     ]),
                   ]),
                 ),

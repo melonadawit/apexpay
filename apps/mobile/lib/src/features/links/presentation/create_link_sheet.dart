@@ -37,7 +37,10 @@ class _CreateLinkSheetState extends State<CreateLinkSheet> {
                 onPressed: _loading ? null : () async {
                   setState(()=> _loading=true);
                   await Future.delayed(const Duration(seconds: 1));
-                  setState(()=> {_linkUrl='https://checkout.apexpay.et/c/abc123'; _loading=false;});
+                  setState(() {
+                    _linkUrl='https://checkout.apexpay.et/c/abc123';
+                    _loading=false;
+                  });
                 },
                 child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Generate Link • ሊንክ አመንጭ'),
               ),
